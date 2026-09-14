@@ -12,16 +12,16 @@ export function StaffBranchFieldset({ id, branches, selected, label }: {
   const [branchIds, setBranchIds] = useState(selected);
   const unavailableIds = branchIds.filter((branchId) => !branches.some((branch) => branch.id === branchId));
 
-  return <fieldset id={id} className="rounded-xl border border-slate-300 p-3 sm:col-span-2">
-    <legend className="px-1 text-sm font-semibold">{label}</legend>
-    <label className="flex min-h-9 items-center gap-2 text-sm">
-      <input id={`${id}-all-checkbox`} type="checkbox" name="allBranches" checked={allBranches} onChange={(event) => {
+  return <fieldset id={id} className="col-span-full min-w-0 rounded-xl border border-slate-300 p-3">
+    <legend className="max-w-full px-1 text-sm font-semibold [overflow-wrap:anywhere]">{label}</legend>
+    <label className="flex min-h-9 min-w-0 items-center gap-2 text-sm [overflow-wrap:anywhere]">
+      <input id={`${id}-all-checkbox`} type="checkbox" className="shrink-0" name="allBranches" checked={allBranches} onChange={(event) => {
         setAllBranches(event.target.checked);
         setBranchIds([]);
       }}/> All current and future branches
     </label>
-    <div className="grid gap-1 sm:grid-cols-2">{branches.map((branch, index) => <label className="flex min-h-9 items-center gap-2 text-sm" key={branch.id}>
-      <input id={`${id}-${branch.id}-checkbox`} type="checkbox" name="branchIds" value={branch.id}
+    <div className="grid gap-1 sm:grid-cols-2">{branches.map((branch, index) => <label className="flex min-h-9 min-w-0 items-center gap-2 text-sm [overflow-wrap:anywhere]" key={branch.id}>
+      <input id={`${id}-${branch.id}-checkbox`} type="checkbox" className="shrink-0" name="branchIds" value={branch.id}
         checked={branchIds.includes(branch.id)} required={!allBranches && !branchIds.length && index === 0}
         onChange={(event) => {
           setAllBranches(false);

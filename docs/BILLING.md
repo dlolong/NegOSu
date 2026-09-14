@@ -4,7 +4,7 @@
 
 `modules/platform/plan-catalog.ts` is the single customer-facing launch catalog used by both `/plans` and authenticated Billing presentation. It defines the public plan names, Philippine-peso prices, summaries, and honest plan highlights. The database remains authoritative for subscription state, provider configuration, and entitlement enforcement.
 
-Authenticated Billing compares every active database plan with this launch catalog before presenting plan choices. A name, price, annual price, or custom-plan mismatch produces a controlled billing error instead of displaying a price that conflicts with the public site. Changes to launch pricing therefore require one coordinated change to the catalog, append-only database migration, and Stripe Prices. The launch regression test verifies the seeded database values match the shared catalog.
+Authenticated Billing compares each active database plan with this launch catalog before enabling its checkout. A name, price, annual price, or custom-plan mismatch disables checkout for that plan and suppresses launch marketing annotations; it does not hide the subscription or other plans. Displayed prices come from the database. Changes to launch pricing therefore require one coordinated change to the catalog, append-only database migration, and Stripe Prices. The launch regression test verifies the seeded database values match the shared catalog.
 
 The `monthly_jobs` entitlement currently applies to Automotive Job Orders. Public cross-industry highlights do not describe that value as a Salon Appointment limit, and Salon Billing omits the Automotive-only Job Order count. Public cards list only universal shared concepts or qualify additional capabilities by industry; they do not promise Automotive-only reports, payments, or booking-request workflows to Salon businesses. Authenticated Billing uses `visiblePlanFeatureLabels()` to translate enabled database keys into customer-readable, industry-supported capabilities: Salon may show Appointment reminders, Automotive may show Maintenance reminders and Advanced Automotive reports, and the historical `ai` flag stays hidden until a launch-ready workflow exists.
 
@@ -28,3 +28,9 @@ Use Stripe CLI forwarding and test-mode products before production. Never put se
 - `cancelled` and `paused` fall back to Free access.
 - Downgrades prevent new over-limit resources but never delete branches, staff, jobs, photos, or history.
 - Only owners can view subscription state or launch billing management.
+
+## Billing read availability
+
+`lib/billing/overview.ts` loads the base catalog/subscription separately from provider configuration and `get_org_entitlements`. Missing provider columns or RPCs must not hide readable billing information. Catalog and subscription errors have separate recovery states. Checkout and portal controls remain unavailable when setup or subscription reads fail. Effective access is displayed only from the entitlement RPC; when unavailable, existing subscription data is labeled Subscription plan instead of inventing effective entitlements.
+
+The provider columns and entitlement RPC require `0028_phase11_revenue_phase12_billing.sql`. Verify migration history and schema together before applying pending migrations in order through the release workflow. Do not blindly rerun this migration on a partially migrated database: it also changes invoice/revenue behavior and contains a data update. Plan viewing can work without online billing; checkout still requires the canonical billing schema and configured provider prices/credentials.

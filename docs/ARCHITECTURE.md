@@ -4,7 +4,7 @@
 
 NegOSu remains a cloud-neutral Next.js application backed by Supabase. Production startup validates the required public URL and Supabase configuration before serving traffic; optional billing and notification providers must be configured as complete sets. `/health` is intentionally a liveness-only endpoint and discloses no database or environment details. Deployment, migration ordering, rollback, and pilot smoke procedures live in `DEPLOYMENT.md`, `RELEASE_CHECKLIST.md`, and `PILOT_QA.md`.
 
-The public Plans page and authenticated Billing UI share `modules/platform/plan-catalog.ts` as their presentation contract. Database subscription rows remain authoritative for subscription state and entitlements, and Billing fails closed when its active database catalog drifts from the published prices.
+The public Plans page and authenticated Billing UI share `modules/platform/plan-catalog.ts` as their presentation contract. Database subscription rows remain authoritative for subscription state and entitlements, and Billing disables checkout for plans that drift from published prices while retaining readable subscription and catalog information. Provider setup failures are isolated from base billing reads.
 
 ## Product entry and organization context
 

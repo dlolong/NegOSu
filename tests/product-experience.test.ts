@@ -94,7 +94,7 @@ test("public booking and neutral fallback surfaces expose semantic roots and bra
 });
 
 test("commercial contact and customer import surfaces use the NegOSu product name", () => {
-  const billing = source("app/dashboard/settings/billing/page.tsx");
+  const billing = source("app/dashboard/settings/billing/page.tsx") + source("components/billing-overview.tsx");
   const customerTemplate = source("app/dashboard/customers/import/template/route.ts");
   assert.match(billing, /sales@negosu\.com/);
   assert.match(customerTemplate, /negosu-customers-template\.csv/);

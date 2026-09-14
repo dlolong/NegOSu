@@ -68,10 +68,10 @@ test("Plans is discoverable, responsive, and uses clear launch actions", () => {
   assert.doesNotMatch(publicClaims, /Public business page|Reminders and advanced reports|All Business features/);
 });
 
-test("Billing blocks catalog drift and keeps Automotive-only limits out of Salon copy", () => {
-  const billing = source("app/dashboard/settings/billing/page.tsx");
-  assert.match(billing, /planMatchesLaunchCatalog/);
-  assert.match(billing, /hasCatalogMismatch/);
+test("Billing isolates catalog drift and keeps Automotive-only limits out of Salon copy", () => {
+  const billing = source("app/dashboard/settings/billing/page.tsx") + source("components/billing-overview.tsx");
+  assert.match(source("lib/billing/overview.ts"), /planMatchesLaunchCatalog/);
+  assert.match(billing, /plan.matchesCatalog/);
   assert.match(billing, /industry === "automotive"/);
   assert.match(billing, /Job Orders\/month/);
   assert.match(billing, /contact support/);

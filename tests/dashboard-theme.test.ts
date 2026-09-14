@@ -51,7 +51,7 @@ test("every alternate palette overrides shared tokens without changing semantic 
 
 test("Public Page and Billing settings expose clear operational sections", () => {
   const publicPage = source("app/dashboard/settings/public-page/page.tsx");
-  const billing = source("app/dashboard/settings/billing/page.tsx");
+  const billing = source("app/dashboard/settings/billing/page.tsx") + source("components/billing-overview.tsx");
   for (const id of ["public-page-readiness-card", "public-page-locations-section", "public-gallery-empty-state"]) assert.match(publicPage, new RegExp(id));
   assert.match(publicPage, /Weekly booking hours/);
   assert.doesNotMatch(publicPage, /Opening-hours JSON/);

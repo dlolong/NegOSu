@@ -1,6 +1,6 @@
 
 import { RecordRow, RecordItem, RecordLink } from "@/components/record-item";
-import { Plus as PlusIcon, Save as SaveIcon, KeyRound, Pencil } from "lucide-react";
+import { Plus as PlusIcon, Save as SaveIcon, KeyRound, Pencil, Info } from "lucide-react";
 
 import { FormActions } from "@/components/form-actions";
 import Link from "next/link";
@@ -58,7 +58,7 @@ export function StaffProfileForm({ profile, branches, industry, prefix }: {
   prefix: string;
 }) {
   const suggestions = staffJobFunctionSuggestions[industry];
-  return <form id={`${prefix}-form`} action={saveStaffProfile} className="grid gap-4 sm:grid-cols-2">
+  return <form id={`${prefix}-form`} action={saveStaffProfile} className="grid min-w-0 grid-cols-1 gap-4 sm:grid-cols-2">
     <input type="hidden" name="staffId" value={profile?.id ?? ""}/>
     <label className="text-sm font-semibold sm:col-span-2">Full name <span aria-hidden="true">*</span>
       <Input id={`${prefix}-name-input`} name="fullName" required maxLength={120} defaultValue={profile?.fullName ?? ""} className="mt-2" autoComplete="name"/>
@@ -99,7 +99,7 @@ export function StaffAccessForm({ profile, branches, industry, prefix }: {
   const roleOptions = staffRoleOptionsForIndustry(industry);
   const linked = Boolean(profile.membershipId);
   const selectedBranches = profile.accessBranchIds ?? [];
-  if (!linked) return <form id={`${prefix}-form`} action={createStaffProfileInvitation} className="grid gap-4">
+  if (!linked) return <form id={`${prefix}-form`} action={createStaffProfileInvitation} className="grid min-w-0 grid-cols-1 gap-4">
     <input type="hidden" name="staffId" value={profile.id}/>
     <label className="text-sm font-semibold">Login email
       <Input id={`${prefix}-login-email-input`} name="loginEmail" type="email" required maxLength={254} defaultValue={profile.email ?? ""} className="mt-2" autoComplete="email"/>
@@ -115,7 +115,7 @@ export function StaffAccessForm({ profile, branches, industry, prefix }: {
     <FormActions id={`${prefix}-actions`} cancelHref="/dashboard/settings/staff" cancelId={`${prefix}-cancel-button`}><SubmitButton id={`${prefix}-save-button`} pendingText="Creating…"><PlusIcon aria-hidden="true" size={16} className="shrink-0"/>{profile.systemAccessStatus === "pending" ? "Replace invitation" : "Create invitation"}</SubmitButton></FormActions>
   </form>;
 
-  return <form id={`${prefix}-form`} action={updateStaffProfileAccess} className="grid gap-4">
+  return <form id={`${prefix}-form`} action={updateStaffProfileAccess} className="grid min-w-0 grid-cols-1 gap-4">
     <input type="hidden" name="staffId" value={profile.id}/>
     <RoleSelect id={`${prefix}-role-select`} name="role" defaultValue={profile.role ?? roleOptions[0]?.value ?? "viewer"} industry={industry}/>
     <label className="text-sm font-semibold">System access status
@@ -169,10 +169,14 @@ export function StaffDirectoryViews({ staff, branches, timezone, industry, prefi
 export function PermissionMatrix({ industry, prefix }: { industry: StaffManagementIndustry; prefix: string }) {
   const headings = industry === "salon" ? ["Access role", "Clients", "Appointments", "Treatments", "Inventory", "Settings"] : ["Access role", "Customers", "Appointments", "Jobs", "Finance", "Inventory", "Settings"];
   const rows = industry === "salon" ? salonPermissions : automotivePermissions;
-  return <section id={`${prefix}-permission-matrix`} className="mt-5 rounded-2xl border border-admin-border bg-white p-5 shadow-sm"><h2 className="font-semibold">Permission matrix</h2>
+  return <aside id={`${prefix}-permission-matrix`} aria-labelledby={`${prefix}-permission-info-title`} className="mt-4 min-w-0 rounded-xl border border-admin-border bg-admin-surface-muted p-3 text-sm text-admin-text-secondary">
+    <div className="flex items-start gap-2"><Info aria-hidden="true" size={16} className="mt-0.5 shrink-0"/><div className="min-w-0"><h2 id={`${prefix}-permission-info-title`} className="text-sm font-medium">About access permissions</h2><p className="mt-1 text-xs">Access roles control what staff can do in the system. They are separate from job functions and apply within assigned access branches.</p></div></div>
+    <details id={`${prefix}-permission-details`} className="mt-2">
+      <summary id={`${prefix}-permission-toggle`} className="min-h-11 cursor-pointer content-center text-xs font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary">View permission matrix</summary>
     <div className="mt-4 hidden overflow-hidden rounded-xl border md:block"><table className="w-full text-left text-sm"><thead className="bg-slate-50 text-xs uppercase text-slate-500"><tr>{headings.map((heading) => <th className="px-3 py-2" key={heading}>{heading}</th>)}</tr></thead><tbody className="divide-y">{rows.map((row) => <tr key={row[0]}>{row.map((cell, index) => <td className="px-3 py-2" key={`${row[0]}-${index}`}>{cell}</td>)}</tr>)}</tbody></table></div>
     <div className="mt-3 grid gap-2 md:hidden">{rows.map((row) => <details className="rounded-xl border p-3" key={row[0]}><summary className="cursor-pointer font-bold">{row[0]}</summary><dl className="mt-2 grid grid-cols-2 gap-2 text-xs">{headings.slice(1).map((heading, index) => <div key={heading}><dt className="text-slate-500">{heading}</dt><dd className="font-semibold">{row[index + 1]}</dd></div>)}</dl></details>)}</div>
-  </section>;
+    </details>
+  </aside>;
 }
 
 function RoleSelect({ id, name, defaultValue, industry }: { id: string; name: string; defaultValue: string; industry: StaffManagementIndustry }) {

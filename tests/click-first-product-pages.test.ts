@@ -53,7 +53,7 @@ test("booking request actions remain clear and reachable on narrow screens", () 
 });
 
 test("billing keeps plan decisions visible and moves secondary details behind disclosure", () => {
-  const billing = source("app/dashboard/settings/billing/page.tsx");
+  const billing = source("app/dashboard/settings/billing/page.tsx") + source("components/billing-overview.tsx");
 
   for (const id of [
     "billing-page",
