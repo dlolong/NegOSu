@@ -3,10 +3,11 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
+import { writeServiceCategory, servicesCatalogHref, type CategoryActionState } from "@/lib/service-categories";
 import { getDashboardContext } from "@/lib/auth/context";
 import { firstError, formValue, normalizePlate } from "@/lib/crm";
 import { reportActionError } from "@/lib/errors/action-error";
-import { categorySchema, parseMoneyToCentavos, selectedValues, serviceSchema, walkInSchema, zonedDateTimeToUtc } from "@/lib/operations";
+import { parseMoneyToCentavos, selectedValues, serviceSchema, walkInSchema, zonedDateTimeToUtc } from "@/lib/operations";
 import { createClient } from "@/lib/supabase/server";
 import { assertIndustryFeature } from "@/lib/auth/industry-access";
 
@@ -14,26 +15,24 @@ function go(path:string,kind:"error"|"message",value:string):never { redirect(`$
 const admin=(role:string)=>["owner","manager"].includes(role);
 const operator=(role:string)=>["owner","manager","advisor"].includes(role);
 
-export async function saveCategory(data:FormData) {
-  const id=formValue(data,"id");
-  const parsed=categorySchema.safeParse({name:formValue(data,"name"),sortOrder:formValue(data,"sortOrder")});
-  if(!parsed.success) go("/dashboard/services","error",firstError(parsed.error));
-  const {activeMembership}=await getDashboardContext();
-  if(!admin(activeMembership.role)) go("/dashboard/services","error","Owner or manager access is required.");
-  const supabase=await createClient();
-  const payload={organization_id:activeMembership.organizationId,name:parsed.data.name,sort_order:parsed.data.sortOrder};
-  const {error}=id?await supabase.from("service_categories").update(payload).eq("id",id).eq("organization_id",activeMembership.organizationId):await supabase.from("service_categories").insert(payload);
-  if(error) go("/dashboard/services","error",error.code==="23505"?"That category already exists.":"Unable to save the category.");
-  revalidatePath("/dashboard/services"); go("/dashboard/services","message",`Category ${id?"updated":"created"}.`);
+export async function saveCategory(data: FormData): Promise<CategoryActionState> {
+  const { activeMembership } = await getDashboardContext();
+  const result = await writeServiceCategory(await createClient(), activeMembership, {
+    id: formValue(data, "id"), name: formValue(data, "name"),
+    sortOrder: formValue(data, "sortOrder"), isActive: data.get("isActive") === "on",
+  });
+  if (result.error) return result;
+  revalidatePath("/dashboard/services");
+  redirect(servicesCatalogHref({ q: formValue(data, "q"), category: formValue(data, "category"), tab: "categories" }));
 }
 
-export async function toggleCategory(data:FormData) {
-  const {activeMembership}=await getDashboardContext();
-  if(!admin(activeMembership.role)) go("/dashboard/services","error","Owner or manager access is required.");
-  const supabase=await createClient();
-  const {error}=await supabase.from("service_categories").update({is_active:formValue(data,"active")==="true"}).eq("id",formValue(data,"id")).eq("organization_id",activeMembership.organizationId);
-  if(error) go("/dashboard/services","error","Unable to update category.");
-  revalidatePath("/dashboard/services"); go("/dashboard/services","message","Category updated.");
+export async function deleteCategory(data: FormData): Promise<CategoryActionState> {
+  const { activeMembership } = await getDashboardContext();
+  const result = await writeServiceCategory(await createClient(), activeMembership, { id: formValue(data, "id") }, true);
+  if (result.error) return result;
+  revalidatePath("/dashboard/services", "layout");
+  const category = formValue(data, "category");
+  redirect(servicesCatalogHref({ q: formValue(data, "q"), category: category === formValue(data, "id") ? "" : category, tab: "categories" }));
 }
 
 function parsePriceLines(value:string) {

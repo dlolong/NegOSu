@@ -1,46 +1,16 @@
 import { expect, test } from "@playwright/test";
-import { readFileSync } from "node:fs";
-import { createRequire } from "node:module";
-import path from "node:path";
+import { renderFormFixture } from "./fixtures/form-browser";
 
 test.use({ browserName: "chromium" });
-
-// esbuild is the locked compiler dependency of the project's tsx test runner.
-const projectRequire = createRequire(path.join(process.cwd(), "package.json"));
-const { build } = createRequire(projectRequire.resolve("tsx/package.json"))("esbuild") as typeof import("esbuild");
 let html: string;
-
-test.beforeAll(async () => {
-  const result = await build({
-    entryPoints: ["e2e/fixtures/form-actions.tsx"], bundle: true, write: false, format: "iife", jsx: "automatic",
-    alias: { "@": process.cwd() }, define: { "process.env.NODE_ENV": '"production"' },
-    plugins: [{ name: "synthetic-form-boundaries", setup(builder) {
-      builder.onResolve({ filter: /^next\/(link|navigation|image)$/ }, args => ({ path: args.path, namespace: "form-boundary" }));
-      builder.onResolve({ filter: /^@\/app\/.*(?:actions|entity-actions)$/ }, args => ({ path: args.path, namespace: "form-boundary" }));
-      builder.onLoad({ filter: /.*/, namespace: "form-boundary" }, args => {
-        let contents: string;
-        if (args.path === "next/link") contents = 'import React from "react"; export default function Link({replace,prefetch,...props}) { return React.createElement("a",props); }';
-        else if (args.path === "next/image") contents = 'import React from "react"; export default function Image({unoptimized,fill,priority,...props}) { return React.createElement("img",props); }';
-        else if (args.path === "next/navigation") contents = 'export function useRouter(){ return {replace: href => location.assign(href)}; }';
-        else {
-          const source = readFileSync(path.join(process.cwd(), args.path.replace("@/", "") + ".ts"), "utf8");
-          const names = [...source.matchAll(/export async function (\w+)/g)].map(match => match[1]);
-          contents = names.map(name => `export async function ${name}(data) { await window.recordFormAction(${JSON.stringify(name)}, data instanceof FormData ? [...data] : []); return {}; }`).join("\n");
-        }
-        return { contents, loader: "jsx", resolveDir: process.cwd() };
-      });
-    } }],
-  });
-  const postcss = projectRequire("postcss") as typeof import("postcss").default;
-  const tailwind = projectRequire("@tailwindcss/postcss") as typeof import("@tailwindcss/postcss").default;
-  const css = (await postcss([tailwind()]).process(readFileSync("app/globals.css", "utf8"), { from: path.resolve("app/globals.css") })).css;
-  html = `<html><head><meta name="viewport" content="width=device-width,initial-scale=1"><style>${css}</style></head><body><main id="root" class="mx-auto max-w-3xl p-4"></main><script>${result.outputFiles[0].text}</script></body></html>`;
-});
+test.beforeAll(async () => { html = await renderFormFixture("e2e/fixtures/form-actions.tsx"); });
 
 const mutations: string[] = [];
+const submissions: Array<{ name: string; entries: Array<[string, string]> }> = [];
 test.beforeEach(async ({ page }) => {
   mutations.length = 0;
-  await page.exposeFunction("recordFormAction", (name: string) => { mutations.push(name); });
+  submissions.length = 0;
+  await page.exposeFunction("recordFormAction", (name: string, entries: Array<[string, string]>) => { mutations.push(name); submissions.push({ name, entries }); });
   await page.route("https://forms.test/**", route => route.fulfill({ contentType: "text/html", body: new URL(route.request().url()).pathname === "/fixture" ? html : '<h1 id="destination">Returned without saving</h1>' }));
 });
 
@@ -60,6 +30,13 @@ for (const [fixture, cancelId, destination] of [
 ]) {
   test(`${fixture} Cancel discards edits, navigates correctly, and stays right-aligned`, async ({ page }) => {
     await page.goto(`https://forms.test/fixture?fixture=${fixture}`);
+    const dialog = page.locator("dialog");
+    if (await dialog.count()) {
+      const header = dialog.locator("header").first();
+      await expect(header.getByRole("link", { name: /^Close / })).toHaveCount(1);
+      await expect(header.getByRole("link", { name: /^Back/ })).toHaveCount(0);
+      await expect(header.locator('[id$="-back-button"]')).toHaveCount(0);
+    }
     const cancel = page.locator(`#${cancelId}`);
     await cancel.scrollIntoViewIfNeeded();
     const row = cancel.locator("..");
@@ -70,6 +47,9 @@ for (const [fixture, cancelId, destination] of [
     const box = await row.boundingBox();
     expect(box!.x).toBeGreaterThanOrEqual(0);
     expect(box!.x + box!.width).toBeLessThanOrEqual(page.viewportSize()!.width);
+    const saveBox = await submit.boundingBox();
+    expect(Math.abs(saveBox!.x + saveBox!.width - box!.x - box!.width)).toBeLessThan(2);
+    if (fixture === "customer-edit") await page.screenshot({ path: test.info().outputPath("customer-edit.png"), fullPage: true });
     const input = page.locator('input:not([type="hidden"]):not([type="checkbox"])').first();
     await input.fill(""); // Cancel must also work when required fields are invalid.
     await cancel.click();
@@ -108,6 +88,7 @@ test("Save validates required fields, submits once, and disables actions while p
   await page.locator("#pending-save").click();
   await expect(page.locator("#pending-save")).toBeDisabled();
   await expect(page.locator("#pending-actions-cancel-button")).toBeDisabled();
+  await page.locator("#pending-save").evaluate((button: HTMLButtonElement) => { button.click(); button.click(); });
   expect(mutations).toEqual(["savePending"]);
   await page.evaluate(() => window.releaseFormSave?.());
   await expect(page.locator("#save-success")).toBeVisible();
@@ -129,4 +110,5 @@ test("customer Save keeps the existing server action and customer field contract
   await page.locator("#customer-full-name-input").fill("New customer");
   await page.locator("#customer-save-button").click();
   await expect.poll(() => mutations).toEqual(["saveCustomer"]);
+  expect(Object.fromEntries(submissions[0].entries)).toMatchObject({ fullName: "New customer", returnTo: "/dashboard/customers?q=Ana&create=1" });
 });

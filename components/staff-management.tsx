@@ -1,3 +1,5 @@
+
+import { RecordRow, RecordItem, RecordLink } from "@/components/record-item";
 import { Plus as PlusIcon, Save as SaveIcon, KeyRound, Pencil } from "lucide-react";
 
 import { FormActions } from "@/components/form-actions";
@@ -145,22 +147,22 @@ export function StaffDirectoryViews({ staff, branches, timezone, industry, prefi
     <div id={tableContainerId} className="mt-4 hidden overflow-hidden rounded-2xl border border-admin-border bg-white shadow-sm md:block">
       <table id={tableId} className="w-full text-left text-sm">
         <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500"><tr><th className="px-3 py-2">Staff</th><th className="px-3 py-2">Function</th><th className="px-3 py-2">Today / Next</th><th className="px-3 py-2">Profile</th><th className="px-3 py-2">System access</th><th className="px-3 py-2 text-right">Actions</th></tr></thead>
-        <tbody className="divide-y divide-slate-100">{staff.map((profile) => <tr id={`${prefix}-row-${profile.id}`} key={profile.id} className="align-top hover:bg-blue-50/70">
-          <td className="min-w-48 px-3 py-3"><strong>{profile.fullName}</strong><StaffContactLines profile={profile}/><small className="block text-slate-500">{branchNames(profile.branchIds, branches)}</small></td>
+        <tbody className="divide-y divide-slate-100">{staff.map((profile) => <RecordRow id={`${prefix}-row-${profile.id}`} key={profile.id} className="align-top hover:bg-blue-50/70">
+          <td className="min-w-48 px-3 py-3"><strong><RecordLink id={`${prefix}-link-${profile.id}`} href={`/dashboard/settings/staff?dialog=${managementAvailable ? "edit" : "view"}&staffId=${profile.id}`}>{profile.fullName}</RecordLink></strong><StaffContactLines profile={profile}/><small className="block text-slate-500">{branchNames(profile.branchIds, branches)}</small></td>
           <td className="px-3 py-3"><strong>{profile.jobFunction || "Not set"}</strong><small className="block max-w-48 text-slate-500">{profile.specializations.join(", ") || "No specialties"}</small></td>
           <td className="px-3 py-3"><strong>{profile.todayCount ?? 0} appointment{profile.todayCount === 1 ? "" : "s"}</strong><small className="block text-slate-500">{profile.nextAt ? `Next ${formatTime(profile.nextAt, timezone)}` : "No upcoming visit"}</small></td>
           <td className="px-3 py-3"><ProfileStatus active={profile.isActive}/></td>
           <td className="px-3 py-3"><AccessStatus id={`${prefix}-access-status-${profile.id}`} profile={profile} industry={industry}/></td>
           <td className="px-3 py-3"><StaffActions profile={profile} prefix={prefix} managementAvailable={managementAvailable}/></td>
-        </tr>)}</tbody>
+        </RecordRow>)}</tbody>
       </table>
     </div>
-    <div id={mobileListId} className="mt-4 grid min-w-0 gap-3 md:hidden">{staff.map((profile) => <article id={`${prefix}-card-${profile.id}`} key={profile.id} className="min-w-0 rounded-2xl border border-admin-border bg-white p-4 shadow-sm">
-      <div className="flex items-start justify-between gap-3"><div className="min-w-0"><h2 className="truncate font-semibold">{profile.fullName}</h2><p className="truncate text-sm text-slate-600">{profile.jobFunction || "Job function not set"}</p></div><ProfileStatus active={profile.isActive}/></div>
+    <div id={mobileListId} className="mt-4 grid min-w-0 gap-3 md:hidden">{staff.map((profile) => <RecordItem id={`${prefix}-card-${profile.id}`} key={profile.id} className="min-w-0 rounded-2xl border border-admin-border bg-white p-4 shadow-sm">
+      <div className="flex items-start justify-between gap-3"><div className="min-w-0"><h2 className="truncate font-semibold"><RecordLink id={`${prefix}-link-mobile-${profile.id}`} href={`/dashboard/settings/staff?dialog=${managementAvailable ? "edit" : "view"}&staffId=${profile.id}`}>{profile.fullName}</RecordLink></h2><p className="truncate text-sm text-slate-600">{profile.jobFunction || "Job function not set"}</p></div><ProfileStatus active={profile.isActive}/></div>
       <div className="mt-3 grid grid-cols-2 gap-3 border-t border-slate-100 pt-3 text-xs"><div className="min-w-0"><p className="text-slate-500">Contact</p><StaffContactLines profile={profile} mobile/></div><div><p className="text-slate-500">Today / Next</p><p className="font-semibold">{profile.todayCount ?? 0} appointment{profile.todayCount === 1 ? "" : "s"}</p><p className="font-semibold">{profile.nextAt ? formatTime(profile.nextAt, timezone) : "No upcoming visit"}</p></div></div>
       <div className="mt-3 border-t border-slate-100 pt-3"><AccessStatus id={`${prefix}-access-status-${profile.id}-mobile`} profile={profile} industry={industry}/><p className="mt-2 truncate text-xs text-slate-500">{branchNames(profile.branchIds, branches)}</p></div>
       <div className="mt-3"><StaffActions profile={profile} prefix={`${prefix}-mobile`} managementAvailable={managementAvailable}/></div>
-    </article>)}</div>
+    </RecordItem>)}</div>
   </>;
 }
 

@@ -13,7 +13,7 @@ import { SubmitButton } from "@/components/submit-button";
 // are replaced at their boundaries; no customer database is contacted.
 declare global {
   interface Window {
-    recordFormAction: (name: string, entries: Array<[string, FormDataEntryValue]>) => Promise<void>;
+    recordFormAction: (name: string, entries: Array<[string, FormDataEntryValue]>) => Promise<{ error?: string } | void>;
     releaseFormSave?: () => void;
   }
 }

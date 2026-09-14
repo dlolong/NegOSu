@@ -103,13 +103,13 @@ export default async function Page({ searchParams }: { searchParams: Promise<Rec
 
   return (
     <main id="reports-page" className="mx-auto w-full max-w-7xl">
-      <header id="reports-page-header" className="flex flex-wrap items-end justify-between gap-4">
-        <div>
+      <header id="reports-page-header" className="flex flex-wrap items-center justify-between gap-4 min-w-0 [&>a]:ml-auto [&>button]:ml-auto [&>form]:ml-auto">
+        <div className="min-w-0 flex-1 basis-full sm:basis-64 [overflow-wrap:anywhere]">
           <p className="text-sm font-medium text-brand-primary">Owner analytics</p>
           <h1 className="mt-1 text-2xl font-semibold sm:text-3xl">Reports</h1>
           <p className="mt-2 text-sm text-zinc-600 sm:text-base">Revenue, customers, workload, and branch trends from operational records.</p>
         </div>
-        <Button id="reports-export-button" asChild variant="secondary">
+        <Button id="reports-export-button" className="ml-auto" asChild variant="secondary">
           <Link href={`/dashboard/reports/export?${exportQuery}`}><DownloadIcon aria-hidden="true" size={16} className="shrink-0"/>Export CSV</Link>
         </Button>
       </header>

@@ -1,3 +1,5 @@
+import { RecordCard, RecordLink } from "@/components/record-item";
+import { FormDialog } from "@/components/management-ui";
 
 import { Check as CheckIcon, RefreshCw as RefreshCwIcon, X as XIcon } from "lucide-react";
 
@@ -27,7 +29,7 @@ type BookingRequest = {
   public_booking_services: Array<{ service_name_snapshot: string; price_centavos: number }>;
 };
 
-export default async function Page({ searchParams }: { searchParams: Promise<{ message?: string; error?: string }> }) {
+export default async function Page({ searchParams }: { searchParams: Promise<{ message?: string; error?: string; requestId?: string }> }) {
   const [params, { activeMembership }, supabase] = await Promise.all([
     searchParams,
     getDashboardContext(),
@@ -40,6 +42,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ m
     .eq("branch_id", activeMembership.branchId)
     .order("created_at", { ascending: false });
   const bookingRequests = (requests ?? []) as BookingRequest[];
+  const selected = bookingRequests.find(request => request.id === params.requestId);
 
   return (
     <main id="booking-requests-page" className="mx-auto w-full max-w-5xl">
@@ -62,10 +65,10 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ m
       ) : bookingRequests.length ? (
         <section id="booking-requests-list" aria-label="Online booking requests" className="mt-5 space-y-3">
           {bookingRequests.map((request) => (
-            <Card id={`booking-request-card-${request.id}`} className="p-4 sm:p-5" key={request.id}>
+            <RecordCard id={`booking-request-card-${request.id}`} className="p-4 sm:p-5" key={request.id}>
               <div className="flex min-w-0 flex-wrap items-start justify-between gap-3">
                 <div className="min-w-0">
-                  <strong className="block break-words font-medium">{request.customer_name}{activeMembership.industry === "automotive" ? ` · ${request.vehicle_make ?? ""} ${request.vehicle_model ?? ""}` : ""}</strong>
+                  <RecordLink id={`booking-request-link-${request.id}`} href={`/dashboard/bookings?requestId=${request.id}`} className="block break-words font-medium">{request.customer_name}{activeMembership.industry === "automotive" ? ` · ${request.vehicle_make ?? ""} ${request.vehicle_model ?? ""}` : ""}</RecordLink>
                   <small className="mt-1 block break-words text-zinc-500">
                     {request.phone}{request.email ? ` · ${request.email}` : ""} · {request.public_reference}
                   </small>
@@ -84,7 +87,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ m
               </p>
               {request.customer_note ? <p className="mt-2 rounded-lg bg-zinc-50 p-3 text-sm">{request.customer_note}</p> : null}
               {request.status === "requested" && roleHasPermission(activeMembership.role, "appointments.manage") ? (
-                <div className="mt-4 grid gap-3 border-t border-zinc-100 pt-4 sm:flex sm:flex-wrap sm:items-end">
+                <div className="mt-4 grid gap-3 border-t border-zinc-100 pt-4 sm:flex sm:flex-wrap sm:items-end sm:justify-end">
                   <form id={`booking-request-confirm-form-${request.id}`} action={reviewBooking}>
                     <input type="hidden" name="id" value={request.id} />
                     <input type="hidden" name="action" value="confirm" />
@@ -109,7 +112,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ m
                   </form>
                 </div>
               ) : null}
-            </Card>
+            </RecordCard>
           ))}
         </section>
       ) : (
@@ -118,6 +121,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ m
           <p className="mt-2 text-sm text-zinc-600">New public requests for this branch will appear here.</p>
         </Card>
       )}
+      {selected ? <FormDialog id="booking-request-details-dialog" title={selected.customer_name} closeHref="/dashboard/bookings" size="md"><dl className="space-y-4 text-sm">{[["Reference", selected.public_reference], ["Status", selected.status], ["Contact", [selected.phone, selected.email].filter(Boolean).join(" · ")], ["Requested time", new Intl.DateTimeFormat("en-PH", { dateStyle: "medium", timeStyle: "short", timeZone: activeMembership.timezone }).format(new Date(selected.preferred_at))], ["Services", selected.public_booking_services.map(service => service.service_name_snapshot).join(", ")], ["Customer note", selected.customer_note || "No note"]].map(([label,value])=><div key={label}><dt className="text-admin-text-muted">{label}</dt><dd className="whitespace-pre-wrap [overflow-wrap:anywhere]">{value}</dd></div>)}</dl></FormDialog> : null}
     </main>
   );
 }

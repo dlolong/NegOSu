@@ -3,7 +3,7 @@ import { z } from "zod";
 const money = z.string().trim().regex(/^\d+(?:\.\d{1,2})?$/, "Enter a valid PHP amount.");
 export const inventoryItemSchema = z.object({
   name:z.string().trim().min(2).max(120),sku:z.string().trim().max(60),category:z.string().trim().max(80),description:z.string().trim().max(1000),unit:z.string().trim().min(1).max(30),
-  cost:money,sellPrice:money,reorderLevel:z.coerce.number().min(0).max(999999999),lotNumber:z.string().trim().max(80),expiresOn:z.string(),
+  cost:money,sellPrice:money,reorderLevel:z.coerce.number().min(0).max(999999999),lotNumber:z.string().trim().max(80),expiresOn:z.union([z.literal(""),z.iso.date()]),
 });
 export const movementSchema=z.object({itemId:z.uuid(),type:z.enum(["opening","purchase","usage","adjustment","return","waste"]),quantity:z.coerce.number().positive().max(999999999),note:z.string().trim().max(500),idempotencyKey:z.uuid()});
 export const transferSchema=z.object({sourceItemId:z.uuid(),targetItemId:z.uuid(),quantity:z.coerce.number().positive().max(999999999),note:z.string().trim().max(500),idempotencyKey:z.uuid()});

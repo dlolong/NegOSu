@@ -8,7 +8,7 @@ export function PublicPlanCatalog({ compact = false }: { compact?: boolean }) {
     <section id={compact ? "negosu-home-plans" : "negosu-plans-catalog"} aria-labelledby={compact ? "negosu-home-plans-title" : "negosu-plans-title"} className={compact ? "border-y border-zinc-100 bg-zinc-50" : "bg-white"}>
       <div className="mx-auto max-w-7xl px-4 py-14 sm:px-6 sm:py-18">
         <p className="text-sm font-semibold text-brand-primary-strong">Simple plans</p>
-        <div className="mt-2 flex flex-col justify-between gap-3 lg:flex-row lg:items-end">
+        <div className="mt-2 flex flex-col justify-between gap-3 lg:flex-row lg:items-center">
           <div>
             <h2 id={compact ? "negosu-home-plans-title" : "negosu-plans-title"} className="text-3xl font-semibold tracking-tight sm:text-4xl">Start free. Upgrade when your business needs more.</h2>
             <p className="mt-3 max-w-2xl leading-7 text-zinc-600">Choose Automotive or Salon &amp; Beauty at signup. Available tools vary by industry and plan. Prices are in Philippine pesos.</p>

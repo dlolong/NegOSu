@@ -1,0 +1,13 @@
+import React from "react";
+import { createRoot } from "react-dom/client";
+import { InventoryWorkspace } from "@/components/inventory-workspace";
+import type { InventoryStock } from "@/lib/inventory-workspace";
+const query = new URLSearchParams(location.search);
+if (query.has("readonly")) sessionStorage.setItem("inventory-readonly", "1");
+const base: InventoryStock = { id: "a7000000-0000-4000-8000-000000000001", branch_id: "main", name: "Cleaning solution", sku: "CLEAN", category: "Supplies", unit: "L", quantity_on_hand: 5, reorder_level: 5, valuation_centavos: 120000 };
+const stock: InventoryStock[] = [base, { ...base, id: "a7000000-0000-4000-8000-000000000002", name: "Brush", sku: "BRUSH", quantity_on_hand: 0 }, { ...base, id: "a7000000-0000-4000-8000-000000000003", name: "Towel", sku: "TOWEL", category: "Accessories", quantity_on_hand: 20 }, { ...base, id: "a7000000-0000-4000-8000-000000000004", branch_id: "east", sku: "clean" }];
+if (query.has("long")) stock[0] = { ...base, name: "LongProductName".repeat(12), sku: "LongSKU".repeat(10), category: "LongCategory".repeat(10), unit: "LongUnit".repeat(5), quantity_on_hand: 999999999 };
+if (query.has("many")) stock.push(...Array.from({ length: 24 }, (_, index) => ({ ...base, id: `extra-${index}`, name: `Extra ${index}` })));
+const root = document.getElementById("root")!;
+root.className = "mx-auto max-w-7xl p-4";
+createRoot(root).render(<InventoryWorkspace stock={query.has("empty") ? [] : stock} movements={[{ id: "movement", name: "Cleaning solution", unit: "L", type: "purchase", quantity: 5, note: "PO-123", createdAt: "2026-09-14T03:00:00Z" }]} branches={[{ id: "main", name: "Main branch" }, { id: "east", name: "East branch" }]} services={[{ id: "87000000-0000-4000-8000-000000000001", name: "Cleaning service" }]} branchId="main" branchName="Main branch" salon={query.get("industry") === "salon"} canManage={!query.has("readonly") && !sessionStorage.getItem("inventory-readonly")} query={Object.fromEntries(query)} loadError={query.has("failed") ? "Unable to load inventory. Try again to see current stock and movements." : undefined}/>);

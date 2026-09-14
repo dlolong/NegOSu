@@ -104,8 +104,8 @@ export default async function Page({
       className="mx-auto max-w-4xl"
     >
       {/* Header */}
-      <div className="flex flex-wrap justify-between gap-4">
-        <div>
+      <div className="flex flex-wrap justify-between gap-4 items-center min-w-0 [&>a]:ml-auto [&>button]:ml-auto [&>form]:ml-auto">
+        <div className="min-w-0 flex-1 basis-full sm:basis-64 [overflow-wrap:anywhere]">
           <p className="text-sm font-bold text-brand-primary">
             {category?.name ?? (isSalon ? "Treatment" : "Service")}
           </p>
@@ -121,6 +121,7 @@ export default async function Page({
 
         {canManage && (
           <Button
+            className="ml-auto"
             id={isSalon ? "salon-treatment-edit-button" : undefined}
             asChild
           >

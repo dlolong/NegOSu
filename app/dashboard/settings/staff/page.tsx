@@ -1,3 +1,4 @@
+import { RecordCard, RecordLink } from "@/components/record-item";
 import { X as XIcon, Plus } from "lucide-react";
 import Link from "next/link";
 
@@ -31,7 +32,7 @@ import {
 } from "@/modules/core/staff/staff.runtime";
 
 type Params = {
-  dialog?: "create" | "edit" | "access";
+  dialog?: "create" | "edit" | "access" | "view";
   staffId?: string;
   message?: string;
   error?: string;
@@ -53,7 +54,7 @@ export default async function StaffPage({ searchParams }: { searchParams: Promis
   const prefix = industry === "salon" ? "salon-staff" : "staff";
 
   if (activeMembership.role !== "owner" && industry === "salon") {
-    return <SalonStaffDailySchedule organizationId={activeMembership.organizationId} branchId={activeMembership.branchId} branchName={activeMembership.branchName} timezone={activeMembership.timezone}/>;
+    return <SalonStaffDailySchedule organizationId={activeMembership.organizationId} branchId={activeMembership.branchId} branchName={activeMembership.branchName} timezone={activeMembership.timezone} selectedStaffId={parameters.staffId}/>;
   }
   if (activeMembership.role !== "owner") return <main id={`${prefix}-page`} className="mx-auto max-w-4xl"><PageHeader id={`${prefix}-page-header`} eyebrow="Organization team" title="Staff"/><Card className="mt-6 p-6">Only organization owners can manage Staff profiles and system access.</Card></main>;
 
@@ -83,7 +84,7 @@ export default async function StaffPage({ searchParams }: { searchParams: Promis
     nextAt: schedules.get(profile.id)?.next ?? null,
   }));
   const selected = staff.find(({ id }) => id === parameters.staffId);
-  const selectionError = !profileManagementAvailable && parameters.dialog
+  const selectionError = !profileManagementAvailable && parameters.dialog && parameters.dialog !== "view"
     ? "Staff changes are currently unavailable. Please try again or contact your administrator."
     : (parameters.dialog === "edit" || parameters.dialog === "access") && !selected
     ? "Staff profile not found."
@@ -101,17 +102,19 @@ export default async function StaffPage({ searchParams }: { searchParams: Promis
     <InvitationHistory invitations={(invitationResult.data ?? []) as InvitationRow[]} timezone={activeMembership.timezone} industry={industry} prefix={prefix}/>
     <PermissionMatrix industry={industry} prefix={prefix}/>
 
+    {parameters.dialog === "view" && selected ? <FormDialog id={`${prefix}-details-dialog`} title={selected.fullName} closeHref="/dashboard/settings/staff" size="md"><dl className="space-y-4 text-sm">{[["Function", selected.jobFunction || "Not set"], ["Specializations", selected.specializations.join(", ") || "Not set"], ["Status", selected.isActive ? "Active" : "Inactive"]].map(([label,value])=><div key={label}><dt className="text-admin-text-muted">{label}</dt><dd className="[overflow-wrap:anywhere]">{value}</dd></div>)}</dl></FormDialog> : null}
     {profileManagementAvailable && parameters.dialog === "create" ? <FormDialog id={`${prefix}-create-dialog`} title="Add Staff" description="Create an operational profile now. Email, mobile, and login access are optional." closeHref="/dashboard/settings/staff" size="lg"><StaffProfileForm branches={branches} industry={industry} prefix={`${prefix}-create`}/></FormDialog> : null}
     {profileManagementAvailable && parameters.dialog === "edit" && selected ? <FormDialog id={`${prefix}-edit-dialog`} title={`Edit ${selected.fullName}`} description="Profile and operational availability are independent from login access." closeHref="/dashboard/settings/staff" size="lg"><StaffProfileForm profile={selected} branches={branches} industry={industry} prefix={`${prefix}-edit`}/></FormDialog> : null}
     {profileManagementAvailable && parameters.dialog === "access" && selected && selected.role !== "owner" ? <FormDialog id={`${prefix}-access-dialog`} title={`${selected.membershipId ? "Manage" : "Grant"} system access`} description={`Set login permissions for ${selected.fullName} without changing the Staff profile.`} closeHref="/dashboard/settings/staff" size="md"><StaffAccessForm profile={selected} branches={branches} industry={industry} prefix={`${prefix}-access`}/></FormDialog> : null}
   </main>;
 }
 
-async function SalonStaffDailySchedule({ organizationId, branchId, branchName, timezone }: {
+async function SalonStaffDailySchedule({ organizationId, branchId, branchName, timezone, selectedStaffId }: {
   organizationId: string;
   branchId: string;
   branchName: string;
   timezone: string;
+  selectedStaffId?: string;
 }) {
   const window = localDayWindow(timezone);
   const [staffResult, assignmentResult] = await Promise.all([
@@ -124,9 +127,11 @@ async function SalonStaffDailySchedule({ organizationId, branchId, branchName, t
   ]);
   const schedule = scheduleTimesByStaff(assignmentResult.data);
   const staff = staffResult.data.filter((profile) => !profile.branchIds.length || profile.branchIds.includes(branchId));
+  const selected = staff.find(profile => profile.staffId === selectedStaffId);
   return <main id="salon-staff-page" className="mx-auto min-w-0 max-w-6xl"><PageHeader id="salon-staff-page-header" eyebrow={branchName} title="Staff daily schedule" description="Today’s Salon assignment context. Organization owners manage profiles and system access."/>
     <FormMessage error={staffResult.error || assignmentResult.error ? "Unable to load the Staff schedule." : undefined}/>
-    <div id="salon-staff-today-schedule" className="mt-6 grid min-w-0 gap-3 sm:grid-cols-2 lg:grid-cols-3">{staff.map((profile) => { const visits = schedule.get(profile.staffId) ?? [];return <Card id={`salon-staff-schedule-${profile.staffId}`} key={profile.staffId} className="min-w-0 p-4"><div className="flex justify-between gap-3"><span className="min-w-0"><strong className="block truncate">{profile.fullName}</strong><small className="block truncate text-slate-500">{profile.jobFunction ?? "Staff"}</small></span><strong>{visits.length}</strong></div><p className="mt-3 text-sm text-slate-600">{visits.length ? visits.map((value) => formatTime(value, timezone)).join(" · ") : "Available — no assigned visits"}</p></Card>;})}</div>
+    <div id="salon-staff-today-schedule" className="mt-6 grid min-w-0 gap-3 sm:grid-cols-2 lg:grid-cols-3">{staff.map((profile) => { const visits = schedule.get(profile.staffId) ?? [];return <RecordCard id={`salon-staff-schedule-${profile.staffId}`} key={profile.staffId} className="min-w-0 p-4"><div className="flex justify-between gap-3"><span className="min-w-0"><RecordLink id={`salon-staff-schedule-link-${profile.staffId}`} className="block truncate" href={`/dashboard/settings/staff?staffId=${profile.staffId}`}>{profile.fullName}</RecordLink><small className="block truncate text-slate-500">{profile.jobFunction ?? "Staff"}</small></span><strong>{visits.length}</strong></div><p className="mt-3 text-sm text-slate-600">{visits.length ? visits.map((value) => formatTime(value, timezone)).join(" · ") : "Available — no assigned visits"}</p></RecordCard>;})}</div>
+    {selected ? <FormDialog id="salon-staff-schedule-dialog" title={selected.fullName} closeHref="/dashboard/settings/staff" size="md"><p className="text-sm text-admin-text-muted">{selected.jobFunction || "Staff"} · {branchName}</p><h3 className="mt-4 font-semibold">Today&apos;s assigned visits</h3><ul className="mt-3 space-y-2">{(schedule.get(selected.staffId) ?? []).map((value,index)=><li key={`${value}-${index}`} className="rounded-xl border border-admin-border p-3 text-sm">{formatTime(value, timezone)}</li>)}</ul>{!schedule.get(selected.staffId)?.length ? <p className="mt-3 text-sm">No assigned visits today.</p> : null}</FormDialog> : null}
   </main>;
 }
 

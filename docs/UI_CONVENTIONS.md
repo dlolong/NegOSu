@@ -30,6 +30,8 @@ Group headings and order communicate importance; navigation groups do not receiv
 
 Operational pages use a compact header with title/context on the left and one primary action on the right. The main list or workflow begins after a single compact filter toolbar; avoid decorative hero spacing and repeated introductions.
 
+Page, section, and dialog headers vertically center their action controls beside the complete heading block (title and supporting context). Action groups use centered items, remain right-aligned, and wrap below the heading when space is limited. Allow heading text to shrink and break long names; give it a reasonable flex basis on wider screens so buttons cannot squeeze it into a narrow column. Use the shared `PageHeader` and `SectionHeader` where practical. Labeled filter inputs and their submit buttons may retain bottom alignment so their input controls line up.
+
 ```text
 Page title                         Primary action
 Compact context
@@ -63,7 +65,15 @@ Published storefronts use a compact business header, clear cover/identity area, 
 
 ## Create and edit flow
 
+Services/Treatments use separate catalog and Categories views. Categories are a full-width list with Add category in the header and Edit/Delete controls on each row. Create/edit/delete use the shared dialog and action row; category editing retains drafts after server errors. Deleting a category requires confirmation and leaves its services under Uncategorized. Inactive categories remain visible for management and can be reactivated in Edit.
+
+Nested dashboard pages use `DashboardBackLink` with explicit parent destinations from `lib/dashboard-back-navigation.ts`. Do not use browser-history Back for pages that can be opened directly. Existing context-aware Back controls remain in place for import, vehicle history, and job work pages. Dialog headers expose only Close, returning to their clean parent URL. Do not add a duplicate Back control when it has the same destination. Standalone pages retain their parent Back navigation. Dialog width variants use responsive maximum widths so the mobile full-screen default cannot override desktop sizing.
+
 Simple create/edit actions open `FormDialog` from the list or current context. Existing form components and server actions remain authoritative and are reused inside dialogs. The dialog has a fixed header, one scrollable body, and reachable form actions. Successful list-launched mutations return to the list; legacy `/new` and `/edit` routes remain available for bookmarks and compatibility.
+
+Use `FormActions` for editable forms. It spans all grid columns and aligns Cancel followed by the primary Save/Create action to the right at every width, wrapping when needed. Keep descriptive labels and decorative Lucide icons on action buttons; retain loading indicators while saving. Navigation buttons default to `type="button"`; only explicit submit controls submit a form.
+
+Inside `FormDialog`, Cancel uses the dialog's clean `closeHref`, preserving list filters and removing the parameters that open the dialog. A mutation's `returnTo` may intentionally contain create/edit parameters for error recovery and must never be used as the Cancel destination. Standalone forms supply their list/detail `cancelHref`. Inline forms without a destination use native reset; controlled fields must restore their state through `onReset`. Inline quick-create sections provide an `onCancel` callback to restore the original selection without submitting the containing form. Cancel and Save are disabled while their form is submitting.
 
 ```text
 List → Create dialog → Save → refreshed list
@@ -155,3 +165,19 @@ The server checks access on every refresh and returns only display fields. Custo
 Salon storefronts do not expose customer queues. A confirmed reservation's private booking-status page provides **View your branch’s queue** on the appointment day while the appointment is confirmed, checked in, or in service. This opens `/booking/[token]/queue`, reusing the fullscreen display, refresh interval, and paging. The token fixes the branch; customers cannot switch branches. **Your reservation** returns to the booking details. Only today's checked-in and in-service clients appear, with first names plus last initials and appointment times.
 
 Migration `0069_reservation_queue_access.sql` restricts the projection introduced in `0065` to verified reservations. The old storefront queue page and slug/branch API return 404, and direct anonymous/authenticated execution of the old RPC is revoked. Reservation eligibility, publication, active organization, Salon industry, and branch ownership are checked on every read. Access loss clears displayed rows. The staff-operated display remains available to authorized staff independently of public-page publication.
+
+## Inventory workspace
+
+Inventory gives the active branch's stock the full content width. Separate Stock and Movement history views; history shows the latest 30 branch movements with timestamps in the organization's timezone. Summary links filter products by healthy, low, or out-of-stock status. Stock at zero is Out of stock; positive stock at or below its reorder level is Low stock. On hand describes physical balance, not unreserved availability.
+
+Use search, category/status filters, twenty-product pages, desktop tables, and responsive cards. Product/movement/transfer/recipe forms open in the shared route-addressable dialog, with Close and right-aligned Cancel/Save. Keep filters when closing or saving; return validation errors in place and preserve drafts. New products start at zero; opening stock is an explicit movement. Optional product metadata can be collapsed, and existing categories are offered as suggestions.
+
+Transfers show matching SKUs in a different accessible branch and clear the destination if the source changes. The database still checks permissions, reservations, stock availability, and transfer integrity. Automotive recipes stay hidden from Salon. Stock query failures must show an error instead of misleading zero-value metrics.
+
+## Opening records from lists
+
+Use `RecordRow` for table records, `RecordCard` for styled cards, and `RecordItem` for article/list-item containers. Place one `RecordLink` on the record's name or primary identifier. Clicking non-interactive row/card content follows that link; keyboard users Tab to the native link and press Enter. Keep native table/list semantics. Modifier/middle clicks open a separate tab, and selecting text must not navigate.
+
+Keep Edit/Delete and other explicit actions in the trailing table cell or right-aligned wrapping card action group. Do not add a separate Open/View button for the same destination. Related-record links, buttons, forms, labels, selection controls, and text fields operate independently of the containing record. Use `data-record-ignore` for any other interactive area that must not trigger navigation. Never wrap an entire interactive card in an anchor containing other links or buttons.
+
+Use the existing detail page when available, or the existing edit form for an editable settings record. Read-only previews are available for inventory products, booking requests, standalone queue entries, branches/resources, and staff context. Preview records are resolved from the same server-scoped data used for the list; opening a record does not grant write access. Read-only roles must not see Edit/Delete controls. Financial aggregates, permission matrices, import previews, and static line-item summaries do not have record destinations and remain informational.

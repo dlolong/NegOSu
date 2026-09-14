@@ -3,8 +3,8 @@ import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
 export function PageHeader({ id, eyebrow, title, description, action }: { id: string; eyebrow?: string; title: string; description?: string; action?: ReactNode }) {
-  return <header id={id} className="flex min-w-0 flex-wrap items-end justify-between gap-3">
-    <div className="min-w-0 flex-1">{eyebrow ? <p className="text-xs font-semibold uppercase tracking-[0.12em] text-brand-primary">{eyebrow}</p> : null}<h1 className="mt-0.5 text-2xl font-semibold tracking-tight text-admin-text sm:text-3xl">{title}</h1>{description ? <p className="mt-1 max-w-3xl text-sm text-admin-text-secondary">{description}</p> : null}</div>{action ? <div className="flex shrink-0 flex-wrap items-center gap-2">{action}</div> : null}
+  return <header id={id} className="flex min-w-0 flex-wrap items-center justify-between gap-3">
+    <div id={`${id}-content`} className="min-w-0 flex-1 basis-full sm:basis-64 [overflow-wrap:anywhere]">{eyebrow ? <p className="text-xs font-semibold uppercase tracking-[0.12em] text-brand-primary">{eyebrow}</p> : null}<h1 className="mt-0.5 text-2xl font-semibold tracking-tight text-admin-text sm:text-3xl">{title}</h1>{description ? <p className="mt-1 max-w-3xl text-sm text-admin-text-secondary">{description}</p> : null}</div>{action ? <div id={`${id}-actions`} className="ml-auto flex min-w-0 max-w-full flex-wrap items-center justify-end gap-2 [&>div]:flex-wrap [&>div]:items-center [&>div]:justify-end">{action}</div> : null}
   </header>;
 }
 
@@ -17,7 +17,7 @@ export function EmptyState({ id, title, description, action }: { id: string; tit
 }
 
 export function SectionHeader({ id, title, description, action }: { id: string; title: string; description?: string; action?: ReactNode }) {
-  return <header id={id} className="flex min-w-0 flex-wrap items-start justify-between gap-3"><div className="min-w-0"><h2 className="text-base font-semibold text-admin-text">{title}</h2>{description ? <p className="mt-1 text-sm text-admin-text-secondary">{description}</p> : null}</div>{action}</header>;
+  return <header id={id} className="flex min-w-0 flex-wrap items-center justify-between gap-3"><div id={`${id}-content`} className="min-w-0 flex-1 basis-full sm:basis-64 [overflow-wrap:anywhere]"><h2 className="text-base font-semibold text-admin-text">{title}</h2>{description ? <p className="mt-1 text-sm text-admin-text-secondary">{description}</p> : null}</div>{action ? <div id={`${id}-actions`} className="ml-auto flex min-w-0 max-w-full flex-wrap items-center justify-end gap-2">{action}</div> : null}</header>;
 }
 
 export function StatusPill({ active, activeLabel = "Active", inactiveLabel = "Inactive", id, className }: { active: boolean; activeLabel?: string; inactiveLabel?: string; id?: string; className?: string }) {

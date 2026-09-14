@@ -50,22 +50,24 @@ test("Command Center keeps compact hierarchy and names non-color status meaning"
 
 test("high-traffic schedules and catalog avoid tablet-width overflow traps", () => {
   const appointments = source("app/dashboard/appointments/page.tsx");
-  const services = source("app/dashboard/services/page.tsx");
+  const services = source("app/dashboard/services/page.tsx") + source("components/service-catalog.tsx");
   assert.match(appointments, /sm:grid-cols-2 xl:grid-cols-/);
   assert.match(appointments, />Search<input/);
   assert.match(appointments, />Range<select/);
   assert.match(appointments, />Status<select/);
-  assert.match(services, /xl:grid-cols-\[240px_minmax\(0,1fr\)\]/);
-  assert.match(services, /shadow-ui-sm xl:block/);
-  assert.match(services, /salon-treatments-mobile-list[^\n]*xl:hidden/);
-  assert.doesNotMatch(services, /grid-cols-\[1fr_70px_auto\]/);
-  assert.match(services, /salon\?"salon-treatment":"service"/);
+  assert.match(services, /service-catalog-sections/);
+  assert.doesNotMatch(services, /240px_minmax/);
+  assert.match(services, /table-fixed/);
+  assert.match(services, /xl:block/);
+  assert.match(services, /xl:hidden/);
+  assert.match(services, /min-w-0/);
+  assert.match(services, /overflow-wrap:anywhere/);
   assert.match(services, /-card-\$\{service\.id\}/);
   assert.match(services, /services-empty-state/);
 });
 
 test("inventory and CRM forms expose visible labels and stable operational IDs", () => {
-  const inventory = source("app/dashboard/inventory/page.tsx");
+  const inventory = source("components/inventory-forms.tsx");
   const crm = source("components/crm-forms.tsx");
   for (const label of ["Product name", "Cost (PHP)", "Sell price (PHP)", "Reorder level", "Quantity used"]) assert.match(inventory, new RegExp(`label=\\"${label.replace(/[()]/g, "\\$&")}\\"`));
   assert.match(inventory, /const productPrefix=salon\?"salon-product":"inventory-item",inventoryPrefix=salon\?"salon-inventory":"inventory"/);
