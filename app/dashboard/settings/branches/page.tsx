@@ -1,6 +1,8 @@
 import { FormDialog } from "@/components/management-ui";
 
-import { RecordCard, RecordLink } from "@/components/record-item";
+import { RecordTable } from "@/components/record-table";
+import { ListTabs } from "@/components/list-tabs";
+import { RecordLink } from "@/components/record-item";
 
 import { Pencil as PencilIcon, Plus as PlusIcon, Power as PowerIcon, Star as StarIcon } from "lucide-react";
 import Link from "next/link";
@@ -10,11 +12,10 @@ import { FormMessage } from "@/components/form-message";
 import { PageHeader } from "@/components/page-patterns";
 import { SubmitButton } from "@/components/submit-button";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { getDashboardContext } from "@/lib/auth/context";
 import { createClient } from "@/lib/supabase/server";
 
-export default async function Page({ searchParams }: { searchParams: Promise<{ message?: string; error?: string; branchId?: string }> }) {
+export default async function Page({ searchParams }: { searchParams: Promise<{ message?: string; error?: string; branchId?: string; status?: string }> }) {
   const [params, { activeMembership }, supabase] = await Promise.all([searchParams, getDashboardContext(), createClient()]);
   const { data, error } = await supabase.from("branches")
     .select("id,name,address_line,barangay,city,province,is_active,is_primary,phone,email")
@@ -27,23 +28,14 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ m
   return <main id="branches-page" className="mx-auto min-w-0 max-w-5xl">
     <PageHeader id="branches-page-header" eyebrow="Settings" title="Branches" description="Manage locations and the organization default." action={canManage ? <Button asChild><Link id="branch-create-button" href="/dashboard/settings/branches/new"><PlusIcon aria-hidden="true" size={16} className="shrink-0"/>Add branch</Link></Button> : undefined}/>
     <FormMessage {...params} error={params.error ?? (error ? "Unable to load branches." : undefined)}/>
-    <section id="branches-list" className="mt-5 grid gap-3">
-      {data?.map((branch) => <RecordCard id={`branch-card-${branch.id}`} key={branch.id} elevation="none" className="p-5">
-        <div className="flex flex-wrap items-center justify-between gap-4 min-w-0 [&>a]:ml-auto [&>button]:ml-auto [&>form]:ml-auto">
-          <div className="min-w-0 flex-1 basis-full sm:basis-64 [overflow-wrap:anywhere]">
-            <div className="flex flex-wrap items-center gap-2"><h2 className="font-semibold"><RecordLink id={`branch-link-${branch.id}`} href={canManage ? `/dashboard/settings/branches/${branch.id}/edit` : `/dashboard/settings/branches?branchId=${branch.id}`}>{branch.name}</RecordLink></h2>{branch.is_primary ? <span className="rounded-full border border-brand-border bg-brand-tint px-2 py-1 text-xs font-bold text-brand-primary-strong">Default</span> : null}{!branch.is_active ? <span className="rounded-full bg-zinc-200 px-2 py-1 text-xs font-bold">Inactive</span> : null}</div>
-            <p className="mt-2 text-sm text-zinc-600">{[branch.address_line, branch.barangay, branch.city, branch.province].filter(Boolean).join(", ")}</p>
-            <p className="mt-1 text-sm text-zinc-500">{branch.phone || branch.email || "No contact details"}</p>
-          </div>
-          {canManage ? <div className="ml-auto flex max-w-full flex-wrap justify-end gap-2">
-            <Button id={`branch-edit-button-${branch.id}`} asChild variant="secondary"><Link href={`/dashboard/settings/branches/${branch.id}/edit`}><PencilIcon aria-hidden="true" size={16} className="shrink-0"/>Edit</Link></Button>
-            {branch.is_active && !branch.is_primary ? <form id={`branch-default-form-${branch.id}`} action={setPrimaryBranch}><input type="hidden" name="id" value={branch.id}/><SubmitButton id={`branch-default-button-${branch.id}`} variant="secondary" pendingText="Updating…"><StarIcon aria-hidden="true" size={16} className="shrink-0"/>Make default</SubmitButton></form> : null}
-            <form id={`branch-toggle-form-${branch.id}`} action={toggleBranch}><input type="hidden" name="id" value={branch.id}/><input type="hidden" name="active" value={String(!branch.is_active)}/><SubmitButton id={`branch-toggle-button-${branch.id}`} variant={branch.is_active ? "destructive" : "secondary"} pendingText="Updating…"><PowerIcon aria-hidden="true" size={16} className="shrink-0"/>{branch.is_active ? "Deactivate" : "Activate"}</SubmitButton></form>
-          </div> : null}
-        </div>
-      </RecordCard>)}
-      {data?.length === 0 ? <Card id="branches-empty-state" elevation="none" className="p-10 text-center"><h2 className="font-semibold">No branches</h2><p className="mt-2 text-sm text-zinc-600">Add a location to continue operating this business.</p></Card> : null}
-    </section>
+    <ListTabs id="branches-tabs" baseHref="/dashboard/settings/branches" query={params} value={params.status??"all"} options={[{value:"all",label:"All",count:data?.length??0},{value:"active",label:"Active"},{value:"inactive",label:"Inactive"}]}/>
+    <section id="branches-list" className="mt-4"><RecordTable id="branches-table" caption="Business branches" columns={[{key:"branch",label:"Branch"},{key:"contact",label:"Contact",secondary:true},...(canManage?[{key:"status",label:"Status",secondary:true}]:[]),{key:"actions",label:canManage?"Actions":"Status",align:"right"}]} rows={(data??[]).filter(branch=>!params.status||params.status==="all"||(params.status==="active"?branch.is_active:!branch.is_active)).map(branch=>({id:`branch-card-${branch.id}`,cells:{
+      branch:<><RecordLink id={`branch-link-${branch.id}`} href={canManage?`/dashboard/settings/branches/${branch.id}/edit`:`/dashboard/settings/branches?branchId=${branch.id}`}>{branch.name}</RecordLink>{branch.is_primary&&<span className="ml-2 text-xs text-brand-primary">Default</span>}<p className="mt-1 text-xs text-admin-text-secondary">{[branch.address_line,branch.barangay,branch.city,branch.province].filter(Boolean).join(", ")}</p></>,contact:branch.phone||branch.email||"No contact details",status:branch.is_active?"Active":"Inactive",actions:canManage ? <div className="ml-auto flex max-w-full flex-wrap justify-end gap-2">
+            <Button id={`branch-edit-button-${branch.id}`} asChild variant="secondary" size="sm"><Link href={`/dashboard/settings/branches/${branch.id}/edit`}><PencilIcon aria-hidden="true" size={16} className="shrink-0"/>Edit</Link></Button>
+            {branch.is_active && !branch.is_primary ? <form id={`branch-default-form-${branch.id}`} action={setPrimaryBranch}><input type="hidden" name="id" value={branch.id}/><SubmitButton id={`branch-default-button-${branch.id}`} variant="secondary" pendingText="Updating…" size="sm"><StarIcon aria-hidden="true" size={16} className="shrink-0"/>Make default</SubmitButton></form> : null}
+            <form id={`branch-toggle-form-${branch.id}`} action={toggleBranch}><input type="hidden" name="id" value={branch.id}/><input type="hidden" name="active" value={String(!branch.is_active)}/><SubmitButton id={`branch-toggle-button-${branch.id}`} variant={branch.is_active ? "destructive" : "secondary"} pendingText="Updating…" size="sm"><PowerIcon aria-hidden="true" size={16} className="shrink-0"/>{branch.is_active ? "Deactivate" : "Activate"}</SubmitButton></form>
+          </div> : null
+    },mobile:<><p>{branch.phone||branch.email||"No contact details"}</p><p>{branch.is_active?"Active":"Inactive"}</p></>}))}/></section>
     {selected ? <FormDialog id="branch-details-dialog" title={selected.name} closeHref="/dashboard/settings/branches" size="md"><dl className="space-y-4 text-sm"><div><dt className="text-admin-text-muted">Address</dt><dd className="[overflow-wrap:anywhere]">{[selected.address_line, selected.barangay, selected.city, selected.province].filter(Boolean).join(", ") || "Not provided"}</dd></div><div><dt className="text-admin-text-muted">Contact</dt><dd className="[overflow-wrap:anywhere]">{selected.phone || selected.email || "Not provided"}</dd></div><div><dt className="text-admin-text-muted">Status</dt><dd>{selected.is_active ? "Active" : "Inactive"}</dd></div></dl></FormDialog> : null}
   </main>;
 }

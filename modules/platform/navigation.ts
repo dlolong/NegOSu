@@ -44,7 +44,7 @@ export const karkrNavigation = [
   { key: "reminders", label: "Maintenance", href: "/dashboard/reminders", group: "more", industryFeature: "maintenance", subscriptionFeature: "reminders" },
   { key: "branches", label: "Branches", href: "/dashboard/settings/branches", group: "more", permission: "branches.manage" },
   { key: "resources", label: "Service Bays", href: "/dashboard/settings/resources", group: "more", industryFeature: "resources", permission: "settings.manage" },
-  { key: "reports", label: "Reports", href: "/dashboard/reports", group: "more", subscriptionFeature: "advanced_reports", permission: "reports.view" },
+  { key: "reports", label: "Reports", href: "/dashboard/reports", group: "more", industryFeature: "reports", subscriptionFeature: "advanced_reports", permission: "reports.view" },
   { key: "settings", label: "Settings", href: "/dashboard/settings", group: "more", permission: "settings.manage" },
 ] as const satisfies readonly NavigationItem[];
 
@@ -56,13 +56,31 @@ const salonNavigation = [
   { key: "services", label: "Treatments", href: "/dashboard/services", group: "business", permission: "services.manage" },
   { key: "staff", label: "Staff", href: "/dashboard/settings/staff", group: "business", permission: "settings.manage" },
   { key: "inventory", label: "Inventory", href: "/dashboard/inventory", group: "business", industryFeature: "inventory", permission: "inventory.manage" },
+  { key: "payments", label: "Payments", href: "/dashboard/payments", group: "business", industryFeature: "payments", permission: "payments.record" },
+  { key: "reports", label: "Reports", href: "/dashboard/reports", group: "more", industryFeature: "reports", subscriptionFeature: "advanced_reports", permission: "reports.view" },
   { key: "resources", label: "Resources", href: "/dashboard/settings/resources", group: "more", industryFeature: "resources", permission: "settings.manage" },
   { key: "branches", label: "Branches", href: "/dashboard/settings/branches", group: "more", permission: "branches.manage" },
   { key: "settings", label: "Settings", href: "/dashboard/settings", group: "more", permission: "settings.manage" },
 ] as const satisfies readonly NavigationItem[];
 
+const petCareNavigation: readonly NavigationItem[] = [
+  { key: "dashboard", label: "Dashboard", href: "/dashboard/pet-care", group: "dashboard" },
+  { key: "appointments", label: "Appointments", href: "/dashboard/pet-care/appointments", group: "operations", permission: "customers.read" },
+  { key: "bookings", label: "Booking Requests", href: "/dashboard/bookings", group: "operations", industryFeature: "booking_requests", permission: "appointments.manage" },
+  { key: "branches", label: "Branches", href: "/dashboard/settings/branches", group: "more", permission: "branches.manage" },
+  { key: "pets", label: "Pets", href: "/dashboard/pet-care/pets", group: "customers", permission: "customers.read" },
+  { key: "customers", label: "Pet Owners", href: "/dashboard/customers", group: "customers", permission: "customers.read" },
+  { key: "services", label: "Services", href: "/dashboard/services", group: "business", permission: "services.manage" },
+  { key: "staff", label: "Staff", href: "/dashboard/settings/staff", group: "business", permission: "settings.manage" },
+  { key: "payments", label: "Payments", href: "/dashboard/payments", group: "business", industryFeature: "payments", permission: "payments.record" },
+  { key: "inventory", label: "Inventory", href: "/dashboard/inventory", group: "business", permission: "inventory.manage" },
+  { key: "reports", label: "Reports", href: "/dashboard/reports", group: "more", industryFeature: "reports", subscriptionFeature: "advanced_reports", permission: "reports.view" },
+  { key: "resources", label: "Resources", href: "/dashboard/settings/resources", group: "more", permission: "settings.manage" },
+  { key: "settings", label: "Settings", href: "/dashboard/settings", group: "more", permission: "settings.manage" },
+];
+
 export function navigationForIndustry(config: IndustryConfig, role?: OrganizationMembership["role"]): readonly NavigationItem[] {
-  const navigation: readonly NavigationItem[] = config.key === "salon" ? salonNavigation : karkrNavigation;
+  const navigation: readonly NavigationItem[] = config.key === "pet_care" ? petCareNavigation : config.key === "salon" ? salonNavigation : karkrNavigation;
   return navigation.filter((item) =>
     (!item.industryFeature || industrySupportsFeature(config, item.industryFeature))
     && (!role || !item.permission || roleHasPermission(role, item.permission)),

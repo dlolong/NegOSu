@@ -1,6 +1,7 @@
 type ErrorLike = {
   name?: string;
   code?: string;
+  message?: string;
   cause?: unknown;
 };
 
@@ -42,6 +43,16 @@ function diagnosticCode(error: unknown) {
   return typeof cause.code === "string" ? cause.code : undefined;
 }
 
+/** Only SQL identifier diagnostics are allowed; never log error detail/failing rows. */
+function schemaDiagnostic(error: unknown) {
+  const direct = errorLike(error), database = direct.code ? direct : errorLike(direct.cause);
+  if (database.code !== "42703" || typeof database.message !== "string") return undefined;
+  const column = database.message.match(/^column ([a-zA-Z0-9_."]+) (?:of relation "[a-zA-Z0-9_]+" )?does not exist$/);
+  if (column) return `missing column ${column[1]}`;
+  const field = database.message.match(/^record "([a-zA-Z0-9_]+)" has no field "([a-zA-Z0-9_]+)"$/);
+  return field ? `missing field ${field[1]}.${field[2]}` : "missing database column";
+}
+
 export function isControlledUserFacingError(error: unknown): error is Error {
   return error instanceof Error
     && controlledDomainErrors.has(error.name)
@@ -57,11 +68,20 @@ export function normalizeActionError(error: unknown, fallback: string) {
 /** Logs searchable, non-sensitive context and returns a customer-safe message. */
 export function reportActionError(operation: string, error: unknown, fallback: string) {
   const details = errorLike(error);
-  console.error("server_action.failure", {
+  console.error("server_action.failure", JSON.stringify({
     operation,
     category: typeof details.name === "string" ? details.name : "UnknownError",
     code: diagnosticCode(error),
-  });
+    schema: schemaDiagnostic(error),
+    validation: isControlledUserFacingError(error) && error.name === "SchedulingError" ? (
+      /operating hours|outside branch hours/i.test(error.message) ? "branch_hours" :
+      /overlap|already booked|busy|fully booked|capacity/i.test(error.message) ? "schedule_conflict" :
+      /UUID|valid.*id/i.test(error.message) ? "invalid_selection" :
+      /branch/i.test(error.message) ? "branch_access_or_availability" :
+      /service/i.test(error.message) ? "service_availability" :
+      /customer|owner|pet/i.test(error.message) ? "customer_or_pet_availability" : "scheduling_validation"
+    ) : undefined,
+  }));
   return normalizeActionError(error, fallback);
 }
 

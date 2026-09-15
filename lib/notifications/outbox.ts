@@ -41,6 +41,7 @@ function safeErrorMessage(error:unknown){
 
 export async function processNotificationOutboxBatch(input:{
   repository:NotificationOutboxRepository;providers:DeliveryProviders;render:NotificationTemplateRenderer;
+  isReferenceCurrent?: (row: ClaimedNotification) => Promise<boolean>;
   workerId:string;deliverySecretKey?:string;batchSize?:number;now?:Date;
 }):Promise<ProcessOutboxResult>{
   const rows=await input.repository.claimBatch({
@@ -79,6 +80,10 @@ export async function processNotificationOutboxBatch(input:{
     }
     // A decision/revocation trigger may cancel a claimed row while its message
     // is being prepared. Recheck the generic claim immediately before send.
+    if(input.isReferenceCurrent && !await input.isReferenceCurrent(row)){
+      await input.repository.recordResult({outboxId:row.id,workerId:input.workerId,result:"cancelled",errorCode:"REFERENCE_NO_LONGER_ELIGIBLE"});
+      result.cancelled++;continue;
+    }
     if(!await input.repository.isClaimActive({outboxId:row.id,workerId:input.workerId})){
       result.cancelled++;continue;
     }

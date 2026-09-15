@@ -8,7 +8,7 @@ Shared authentication uses `login-*`, `signup-*`, and password-recovery semantic
 
 Salon Appointment detail prioritizes the one valid next lifecycle action, Customer self-service, and Payment balance. The public appointment page is mobile-first, outside the dashboard shell, `noindex`, and uses `public-salon-appointment-*` IDs. Staff rows keep authorization role visually separate from job function and show Today/Next schedule context loaded in batches.
 
-These operational conventions are shared by KarKR and Salon. Industry configuration supplies terminology and capabilities; shared components must not hard-code Automotive labels when rendering a Salon organization. Salon uses `salon-*` semantic IDs on its page roots, primary actions, tables/cards, and appointment controls. Desktop record lists remain tables where practical and mobile layouts use compact cards.
+These operational conventions are shared by KarKR and Salon. Industry configuration supplies terminology and capabilities; shared components must not hard-code Automotive labels when rendering a Salon organization. Salon uses `salon-*` semantic IDs on its page roots, primary actions, tables/cards, and appointment controls. Record directories use responsive tables on desktop and phones, grouping secondary context beneath the record name on narrow screens.
 
 ## Navigation priority
 
@@ -36,20 +36,20 @@ Page, section, and dialog headers vertically center their action controls beside
 Page title                         Primary action
 Compact context
 Search | common filters | more filters
-Desktop table / mobile cards      Optional selected detail
+Responsive record table          Optional selected detail
 ```
 
 `PageHeader`, `FilterBar`, `EmptyState`, and `StatusPill` in `components/page-patterns.tsx` are the focused shared primitives. They are intentionally compositional rather than a universal management-page abstraction.
 
 ## Admin color system
 
-Authenticated workspaces use a restrained NegOSu admin palette: navy for structural chrome and primary text, blue for primary actions and interactive emphasis, soft slate for the page canvas and secondary surfaces, and white for working cards, tables, menus, and dialogs. Borders and shadows stay subtle so dense operational data remains the focus.
+Authenticated workspaces offer five generic palettes: Steel Blue, Plum, Teal, Graphite, and Indigo. Dark ink provides structural chrome and primary text; an accessible accent identifies actions and selection. Soft neutral canvases surround white working cards, tables, menus, and dialogs. Borders and shadows stay subtle so dense operational data remains the focus.
 
-Semantic colors are reserved for meaning: emerald for success/available, amber for warning/busy/pending, red for danger/errors, and sky for uncommon informational feedback. Page eyebrows, links, selected plans, filters, and neutral information use the blue/navy/slate system. Navigation importance is expressed by grouping and order, never by rainbow color treatment.
+Semantic colors are reserved for meaning: emerald for success/available, amber for warning/busy/pending, red for danger/errors, and sky for uncommon informational feedback. Page eyebrows, links, selected plans, filters, and neutral information use shared brand/admin tokens. Navigation importance is expressed by grouping and order, never by rainbow color treatment.
 
 The implementation contract is documented in `docs/DESIGN_SYSTEM.md`. Shared components keep backwards-compatible props while centralizing new visual behavior.
 
-Users may choose one of the professional workspace palettes in Profile settings. Pages must continue consuming shared brand/admin tokens so the selection applies consistently; do not add theme-specific conditions to individual operational pages. Semantic status colors stay fixed, and public storefront branding is independent from the private workspace palette.
+Profile settings display all five palettes together without recommendations or industry names. Selection follows the account across businesses. Retired preferences resolve to a current palette; missing preferences use Steel Blue. Pages must consume shared brand/admin tokens; do not add theme-specific conditions to operational pages. Use `brand-on-dark` for accessible sidebar focus and active markers. Semantic status colors stay fixed, and public storefront branding is independent from the private workspace palette.
 
 Public Page settings show publishing readiness, public services, booking locations, friendly day-by-day hours, and gallery content as distinct sections. Billing shows the current subscription before plan comparison and never offers a checkout interval that lacks a configured provider price.
 
@@ -57,8 +57,8 @@ Published storefronts use a compact business header, clear cover/identity area, 
 
 ## Lists, tables, and cards
 
-- Use compact tables from the `md` breakpoint when records share comparable fields.
-- Use cards below `md`; preserve the same identity, status, key operational context, and primary action.
+- Use `RecordTable` for directories with comparable fields at every viewport width. Keep the record name and trailing amount/actions visible; group secondary fields in the row’s `mobile` content below `lg`.
+- Use `Tabs` or `ListTabs` for meaningful sections/status groups. Preserve search/date filters and reset pagination when changing views. Purpose-built workflow boards may retain cards.
 - Keep rows approximately 40–56 pixels where content permits. Combine identity details such as vehicle/model and plate instead of creating secondary columns.
 - Put long descriptions, notes, and history in detail views. Never hide critical status, money, or primary identity through truncation.
 - Distinguish “no records” from “no filter results”; filtered empty states provide a Clear filters action.
@@ -94,11 +94,11 @@ A right-side detail panel is optional and only justified for frequent list/detai
 
 ## Scrolling and responsive behavior
 
-The app shell owns one main content scroll region. The desktop navigation can scroll independently when taller than the viewport. Avoid nested vertical list/table scroll areas. Dialogs use `100dvh`, a single scrollable body, and actions within that body; mobile bottom padding keeps content clear of navigation. Horizontal table scrolling is a last resort—reduce columns or switch to cards first.
+The app shell owns one main content scroll region. The desktop navigation can scroll independently when taller than the viewport. Avoid nested vertical list/table scroll areas. Dialogs use `100dvh`, a single scrollable body, and actions within that body; mobile bottom padding keeps content clear of navigation. Horizontal table scrolling is a last resort—group secondary columns beneath the primary record first.
 
 Review at 1366×768, 1440×900, and common mobile widths 320, 375, 390, and 430 pixels. Do not allow mobile page overflow, unreachable dialog actions, or bottom-navigation collisions.
 
-The dashboard shell owns the primary vertical scroll region. `html`/`body` must not compete with its fixed viewport frame; the sidebar may scroll independently only when navigation exceeds the viewport. Dialog content is the only vertical scroll region inside a modal. Wide desktop tables may use their explicit horizontal frame as a fallback, but responsive routes should prefer purpose-built mobile cards.
+The dashboard shell owns the primary vertical scroll region. `html`/`body` must not compete with its fixed viewport frame; the sidebar may scroll independently only when navigation exceeds the viewport. Dialog content is the only vertical scroll region inside a modal. Wide desktop tables may use their explicit horizontal frame as a fallback, but record directories should prefer a condensed responsive table.
 
 ## Shared interaction rules
 
@@ -140,13 +140,13 @@ Every meaningful rendered root, section, form, table, dialog, menu, control, and
 <article id={`customer-card-${customer.id}`} />
 ```
 
-Pages are mobile-first, avoid horizontal overflow, expose visible loading/empty/error states, preserve visible focus, use native semantic HTML, and keep touch targets practical. Dense tables may become cards on narrow screens. Reusable visual components should accept an `id` prop when practical and derive child IDs from it.
+Pages are mobile-first, avoid horizontal overflow, expose visible loading/empty/error states, preserve visible focus, use native semantic HTML, and keep touch targets practical. Dense directories group secondary fields beneath the record name on narrow screens. Reusable visual components should accept an `id` prop when practical and derive child IDs from it.
 
 The current application predates the complete ID convention. Add IDs whenever a screen is materially changed; a dedicated screen-by-screen pass should use Playwright at 320, 375, 390, and 430 pixels rather than unsafe mechanical JSX rewrites.
 
-Salon operational lists follow the same contract: Appointments, Clients, Treatments, Resources, and Staff render compact desktop tables and mobile cards with deterministic `salon-*` IDs. Create/edit appointment, treatment, and resource routes use `FormDialog`; the route remains bookmarkable while the form body owns the single dialog scroll region.
+Salon operational lists follow the same contract: Appointments, Clients, Treatments, Resources, and Staff render shared responsive tables with deterministic `salon-*` IDs. Create/edit appointment, treatment, and resource routes use `FormDialog`; the route remains bookmarkable while the form body owns the single dialog scroll region.
 
-Maintenance uses a compact desktop table and mobile cards. Keep due-status counts and filters in the first viewport, preserve semantic `maintenance-*` IDs, and route rebooking through the existing appointment form instead of creating a parallel booking UI. Show the linked appointment and reminder state independently: “Appointment scheduled” suppresses reminders but does not imply completed maintenance. Use the standard dialog for an explicit snooze-until date and optional reason; keep Resume Reminders inline and retain the actual due date on screen.
+Maintenance uses a responsive table and separate Due services / Service intervals tabs. Keep due-status counts and filters in the first viewport, preserve semantic `maintenance-*` IDs, and route rebooking through the existing appointment form instead of creating a parallel booking UI. Show the linked appointment and reminder state independently: “Appointment scheduled” suppresses reminders but does not imply completed maintenance. Use the standard dialog for an explicit snooze-until date and optional reason; keep Resume Reminders inline and retain the actual due date on screen.
 
 ## Owner Command Center
 
@@ -170,7 +170,7 @@ Migration `0069_reservation_queue_access.sql` restricts the projection introduce
 
 Inventory gives the active branch's stock the full content width. Separate Stock and Movement history views; history shows the latest 30 branch movements with timestamps in the organization's timezone. Summary links filter products by healthy, low, or out-of-stock status. Stock at zero is Out of stock; positive stock at or below its reorder level is Low stock. On hand describes physical balance, not unreserved availability.
 
-Use search, category/status filters, twenty-product pages, desktop tables, and responsive cards. Product/movement/transfer/recipe forms open in the shared route-addressable dialog, with Close and right-aligned Cancel/Save. Keep filters when closing or saving; return validation errors in place and preserve drafts. New products start at zero; opening stock is an explicit movement. Optional product metadata can be collapsed, and existing categories are offered as suggestions.
+Use search, category/status filters, twenty-product pages, and responsive tables for Stock and History. Product/movement/transfer/recipe forms open in the shared route-addressable dialog, with Close and right-aligned Cancel/Save. Keep filters when closing or saving; return validation errors in place and preserve drafts. New products start at zero; opening stock is an explicit movement. Optional product metadata can be collapsed, and existing categories are offered as suggestions.
 
 Transfers show matching SKUs in a different accessible branch and clear the destination if the source changes. The database still checks permissions, reservations, stock availability, and transfer integrity. Automotive recipes stay hidden from Salon. Stock query failures must show an error instead of misleading zero-value metrics.
 
@@ -183,3 +183,13 @@ Keep Edit/Delete and other explicit actions in the trailing table cell or right-
 Use the existing detail page when available, or the existing edit form for an editable settings record. Read-only previews are available for inventory products, booking requests, standalone queue entries, branches/resources, and staff context. Preview records are resolved from the same server-scoped data used for the list; opening a record does not grant write access. Read-only roles must not see Edit/Delete controls. Financial aggregates, permission matrices, import previews, and static line-item summaries do not have record destinations and remain informational.
 
 The Staff permission matrix is secondary reference information: show a compact, muted info box with a short explanation and a collapsed “View permission matrix” disclosure. Keep the full industry-specific reference available on demand without competing with Staff and access-management actions.
+
+## Shared directory tables and tabs
+
+`components/record-table.tsx` composes the existing table primitives and `RecordRow`. Page adapters provide named cells and concise mobile context; keep IDs unique across both representations. A native `RecordLink` provides row navigation while trailing actions retain their own behavior. Read-only columns should not repeat the same amount/status in the trailing cell.
+
+`components/list-tabs.tsx` composes route-based `Tabs`. `lib/list-navigation.ts` preserves list filters while dropping pagination on tab changes and stripping transient dialog, notification and invitation parameters. Inventory and catalog keep their existing specialized URL helpers.
+
+Booking Requests uses Pending, Confirmed, Declined and All views. Search covers customer/contact, reference, service and pet name. Selecting a row opens the request dialog, including existing confirmation/decline forms only when the request and actor allow review. Closing returns to the filtered list.
+
+Staff separates Directory and Invitations. My Work separates Working, Assigned and History; work controls still use the existing server actions, and history labels are batch-loaded within the active tenant and branch. Appointments uses Day/Week tabs with one date/status/search toolbar.

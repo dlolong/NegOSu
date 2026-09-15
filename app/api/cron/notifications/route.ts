@@ -1,3 +1,4 @@
+import { enqueuePetCareReminders, petNotificationIsCurrent } from "@/modules/pet-care/notifications/runtime";
 import { randomUUID } from "node:crypto";
 import { NextResponse } from "next/server";
 
@@ -18,11 +19,12 @@ export async function POST(request:Request){
   if(!isAuthorizedNotificationCron(request,serverEnv.NOTIFICATION_CRON_SECRET)){
     return new NextResponse("Unauthorized",{status:401});
   }
-  const [estimateRemindersQueued,maintenanceRemindersQueued,salonAppointmentRemindersQueued]=await Promise.all([
-    enqueueDueEstimateApprovalReminders(),enqueueDueVehicleMaintenanceReminders(),enqueueDueSalonAppointmentReminders(),
+  const [estimateRemindersQueued,maintenanceRemindersQueued,salonAppointmentRemindersQueued,petCareRemindersQueued]=await Promise.all([
+    enqueueDueEstimateApprovalReminders(),enqueueDueVehicleMaintenanceReminders(),enqueueDueSalonAppointmentReminders(),enqueuePetCareReminders(),
   ]);
   const delivery=await processNotificationOutboxBatch({
     repository:notificationOutboxRepository,
+    isReferenceCurrent: row => row.notificationType.startsWith("PET_CARE_") ? petNotificationIsCurrent(row.id) : Promise.resolve(true),
     providers:createDeliveryProviders({
       emailProvider:serverEnv.EMAIL_PROVIDER,smsProvider:serverEnv.SMS_PROVIDER,nodeEnvironment:process.env.NODE_ENV,
     }),
@@ -30,5 +32,5 @@ export async function POST(request:Request){
     workerId:`notification-cron-${randomUUID()}`,
     deliverySecretKey:serverEnv.NOTIFICATION_LINK_ENCRYPTION_KEY,
   });
-  return NextResponse.json({estimateRemindersQueued,maintenanceRemindersQueued,salonAppointmentRemindersQueued,delivery});
+  return NextResponse.json({estimateRemindersQueued,maintenanceRemindersQueued,salonAppointmentRemindersQueued,petCareRemindersQueued,delivery});
 }

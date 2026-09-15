@@ -8,7 +8,8 @@ export function availabilityDependenciesForClient(supabase:SupabaseClient):Avail
   async loadContext(input) {
     const staffIds = input.staffAssignments.map(({ staffId }) => staffId);
     const resourceIds = input.resourceAssignments.map(({ resourceId }) => resourceId);
-    const [{ data: branch }, { data: services }, { data: branchAvailability }, { data: staff }, { data: staffBranches }, { data: resources }] = await Promise.all([
+    const [{ data: policy }, { data: branch }, { data: services }, { data: branchAvailability }, { data: staff }, { data: staffBranches }, { data: resources }] = await Promise.all([
+      supabase.from("organizations").select("appointment_parallel_enabled").eq("id", input.organizationId).maybeSingle(),
       supabase.from("branches").select("timezone,opening_hours").eq("id", input.branchId).eq("organization_id", input.organizationId).eq("is_active", true).maybeSingle(),
       supabase.from("services").select("id,duration_minutes").eq("organization_id", input.organizationId).eq("is_active", true).in("id", input.serviceIds),
       supabase.from("service_branch_availability").select("service_id,branch_id,is_available").eq("organization_id", input.organizationId).in("service_id", input.serviceIds),
@@ -30,6 +31,7 @@ export function availabilityDependenciesForClient(supabase:SupabaseClient):Avail
     ]);
     const appointmentById = new Map((appointments ?? []).map((appointment) => [appointment.id, appointment]));
     return {
+      parallelAppointments: policy?.appointment_parallel_enabled === true,
       branch: branch ? { timezone: branch.timezone, openingHours: branch.opening_hours as Record<string, { open?: string; close?: string; closed?: boolean }> } : null,
       services: serviceRows,
       appointments: (appointments ?? []).filter((appointment): appointment is { id: string; starts_at: string; ends_at: string } => Boolean(appointment.starts_at && appointment.ends_at)).map((appointment) => ({ id: appointment.id, startsAt: appointment.starts_at, endsAt: appointment.ends_at })),

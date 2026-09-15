@@ -9,7 +9,7 @@ import { publicBookingSchemaForIndustry, type PublicBookingState, type PublicSho
 import { createClient } from "@/lib/supabase/server";
 
 export async function submitBooking(_previous: PublicBookingState, data: FormData): Promise<PublicBookingState> {
-  const fields = ["slug", "branchId", "preferredAt", "customerName", "phone", "email", "vehicleMake", "vehicleModel", "vehicleYear", "vehicleType", "plateNumber", "customerNote", "website"];
+  const fields = ["slug", "branchId", "preferredAt", "customerName", "phone", "email", "vehicleMake", "vehicleModel", "vehicleYear", "vehicleType", "plateNumber", "customerNote", "website", "petName", "species", "breed"];
   const values = Object.fromEntries(fields.map((key) => [key, formValue(data, key)]));
   const fail = (error: string) => ({ error, values });
   if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(values.slug)) return fail("This booking link is invalid.");
@@ -19,7 +19,7 @@ export async function submitBooking(_previous: PublicBookingState, data: FormDat
   if (shopError || !shop) return fail("Online booking is unavailable. Please contact the business directly.");
   // Legacy Automotive responses predate the industry field; unsupported industries fail closed.
   const industry = shop.industry ?? "automotive";
-  if (industry !== "salon" && industry !== "automotive") return fail("Online booking is unavailable.");
+  if (industry !== "salon" && industry !== "automotive" && industry !== "pet_care") return fail("Online booking is unavailable.");
   const parsed = publicBookingSchemaForIndustry(industry).safeParse({ ...values, serviceIds: data.getAll("serviceIds") });
   if (!parsed.success) {
     const field = parsed.error.issues[0]?.path[0];
@@ -34,13 +34,14 @@ export async function submitBooking(_previous: PublicBookingState, data: FormDat
   const h = await headers();
   const fingerprint = `${h.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "local"}|${h.get("user-agent") ?? "unknown"}`;
   const rateKey = createHash("sha256").update(fingerprint).digest("hex");
-  const { data: result, error } = await supabase.rpc("submit_public_booking", {
+  const { data: result, error } = await supabase.rpc(industry === "pet_care" ? "submit_pet_public_booking" : "submit_public_booking", {
     p_slug: parsed.data.slug, p_branch_id: parsed.data.branchId, p_service_ids: parsed.data.serviceIds,
     p_preferred_at: parsed.data.preferredAt, p_customer_name: parsed.data.customerName,
     p_phone: parsed.data.phone, p_email: parsed.data.email || null,
+    ...(industry === "pet_care" ? { p_pet_name: values.petName.trim(), p_species: values.species, p_breed: values.breed.trim() || null } : {
     p_vehicle_make: parsed.data.vehicleMake || null, p_vehicle_model: parsed.data.vehicleModel || null,
     p_vehicle_year: parsed.data.vehicleYear || null, p_vehicle_type: parsed.data.vehicleType || null,
-    p_plate_number: parsed.data.plateNumber || null, p_customer_note: parsed.data.customerNote || null,
+    p_plate_number: parsed.data.plateNumber || null }), p_customer_note: parsed.data.customerNote || null,
     p_rate_key_hash: rateKey, p_honeypot: parsed.data.website,
   });
   if (error || !result) return fail(reportActionError("public_booking.submit", error, "Unable to submit this request. The opening may no longer be available. Please refresh the openings or try again."));

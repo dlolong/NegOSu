@@ -32,7 +32,7 @@ export const signInSchema = z.object({
 });
 
 export const signUpSchema = z.object({
-  industry: z.enum(publicProductKeys, "Choose Automotive or Salon & Beauty."),
+  industry: z.enum(publicProductKeys, "Choose Automotive, Salon & Beauty, or Pet Care."),
   firstName: z.string().trim().min(1, "Enter your first name.").max(60),
   lastName: z.string().trim().min(1, "Enter your last name.").max(60),
   email: normalizedEmail,

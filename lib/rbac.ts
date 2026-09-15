@@ -28,6 +28,13 @@ const salonStaffRoleOptions: readonly StaffRoleOption[] = [
 export function staffRoleOptionsForIndustry(industry: string): readonly StaffRoleOption[] {
   if (industry === "automotive") return automotiveStaffRoleOptions;
   if (industry === "salon") return salonStaffRoleOptions;
+  if (industry === "pet_care") return [
+    { value: "manager", label: "Manager", description: "Manages grooming operations." },
+    { value: "advisor", label: "Front Desk", description: "Coordinates pets, pet owners, and appointments." },
+    { value: "technician", label: "Service Provider", description: "Views scheduled work. Groomer is a job function." },
+    { value: "cashier", label: "Cashier", description: "Records appointment payments." },
+    { value: "viewer", label: "Viewer", description: "Read-only operational access." },
+  ];
   return [];
 }
 

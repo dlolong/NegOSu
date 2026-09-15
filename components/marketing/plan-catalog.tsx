@@ -1,3 +1,4 @@
+import { petCareBrand } from "@/modules/platform/brand";
 import { Check } from "lucide-react";
 import Link from "next/link";
 
@@ -15,6 +16,8 @@ export function PublicPlanCatalog({ compact = false }: { compact?: boolean }) {
           </div>
           {compact ? <Link id="negosu-view-all-plans-link" href="/plans" className="inline-flex min-h-11 items-center font-semibold text-brand-primary-strong hover:underline">Compare all plans</Link> : null}
         </div>
+
+        <p id={compact ? "negosu-home-pet-care-note" : "negosu-plans-pet-care-note"} className="mt-4 rounded-xl border border-brand-border bg-brand-tint p-4 text-sm leading-6 text-zinc-600">Pet Care includes grooming appointments, pet records, and pickup tracking. Public pages and reminders follow your selected plan. <Link href={petCareBrand.path} className="text-brand-primary-strong underline">Explore Pet Care.</Link></p>
 
         <div id="negosu-plan-grid" className="mt-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
           {launchPlanCatalog.map((plan) => (

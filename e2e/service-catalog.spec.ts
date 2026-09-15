@@ -25,7 +25,7 @@ async function assertContained(page: Page) {
 
 test("category list has top Add and row Edit/Delete controls without inline edit forms or overflow", async ({ page }) => {
   await page.goto("https://forms.test/fixture");
-  await expect(page.locator("#service-category-list li")).toHaveCount(2);
+  await expect(page.locator("#service-category-list tbody tr")).toHaveCount(2);
   await expect(page.locator("input:visible")).toHaveCount(0);
   const add = page.locator("#service-category-add-button");
   expect((await add.boundingBox())!.y).toBeLessThan((await page.locator("#service-category-list").boundingBox())!.y);

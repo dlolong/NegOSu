@@ -3,6 +3,8 @@
 import { useActionState, useState, type ReactNode } from "react";
 import { ArrowRightLeft, Plus, Save } from "lucide-react";
 import { createInventoryItem, recordMovement, saveRecipe, transferStock } from "@/app/dashboard/inventory/actions";
+import { SuggestedValueField } from "@/components/suggested-value-field";
+import { SearchableSelect } from "@/components/searchable-select";
 import { FormActions } from "@/components/form-actions";
 import { FormMessage } from "@/components/form-message";
 import { SubmitButton } from "@/components/submit-button";
@@ -23,6 +25,7 @@ export function InventoryForm({ mode, salon, stock, item, branches, services, re
   const [state, action] = useActionState((_previous: InventoryActionState, data: FormData) => actions[mode](data), {});
   const [draft, setDraft] = useState<Record<string, string>>({ unit: "unit", cost: "0", sellPrice: "0", reorderLevel: "0", type: "purchase", sourceItemId: "" });
   const field = (name: string) => ({ name, value: draft[name] ?? "", onChange: (event: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => setDraft(current => ({ ...current, [name]: event.target.value, ...(name === "sourceItemId" ? { targetItemId: "" } : {}) })) });
+  const choiceField = (name: string) => ({ name, value: draft[name] ?? "", onValueChange: (value: string) => setDraft(current => ({ ...current, [name]: value, ...(name === "sourceItemId" ? { targetItemId: "" } : {}) })) });
   const source = stock.find(row => row.id === draft.sourceItemId);
   const targets = matchingTransferTargets(source, stock);
   const id = mode === "create" ? `${productPrefix}-create-form` : mode === "transfer" ? `${inventoryPrefix}-transfer-form` : mode === "recipe" ? "inventory-recipe-form" : `${productPrefix}-movement-form`;
@@ -33,8 +36,7 @@ export function InventoryForm({ mode, salon, stock, item, branches, services, re
       <div className="grid min-w-0 gap-4 sm:grid-cols-2">
         <InventoryField label="Product name"><Input id={`${productPrefix}-name-input`} required minLength={2} maxLength={120} {...field("name")} className="mt-2" placeholder="e.g. Cleaning solution"/></InventoryField>
         <InventoryField label="SKU" optional><Input id={`${productPrefix}-sku-input`} maxLength={60} {...field("sku")} className="mt-2" placeholder="Your product code"/></InventoryField>
-        <InventoryField label="Category" optional><Input id={`${productPrefix}-category-input`} maxLength={80} list={`${productPrefix}-categories`} {...field("category")} className="mt-2" placeholder="e.g. Supplies"/></InventoryField>
-        <datalist id={`${productPrefix}-categories`}>{[...new Set(stock.map(row => row.category).filter(Boolean))].map(category => <option key={category} value={category!}/>)}</datalist>
+        <div><label htmlFor={`${productPrefix}-category-input`} className="text-sm font-semibold">Category (optional)</label><SuggestedValueField id={`${productPrefix}-category-input`} name="category" label="Category" maxLength={80} options={stock.map(row=>row.category).filter((value):value is string=>Boolean(value))} value={draft.category??""} onValueChange={category=>setDraft(current=>({...current,category}))}/></div>
         <InventoryField label="Unit"><Input id={`${productPrefix}-unit-input`} required maxLength={30} {...field("unit")} className="mt-2" placeholder="e.g. bottle, piece, liter"/></InventoryField>
         <InventoryField label="Cost (PHP)"><Input id={`${productPrefix}-cost-input`} required inputMode="decimal" pattern="[0-9]+(\.[0-9]{1,2})?" {...field("cost")} className="mt-2"/></InventoryField>
         <InventoryField label="Sell price (PHP)"><Input id={`${productPrefix}-price-input`} required inputMode="decimal" pattern="[0-9]+(\.[0-9]{1,2})?" {...field("sellPrice")} className="mt-2"/></InventoryField>
@@ -54,14 +56,14 @@ export function InventoryForm({ mode, salon, stock, item, branches, services, re
       <InventoryField label="Quantity"><Input id={`${productPrefix}-movement-quantity`} required type="number" min="0.001" step="0.001" {...field("quantity")} className="mt-2"/></InventoryField>
       <InventoryField label="Reference / note" optional><Input id={`${productPrefix}-movement-note`} maxLength={500} {...field("note")} className="mt-2"/></InventoryField>
     </> : mode === "transfer" ? <>
-      <InventoryField label="Source stock"><select id={`${inventoryPrefix}-transfer-source`} required className={select} {...field("sourceItemId")}><option value="">Select source product and branch</option>{stock.map(row => <option key={row.id} value={row.id}>{row.name} · {branches.find(branch => branch.id === row.branch_id)?.name ?? "Branch"} · {quantityLabel(row.quantity_on_hand, row.unit)}</option>)}</select></InventoryField>
-      <InventoryField label="Destination stock"><select id={`${inventoryPrefix}-transfer-target`} required disabled={!source || !targets.length} className={select} {...field("targetItemId")}><option value="">Select destination product and branch</option>{targets.map(row => <option key={row.id} value={row.id}>{row.name} · {branches.find(branch => branch.id === row.branch_id)?.name ?? "Branch"} · {row.unit}</option>)}</select></InventoryField>
+      <InventoryField label="Source stock"><SearchableSelect id={`${inventoryPrefix}-transfer-source`} required {...choiceField("sourceItemId")} options={stock.map(row=>({id:row.id,name:`${row.name} · ${branches.find(branch=>branch.id===row.branch_id)?.name??"Branch"} · ${quantityLabel(row.quantity_on_hand,row.unit)}`}))} placeholder="Search source product or branch"/></InventoryField>
+      <InventoryField label="Destination stock"><SearchableSelect id={`${inventoryPrefix}-transfer-target`} required disabled={!source||!targets.length} {...choiceField("targetItemId")} options={targets.map(row=>({id:row.id,name:`${row.name} · ${branches.find(branch=>branch.id===row.branch_id)?.name??"Branch"} · ${row.unit}`}))} placeholder="Search destination product or branch"/></InventoryField>
       <p role="status" className="text-sm text-admin-text-muted">{source && !targets.length ? "No matching product in another accessible branch. Create the product there with the same SKU first." : "Choose the same product in another branch. Matching SKUs are shown; check the product and unit before transferring."}</p>
       <InventoryField label="Quantity"><Input id={`${inventoryPrefix}-transfer-quantity`} required type="number" min="0.001" step="0.001" {...field("quantity")} className="mt-2"/></InventoryField>
       <InventoryField label="Transfer note" optional><Input id={`${inventoryPrefix}-transfer-note`} maxLength={500} {...field("note")} className="mt-2"/></InventoryField>
     </> : <>
-      <InventoryField label="Service"><select id="inventory-recipe-service-select" required className={select} {...field("serviceId")}><option value="">Select service</option>{services.map(service => <option key={service.id} value={service.id}>{service.name}</option>)}</select></InventoryField>
-      <InventoryField label="Inventory item"><select id="inventory-recipe-item-select" required className={select} {...field("inventoryItemId")}><option value="">Select inventory item</option>{stock.map(row => <option key={row.id} value={row.id}>{row.name} · {row.unit}</option>)}</select></InventoryField>
+      <InventoryField label="Service"><SearchableSelect id="inventory-recipe-service-select" required {...choiceField("serviceId")} options={services} lookup="service" placeholder="Search service or category"/></InventoryField>
+      <InventoryField label="Inventory item"><SearchableSelect id="inventory-recipe-item-select" required {...choiceField("inventoryItemId")} options={stock.map(row=>({id:row.id,name:`${row.name} · ${row.unit}`}))} placeholder="Search inventory item"/></InventoryField>
       <InventoryField label="Quantity used"><Input id="inventory-recipe-quantity-input" required type="number" min="0.001" step="0.001" {...field("quantity")} className="mt-2"/></InventoryField>
       <p className="text-sm text-admin-text-muted">Set how much of this item the service uses. Saving replaces the quantity for this service and product.</p>
     </>}

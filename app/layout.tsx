@@ -13,7 +13,7 @@ export const metadata: Metadata = {
   icons: {
     icon: { url: "/images/NegOSu_favicon.png", type: "image/png" },
   },
-  keywords: ["business operating system", "automotive business software", "salon management software", "appointment scheduling", "inventory management"],
+  keywords: ["business operating system", "automotive business software", "salon management software", "pet grooming software", "appointment scheduling", "inventory management"],
   openGraph: {
     siteName: productBrand.name,
     title: `${productBrand.name} | Business Operating System`,

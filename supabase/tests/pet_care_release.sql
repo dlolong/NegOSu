@@ -1,0 +1,102 @@
+-- Synthetic, rollback-only Pet Care and shared-boundary checks.
+begin;
+create extension if not exists pgtap with schema extensions;
+set search_path=public,extensions;
+select no_plan();
+insert into auth.users(id,instance_id,aud,role,email,encrypted_password,email_confirmed_at,raw_app_meta_data,raw_user_meta_data,created_at,updated_at) values
+('7c100000-0000-4000-8000-000000000001','00000000-0000-0000-0000-000000000000','authenticated','authenticated','pet-a@example.test','',now(),'{}','{}',now(),now()),
+('7c100000-0000-4000-8000-000000000002','00000000-0000-0000-0000-000000000000','authenticated','authenticated','pet-b@example.test','',now(),'{}','{}',now(),now());
+insert into organizations(id,name,slug,industry,business_type) values
+('7c200000-0000-4000-8000-000000000001','Milo Grooming Test','pet-a-test','pet_care','pet_grooming'),
+('7c200000-0000-4000-8000-000000000002','Other Grooming Test','pet-b-test','pet_care','pet_grooming');
+insert into organization_subscriptions(organization_id,plan_id,status) select id,'pro','active' from organizations where id in('7c200000-0000-4000-8000-000000000001','7c200000-0000-4000-8000-000000000002');
+insert into organization_memberships(organization_id,user_id,role) values('7c200000-0000-4000-8000-000000000001','7c100000-0000-4000-8000-000000000001','owner'),('7c200000-0000-4000-8000-000000000002','7c100000-0000-4000-8000-000000000002','owner');
+insert into branches(id,organization_id,name,is_primary) values('7c300000-0000-4000-8000-000000000001','7c200000-0000-4000-8000-000000000001','Main',true),('7c300000-0000-4000-8000-000000000002','7c200000-0000-4000-8000-000000000002','Other',true);
+update branches set opening_hours=(select jsonb_object_agg(d,jsonb_build_object('open','00:00','close','23:59')) from unnest(array['monday','tuesday','wednesday','thursday','friday','saturday','sunday'])d) where id in('7c300000-0000-4000-8000-000000000001','7c300000-0000-4000-8000-000000000002');
+insert into customers(id,organization_id,full_name) values('7c400000-0000-4000-8000-000000000001','7c200000-0000-4000-8000-000000000001','Maria Test'),('7c400000-0000-4000-8000-000000000002','7c200000-0000-4000-8000-000000000002','Other Test');
+insert into pet_profiles(id,organization_id,customer_id,name,species,handling_cautions) values('7c500000-0000-4000-8000-000000000001','7c200000-0000-4000-8000-000000000001','7c400000-0000-4000-8000-000000000001','Milo','dog','INTERNAL_DO_NOT_EXPOSE'),('7c500000-0000-4000-8000-000000000002','7c200000-0000-4000-8000-000000000001','7c400000-0000-4000-8000-000000000001','Luna','cat',null),('7c500000-0000-4000-8000-000000000003','7c200000-0000-4000-8000-000000000002','7c400000-0000-4000-8000-000000000002','Other Pet','dog',null);
+insert into organization_staff_profiles(id,organization_id,full_name,job_function) values('7c600000-0000-4000-8000-000000000001','7c200000-0000-4000-8000-000000000001','Ana Test','Groomer'),('7c600000-0000-4000-8000-000000000002','7c200000-0000-4000-8000-000000000001','Bo Test','Groomer');
+insert into services(id,organization_id,name,duration_minutes,base_price_centavos) values('7c700000-0000-4000-8000-000000000001','7c200000-0000-4000-8000-000000000001','Bath and brush',60,50000);
+insert into scheduling_resources(id,organization_id,branch_id,name,resource_type,capacity) values('7c800000-0000-4000-8000-000000000001','7c200000-0000-4000-8000-000000000001','7c300000-0000-4000-8000-000000000001','Grooming Room','room',2);
+-- New records work with the legacy opt-in at its false default.
+select ok(pet_care_enabled('7c200000-0000-4000-8000-000000000001'),'active Pet Care needs no pilot opt-in');
+select ok((select not pet_care_pilot_enabled and appointment_parallel_enabled from organizations where id='7c200000-0000-4000-8000-000000000001'),'Pet parallel capacity is canonical without the legacy flag');
+update organizations set public_page_enabled=true where id='7c200000-0000-4000-8000-000000000001';
+update branches set accepts_public_bookings=true where id='7c300000-0000-4000-8000-000000000001';
+update services set is_public=true where id='7c700000-0000-4000-8000-000000000001';
+update customers set phone='09171234567',phone_normalized='09171234567' where id='7c400000-0000-4000-8000-000000000001';
+insert into auth.users(id,instance_id,aud,role,email,encrypted_password,email_confirmed_at,raw_app_meta_data,raw_user_meta_data,created_at,updated_at) values
+('7c100000-0000-4000-8000-000000000003','00000000-0000-0000-0000-000000000000','authenticated','authenticated','pet-signup@example.test','',now(),'{}','{}',now(),now());
+create temporary table release_results(k text primary key, value jsonb, id uuid);
+grant all on release_results to anon,authenticated;
+set local role authenticated;
+set local "request.jwt.claims"='{"sub":"7c100000-0000-4000-8000-000000000003","role":"authenticated"}';
+select throws_ok($$select create_first_organization('Pet Invalid','pet_care','salon','pet-invalid')$$,'22023','Business type does not match organization industry','server validates business subtype');
+insert into release_results(k,id) values('signup',create_first_organization('New Pet Grooming','pet_care','pet_grooming','new-pet-grooming'));
+select is((select industry from organizations where id=(select id from release_results where k='signup')),'pet_care','self-service onboarding creates Pet Care');
+select is((select role::text from organization_memberships where organization_id=(select id from release_results where k='signup')),'owner','signup gets authoritative owner membership');
+select is((select plan_id from organization_subscriptions where organization_id=(select id from release_results where k='signup')),'free','Pet signup uses existing free subscription');
+select throws_ok($$select create_first_organization('Duplicate','pet_care','pet_spa','duplicate-pet')$$,'P0001','User already belongs to an organization','duplicate onboarding is prevented');
+set local role anon;
+set local "request.jwt.claims"='{"role":"anon"}';
+select is(get_public_shop('pet-a-test')->>'industry','pet_care','branded public shop supports Pet Care');
+select ok(not has_table_privilege('anon','public.pet_profiles','select'),'no public pet directory');
+select ok(not has_table_privilege('anon','public.pet_grooming_notes','select'),'notes never readable anonymously');
+select throws_ok($$select submit_pet_public_booking('pet-a-test','7c300000-0000-4000-8000-000000000002',array['7c700000-0000-4000-8000-000000000001']::uuid[],date_trunc('day',now())+interval '5 days 2 hours','Maria Test','09171234567',null,'Milo','dog',null,null,'pet-rate','')$$,null,null,'public request rejects a branch from another tenant');
+select throws_ok($$select submit_pet_public_booking('pet-a-test','7c300000-0000-4000-8000-000000000001',array['7c700000-0000-4000-8000-000000000001']::uuid[],date_trunc('day',now())+interval '5 days 2 hours','Maria Test','09171234567',null,'','dog',null,null,'pet-rate','')$$,null,null,'public request requires pet identity');
+insert into release_results(k,value) values('request',submit_pet_public_booking('pet-a-test','7c300000-0000-4000-8000-000000000001',array['7c700000-0000-4000-8000-000000000001']::uuid[],date_trunc('day',now())+interval '5 days 2 hours','Maria Test','09171234567',null,'Milo','dog',null,null,'pet-rate',''));
+select is(get_public_booking_status((select value->>'token' from release_results where k='request'))->>'status','requested','new Pet request has private status');
+select throws_ok($$select submit_pet_public_booking('pet-a-test','7c300000-0000-4000-8000-000000000001',array['7c700000-0000-4000-8000-000000000001']::uuid[],date_trunc('day',now())+interval '5 days 2 hours','Maria Test','09171234567',null,'Milo','dog',null,null,'pet-rate','')$$,null,null,'same pet duplicate public request blocked');
+select lives_ok($$select submit_pet_public_booking('pet-a-test','7c300000-0000-4000-8000-000000000001',array['7c700000-0000-4000-8000-000000000001']::uuid[],date_trunc('day',now())+interval '5 days 2 hours','Maria Test','09171234567',null,'Luna','cat',null,null,'pet-rate','')$$,'same owner can request another pet at the same time');
+reset role;
+set local "request.jwt.claims"='{}';
+update release_results set id=(select id from public_booking_requests where confirmation_token_hash=encode(extensions.digest(value->>'token','sha256'),'hex')) where k='request';
+select is((select count(*) from pet_booking_details d join public_booking_requests r on r.id=d.booking_request_id where r.organization_id='7c200000-0000-4000-8000-000000000001')::integer,2,'Core requests have explicit pet intake');
+set constraints all immediate;
+set constraints all deferred;
+set local role authenticated;
+set local "request.jwt.claims"='{"sub":"7c100000-0000-4000-8000-000000000002","role":"authenticated"}';
+select is((select count(*) from pet_booking_details)::integer,0,'cross-tenant pet intake is hidden');
+select throws_ok($$select confirm_pet_public_booking((select id from release_results where k='request'),null,'7c600000-0000-4000-8000-000000000001','7c800000-0000-4000-8000-000000000001')$$,'42501','Booking request not found','cross-tenant confirmation denied');
+set local "request.jwt.claims"='{"sub":"7c100000-0000-4000-8000-000000000001","role":"authenticated"}';
+select throws_ok($$select confirm_pet_public_booking((select id from release_results where k='request'),'7c500000-0000-4000-8000-000000000002','7c600000-0000-4000-8000-000000000001','7c800000-0000-4000-8000-000000000001')$$,null,null,'wrong existing pet cannot be attached');
+select throws_ok($$select confirm_pet_public_booking((select id from release_results where k='request'),'7c500000-0000-4000-8000-000000000001',null,'7c800000-0000-4000-8000-000000000001')$$,null,null,'confirmation requires a valid groomer');
+insert into release_results(k,id) values('appointment',confirm_pet_public_booking((select id from release_results where k='request'),'7c500000-0000-4000-8000-000000000001','7c600000-0000-4000-8000-000000000001','7c800000-0000-4000-8000-000000000001'));
+set constraints all immediate;
+select throws_ok($$update pet_profiles set is_active=false where id='7c500000-0000-4000-8000-000000000001'$$,null,null,'pet cannot be deactivated during an active visit');
+select throws_ok($$update customers set is_archived=true where id='7c400000-0000-4000-8000-000000000001'$$,null,null,'owner cannot be archived during an active grooming visit');
+select is((select status::text from appointments where id=(select id from release_results where k='appointment')),'confirmed','staff confirmation uses Core appointment');
+select is((select expected_total_centavos from appointments where id=(select id from release_results where k='appointment')),50000::bigint,'public confirmation uses server pricing');
+select is(confirm_pet_public_booking((select id from release_results where k='request'),null,null,null),(select id from release_results where k='appointment'),'confirmation retry returns the original appointment');
+select lives_ok($$select create_appointment_self_service_link((select id from release_results where k='appointment'),repeat('f',64),now()+interval '7 days')$$,'standard Pet business creates a private appointment link');
+select is(get_public_appointment_self_service(repeat('f',64))->>'state','active','private link works without pilot opt-in');
+select lives_ok($$select record_appointment_payment((select id from release_results where k='appointment'),10000,'cash','pet-release-payment')$$,'standard Pet business uses Core payment recording');
+select lives_ok($$select record_appointment_payment((select id from release_results where k='appointment'),10000,'cash','pet-release-payment')$$,'standard Pet payment retry remains idempotent');
+select throws_ok($$select add_pet_grooming_note('7c900000-0000-4000-8000-000000000001',(select id from release_results where k='appointment'),'Before arrival',null)$$,null,null,'visit notes require arrival');
+select transition_pet_appointment((select id from release_results where k='appointment'),'arrive');
+select lives_ok($$select add_pet_grooming_note('7c900000-0000-4000-8000-000000000001',(select id from release_results where k='appointment'),'Internal grooming observation',current_date+30)$$,'grooming observation saved after arrival');
+select lives_ok($$select add_pet_grooming_note('7c900000-0000-4000-8000-000000000001',(select id from release_results where k='appointment'),'Internal grooming observation',current_date+30)$$,'identical note retry is idempotent');
+select is((select count(*) from pet_grooming_notes)::integer,1,'retry does not duplicate a note');
+select throws_ok($$select add_pet_grooming_note('7c900000-0000-4000-8000-000000000001',(select id from release_results where k='appointment'),'Changed payload',current_date+30)$$,null,null,'note ID cannot be reused with different content');
+select throws_ok($$select add_pet_grooming_note('7c900000-0000-4000-8000-000000000002',(select id from release_results where k='appointment'),'Bad date',current_date-1)$$,null,null,'past return date rejected');
+select throws_ok($$update pet_grooming_notes set note='Tampered'$$,'42501',null,'notes cannot be rewritten directly');
+set local "request.jwt.claims"='{"sub":"7c100000-0000-4000-8000-000000000002","role":"authenticated"}';
+select is((select count(*) from pet_grooming_notes)::integer,0,'other tenant cannot read notes');
+select throws_ok($$select add_pet_grooming_note('7c900000-0000-4000-8000-000000000002',(select id from release_results where k='appointment'),'Other tenant',null)$$,'42501','Grooming note access denied','other tenant cannot add notes');
+reset role;
+set local "request.jwt.claims"='{}';
+select ok(get_public_appointment_self_service(repeat('f',64))::text not like '%Internal grooming observation%','private customer projection excludes grooming notes');
+-- Read-only roles and branch restrictions remain separate from feature availability.
+insert into auth.users(id,instance_id,aud,role,email,encrypted_password,email_confirmed_at,raw_app_meta_data,raw_user_meta_data,created_at,updated_at) values
+('7c100000-0000-4000-8000-000000000004','00000000-0000-0000-0000-000000000000','authenticated','authenticated','pet-branch@example.test','',now(),'{}','{}',now(),now());
+insert into branches(id,organization_id,name) values('7c300000-0000-4000-8000-000000000003','7c200000-0000-4000-8000-000000000001','Restricted branch');
+insert into organization_memberships(id,organization_id,user_id,role) values('7ca00000-0000-4000-8000-000000000001','7c200000-0000-4000-8000-000000000001','7c100000-0000-4000-8000-000000000004','advisor');
+insert into membership_branch_assignments(organization_id,membership_id,branch_id) values('7c200000-0000-4000-8000-000000000001','7ca00000-0000-4000-8000-000000000001','7c300000-0000-4000-8000-000000000003');
+set local role authenticated;
+set local "request.jwt.claims"='{"sub":"7c100000-0000-4000-8000-000000000004","role":"authenticated"}';
+select is((select count(*) from pet_grooming_notes)::integer,0,'restricted branch cannot read grooming notes');
+select is((select count(*) from pet_booking_details)::integer,0,'restricted branch cannot read pet intake');
+select throws_ok($$select confirm_pet_public_booking((select id from release_results where k='request'),null,null,null)$$,'42501','Booking request not found','confirmation retry still checks branch access');
+select throws_ok($$select add_pet_grooming_note('7c900000-0000-4000-8000-000000000002',(select id from release_results where k='appointment'),'Wrong branch',null)$$,'42501','Grooming note access denied','notes enforce branch access');
+select * from finish();
+rollback;

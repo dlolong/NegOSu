@@ -56,6 +56,11 @@ export function BookingForm({ slug, industry, branch, services, selectedDate, sl
         </div>
       </section>
 
+      {industry === "pet_care" ? <section id="public-booking-pet-section" className="mt-7 border-t border-admin-border pt-5"><h3 className="font-semibold">Your pet</h3><p className="mt-1 text-sm text-admin-text-muted">One pet per grooming request.</p><div className="mt-4 grid gap-4 sm:grid-cols-2">
+        <label className="text-sm">Pet name<Input id="public-booking-pet-name" name="petName" required maxLength={120} value={fieldValue("petName")} onChange={updateDraft} className="mt-2"/></label>
+        <label className="text-sm">Species<select id="public-booking-pet-species" name="species" required value={fieldValue("species")} onChange={updateDraft} className="mt-2 min-h-11 w-full rounded-xl border px-3"><option value="" disabled>Select species</option><option value="dog">Dog</option><option value="cat">Cat</option><option value="other">Other</option></select></label>
+        <label className="text-sm sm:col-span-2">Breed (optional)<Input id="public-booking-pet-breed" name="breed" maxLength={120} value={fieldValue("breed")} onChange={updateDraft} className="mt-2"/></label>
+      </div></section> : null}
       {industry === "automotive" ? <section id="public-booking-vehicle-section" className="mt-7 border-t border-admin-border pt-5" aria-labelledby="public-booking-vehicle-title">
         <h3 id="public-booking-vehicle-title" className="font-semibold">Vehicle details</h3>
         <p className="mt-1 text-sm text-admin-text-muted">Tell the shop which vehicle needs service.</p>

@@ -44,6 +44,12 @@ const productEntries: Record<PublicProductKey, ProductEntryConfig> = {
       { value: "other", label: "Other Auto-care Service" },
     ],
   },
+  pet_care: {
+    industry: "pet_care", productName: verticalBrands.pet_care.displayName, eyebrow: "Pet Care",
+    loginTitle: "Welcome back", loginDescription: "Sign in to manage your pet grooming business.",
+    signupDescription: "Create your NegOSu account and set up your pet grooming business.",
+    businessTypeLabel: "Pet Care", businessTypes: [{ value: "pet_grooming", label: "Pet Grooming" }, { value: "pet_spa", label: "Pet Spa & Grooming" }],
+  },
   salon: {
     industry: "salon",
     productName: verticalBrands.salon.displayName,
@@ -83,7 +89,7 @@ export function resolveBusinessIndustry(businessType: string): PublicProductKey 
 }
 
 export function isEnabledSignupIndustry(value: IndustryKey): value is PublicProductKey {
-  return value === "automotive" || value === "salon";
+  return isPublicProductKey(value);
 }
 
 export const productEntryConfigs = productEntries;

@@ -3,7 +3,7 @@ import { ArrowRight as ArrowRightIcon, Pencil as PencilIcon, Plus as PlusIcon, S
 
 import { FormActions } from "@/components/form-actions";
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { randomUUID } from "node:crypto";
 
 import { enqueueAppointment, transitionAppointment } from "@/app/dashboard/operations-actions";
@@ -27,6 +27,7 @@ type AppointmentDetail={id:string;vehicle_id?:string|null;status:string;source:s
 
 export default async function Page({ params, searchParams }: { params: Promise<{ appointmentId: string }>; searchParams: Promise<{ message?: string; error?: string;dialog?:string;customerLink?:string }> }) {
   const [{ appointmentId }, query, { activeMembership }, supabase] = await Promise.all([params, searchParams, getDashboardContext(), createClient()]);
+  if(activeMembership.industry==="pet_care") redirect(`/dashboard/pet-care/appointments/${encodeURIComponent(appointmentId)}`);
   const config=resolveIndustryConfig(activeMembership.industry),salon=config.key==="salon";
   const appointmentResult = salon
     ? await supabase.from("appointments").select("id,status,source,starts_at,ends_at,expected_total_centavos,expected_duration_minutes,customer_note,internal_note,cancellation_reason,created_at,branches(name,timezone),customers(id,full_name,phone),appointment_services(service_id,service_name_snapshot,unit_price_centavos,duration_minutes)").eq("id", appointmentId).eq("organization_id", activeMembership.organizationId).maybeSingle()

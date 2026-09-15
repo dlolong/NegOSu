@@ -4,24 +4,26 @@
 
 Public Plans reuse the neutral NegOSu surface, border, radius, typography, and action hierarchy. The recommended plan uses one restrained primary accent; plan availability and price are communicated with text rather than color alone. Cards stack at phone widths and do not introduce a nested scroll container.
 
-This is the implementation contract for shared NegOSu product UI. It applies to Automotive and Salon without importing either vertical into shared components.
+This is the implementation contract for shared NegOSu product UI. It applies to Automotive, Salon/Facial Care, and Pet Care through shared tokens.
 
 ## Colors
 
 - Canvas: quiet off-white/slate.
 - Surface and raised surface: white.
-- Primary text: dark navy; secondary and muted text: slate.
-- Border and strong border: low-contrast slate.
-- Brand: one NegOSu blue for primary actions, focus, selected navigation/tabs, and important links.
+- Primary text: dark ink; secondary and muted text: readable neutral tones coordinated with the palette.
+- Border and strong border: subtle neutral tones coordinated with the palette.
+- Brand: the workspace accent for primary actions, focus, selected navigation/tabs, and important links. Use `brand-on-dark` for sidebar focus and active indicators.
 - Semantic success, warning, danger, and info colors communicate real state only. Ordinary cards, icons, navigation groups, and filters stay neutral.
 
 Tokens live in `app/globals.css`. Prefer named Tailwind theme tokens such as `admin-surface`, `admin-text`, `brand-primary`, and `status-danger` instead of page-specific hex colors.
 
 ### User-selected workspace themes
 
-Authenticated users may select Ocean Blue, Graphite, Emerald, or Indigo from Profile settings. The preference is stored in the authenticated user metadata and is applied only inside `dashboard-app-shell`; it follows the user when switching organizations. Each palette changes structural chrome, interactive accents, borders, and the canvas through the same shared tokens. It does not change customer-facing public-page branding or semantic success, warning, danger, and information colors.
+Profile settings offer exactly five generic palettes: **Steel Blue, Plum, Teal, Graphite, and Indigo**. All choices appear together with equal prominence. There is no recommendation, industry label, automatic matching, or secondary group. The selected palette follows the account across businesses.
 
-Unknown or older preference values resolve to Ocean Blue. Server actions allowlist every saved theme value; theme metadata is a presentation preference and is never an authorization input.
+The preference is stored in authenticated user metadata and applied only inside `dashboard-app-shell`. Missing or unknown preferences use Steel Blue. Retired values resolve on read: Automotive/Ocean/automatic → Steel Blue, Salon → Plum, Pet Care/Emerald → Teal. Graphite and Indigo remain unchanged. Only the five current IDs can be saved. Metadata is a presentation preference, never an authorization input.
+
+Each palette changes structural chrome, interactive accents, borders, and canvas through shared tokens, preserving public-page branding and semantic status colors. Contrast tests cover white action text, selected surfaces, body/muted text, sidebar labels, and focus/active accents. Cancel resets the chooser to its saved selection; Apply persists it.
 
 ## Typography and spacing
 
@@ -54,7 +56,7 @@ Interactive cards may strengthen their border and shadow slightly. Static cards 
 
 ## Tabs
 
-`Tabs` renders a labelled navigation region. Tabs do not wrap; mobile uses horizontal scrolling. Active state uses a blue underline, readable text, and `aria-current`. Optional counts are compact neutral badges.
+`Tabs` renders a labelled navigation region. Tabs do not wrap; mobile uses horizontal scrolling. Active state uses a brand underline, readable text, and `aria-current`. Optional counts are compact neutral badges.
 
 ## Tables and mobile records
 

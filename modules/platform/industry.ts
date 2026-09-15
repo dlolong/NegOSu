@@ -1,14 +1,16 @@
 import { productBrand, verticalBrands } from "@/modules/platform/brand";
 
-export const industryKeys = ["automotive", "salon", "hospitality", "field_service"] as const;
+export const industryKeys = ["automotive", "salon", "pet_care", "hospitality", "field_service"] as const;
 export type IndustryKey = (typeof industryKeys)[number];
 
 export const industryFeatureKeys = [
+  "pets",
   "vehicles",
   "appointments",
   "job_orders",
   "inventory",
   "payments",
+  "reports",
   "commissions",
   "reservations",
   "queue",
@@ -46,11 +48,13 @@ export const karkrAutomotiveConfig: IndustryConfig = {
     product: "Product",
   },
   features: {
+    pets: false,
     vehicles: true,
     appointments: true,
     job_orders: true,
     inventory: true,
     payments: true,
+    reports: true,
     commissions: false,
     reservations: false,
     queue: true,
@@ -73,11 +77,13 @@ export const salonConfig: IndustryConfig = {
     product: "Product",
   },
   features: {
+    pets: false,
     vehicles: false,
     appointments: true,
     job_orders: false,
     inventory: true,
-    payments: false,
+    payments: true,
+    reports: true,
     commissions: false,
     reservations: false,
     queue: false,
@@ -85,6 +91,12 @@ export const salonConfig: IndustryConfig = {
     booking_requests: true,
     resources: true,
   },
+};
+
+export const petCareConfig: IndustryConfig = {
+  key: "pet_care", productName: "NegOSu Pet Care",
+  terminology: { customer: "Pet Owner", staff: "Staff", booking: "Grooming appointment", location: "Branch", service: "Service", resource: "Grooming resource", product: "Product" },
+  features: { pets: true, vehicles: false, appointments: true, job_orders: false, inventory: true, payments: true, reports: true, commissions: false, reservations: false, queue: false, maintenance: false, booking_requests: true, resources: true },
 };
 
 const disabledIndustryConfig = (key: "hospitality" | "field_service"): IndustryConfig => ({
@@ -97,6 +109,7 @@ const disabledIndustryConfig = (key: "hospitality" | "field_service"): IndustryC
 const industryConfigs: Record<IndustryKey, IndustryConfig> = {
   automotive: karkrAutomotiveConfig,
   salon: salonConfig,
+  pet_care: petCareConfig,
   hospitality: disabledIndustryConfig("hospitality"),
   field_service: disabledIndustryConfig("field_service"),
 };

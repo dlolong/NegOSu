@@ -1,5 +1,6 @@
 
-import { RecordRow, RecordItem, RecordLink } from "@/components/record-item";
+import { RecordTable } from "@/components/record-table";
+import { RecordLink } from "@/components/record-item";
 import { Plus as PlusIcon, Save as SaveIcon, KeyRound, Pencil, Info } from "lucide-react";
 
 import { FormActions } from "@/components/form-actions";
@@ -24,7 +25,7 @@ import { displayPhone } from "@/lib/crm";
 import { staffRoleLabelForIndustry, staffRoleOptionsForIndustry } from "@/lib/rbac";
 import type { StaffManagementItem } from "@/modules/core/staff";
 
-export type StaffManagementIndustry = "automotive" | "salon";
+export type StaffManagementIndustry = "automotive" | "salon" | "pet_care";
 
 export type StaffProfileRow = StaffManagementItem & {
   todayCount?: number;
@@ -73,11 +74,11 @@ export function StaffProfileForm({ profile, branches, industry, prefix }: {
     </label>
     <p className="-mt-2 text-xs text-slate-500 sm:col-span-2">Contact details are optional and do not create a login. System access is managed separately.</p>
     <label className="text-sm font-semibold">Job function <span className="font-normal text-slate-500">(optional)</span>
-      <Input id={`${prefix}-job-function-input`} name="jobFunction" list={`${prefix}-job-function-suggestions`} maxLength={80} defaultValue={profile?.jobFunction ?? ""} className="mt-2" placeholder={industry === "salon" ? "e.g. Senior Stylist" : "e.g. Master Technician"}/>
+      <Input id={`${prefix}-job-function-input`} name="jobFunction" list={`${prefix}-job-function-suggestions`} maxLength={80} defaultValue={profile?.jobFunction ?? ""} className="mt-2" placeholder={industry === "pet_care" ? "e.g. Groomer" : industry === "salon" ? "e.g. Senior Stylist" : "e.g. Master Technician"}/>
       <datalist id={`${prefix}-job-function-suggestions`}>{suggestions.map((suggestion) => <option key={suggestion} value={suggestion}/>)}</datalist>
     </label>
     <label className="text-sm font-semibold">Specialties <span className="font-normal text-slate-500">(optional)</span>
-      <Input id={`${prefix}-specializations-input`} name="specializations" maxLength={1_000} defaultValue={profile?.specializations.join(", ") ?? ""} className="mt-2" placeholder={industry === "salon" ? "Hair color, facials" : "Diagnostics, electrical"}/>
+      <Input id={`${prefix}-specializations-input`} name="specializations" maxLength={1_000} defaultValue={profile?.specializations.join(", ") ?? ""} className="mt-2" placeholder={industry === "pet_care" ? "Coat care, nail trimming" : industry === "salon" ? "Hair color, facials" : "Diagnostics, electrical"}/>
     </label>
     <label className="text-sm font-semibold">Operational status
       <select id={`${prefix}-status-select`} name="isActive" defaultValue={String(profile?.isActive ?? true)} className="mt-2 min-h-11 w-full rounded-xl border border-slate-300 bg-white px-3">
@@ -137,38 +138,15 @@ export function StaffDirectoryViews({ staff, branches, timezone, industry, prefi
   prefix: string;
   managementAvailable?: boolean;
 }) {
-  const tableContainerId = industry === "salon" ? "salon-staff-table-container" : "staff-table-container";
-  const tableId = industry === "salon" ? "salon-staff-table" : "staff-table";
-  const mobileListId = industry === "salon" ? "salon-staff-mobile-list" : "staff-mobile-list";
-  if (!staff.length) return <div id={`${prefix}-empty-state`} className="mt-4 rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-8 text-center">
-    <h2 className="font-semibold">No Staff profiles yet</h2><p className="mt-1 text-sm text-slate-600">{managementAvailable ? "Add a Staff profile now. Login access can be granted later." : "Staff profiles will appear here when available."}</p>
-  </div>;
-  return <>
-    <div id={tableContainerId} className="mt-4 hidden overflow-hidden rounded-2xl border border-admin-border bg-white shadow-sm md:block">
-      <table id={tableId} className="w-full text-left text-sm">
-        <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500"><tr><th className="px-3 py-2">Staff</th><th className="px-3 py-2">Function</th><th className="px-3 py-2">Today / Next</th><th className="px-3 py-2">Profile</th><th className="px-3 py-2">System access</th><th className="px-3 py-2 text-right">Actions</th></tr></thead>
-        <tbody className="divide-y divide-slate-100">{staff.map((profile) => <RecordRow id={`${prefix}-row-${profile.id}`} key={profile.id} className="align-top hover:bg-blue-50/70">
-          <td className="min-w-48 px-3 py-3"><strong><RecordLink id={`${prefix}-link-${profile.id}`} href={`/dashboard/settings/staff?dialog=${managementAvailable ? "edit" : "view"}&staffId=${profile.id}`}>{profile.fullName}</RecordLink></strong><StaffContactLines profile={profile}/><small className="block text-slate-500">{branchNames(profile.branchIds, branches)}</small></td>
-          <td className="px-3 py-3"><strong>{profile.jobFunction || "Not set"}</strong><small className="block max-w-48 text-slate-500">{profile.specializations.join(", ") || "No specialties"}</small></td>
-          <td className="px-3 py-3"><strong>{profile.todayCount ?? 0} appointment{profile.todayCount === 1 ? "" : "s"}</strong><small className="block text-slate-500">{profile.nextAt ? `Next ${formatTime(profile.nextAt, timezone)}` : "No upcoming visit"}</small></td>
-          <td className="px-3 py-3"><ProfileStatus active={profile.isActive}/></td>
-          <td className="px-3 py-3"><AccessStatus id={`${prefix}-access-status-${profile.id}`} profile={profile} industry={industry}/></td>
-          <td className="px-3 py-3"><StaffActions profile={profile} prefix={prefix} managementAvailable={managementAvailable}/></td>
-        </RecordRow>)}</tbody>
-      </table>
-    </div>
-    <div id={mobileListId} className="mt-4 grid min-w-0 gap-3 md:hidden">{staff.map((profile) => <RecordItem id={`${prefix}-card-${profile.id}`} key={profile.id} className="min-w-0 rounded-2xl border border-admin-border bg-white p-4 shadow-sm">
-      <div className="flex items-start justify-between gap-3"><div className="min-w-0"><h2 className="truncate font-semibold"><RecordLink id={`${prefix}-link-mobile-${profile.id}`} href={`/dashboard/settings/staff?dialog=${managementAvailable ? "edit" : "view"}&staffId=${profile.id}`}>{profile.fullName}</RecordLink></h2><p className="truncate text-sm text-slate-600">{profile.jobFunction || "Job function not set"}</p></div><ProfileStatus active={profile.isActive}/></div>
-      <div className="mt-3 grid grid-cols-2 gap-3 border-t border-slate-100 pt-3 text-xs"><div className="min-w-0"><p className="text-slate-500">Contact</p><StaffContactLines profile={profile} mobile/></div><div><p className="text-slate-500">Today / Next</p><p className="font-semibold">{profile.todayCount ?? 0} appointment{profile.todayCount === 1 ? "" : "s"}</p><p className="font-semibold">{profile.nextAt ? formatTime(profile.nextAt, timezone) : "No upcoming visit"}</p></div></div>
-      <div className="mt-3 border-t border-slate-100 pt-3"><AccessStatus id={`${prefix}-access-status-${profile.id}-mobile`} profile={profile} industry={industry}/><p className="mt-2 truncate text-xs text-slate-500">{branchNames(profile.branchIds, branches)}</p></div>
-      <div className="mt-3"><StaffActions profile={profile} prefix={`${prefix}-mobile`} managementAvailable={managementAvailable}/></div>
-    </RecordItem>)}</div>
-  </>;
+  return <RecordTable id={industry === "salon" ? "salon-staff-table" : "staff-table"} caption="Staff directory" className="mt-4" empty="No staff profiles match this view." columns={[{key:"staff",label:"Staff"},{key:"function",label:"Function / schedule",secondary:true},{key:"status",label:"Profile",secondary:true},{key:"access",label:"System access",secondary:true},{key:"actions",label:"Actions",align:"right"}]} rows={staff.map(profile=>({id:`${prefix}-row-${profile.id}`,cells:{
+    staff:<><RecordLink id={`${prefix}-link-${profile.id}`} href={`/dashboard/settings/staff?dialog=${managementAvailable?"edit":"view"}&staffId=${profile.id}`}>{profile.fullName}</RecordLink><StaffContactLines profile={profile}/><small className="block text-admin-text-muted">{branchNames(profile.branchIds,branches)}</small></>,
+    function:<><strong>{profile.jobFunction||"Not set"}</strong><p className="text-xs text-admin-text-muted">{profile.specializations.join(", ")}</p><p className="mt-1 text-xs">{profile.todayCount??0} appointments · {profile.nextAt?formatTime(profile.nextAt,timezone):"No upcoming visit"}</p></>,status:<ProfileStatus active={profile.isActive}/>,access:<AccessStatus id={`${prefix}-access-status-${profile.id}`} profile={profile} industry={industry}/>,actions:<StaffActions profile={profile} prefix={prefix} managementAvailable={managementAvailable}/>,
+  },mobile:<><p>{profile.jobFunction||"Job function not set"}</p><p>{profile.todayCount??0} appointments · {profile.nextAt?formatTime(profile.nextAt,timezone):"No upcoming visit"}</p><ProfileStatus active={profile.isActive}/><AccessStatus id={`${prefix}-access-status-${profile.id}-mobile`} profile={profile} industry={industry}/></>}))}/>;
 }
 
 export function PermissionMatrix({ industry, prefix }: { industry: StaffManagementIndustry; prefix: string }) {
-  const headings = industry === "salon" ? ["Access role", "Clients", "Appointments", "Treatments", "Inventory", "Settings"] : ["Access role", "Customers", "Appointments", "Jobs", "Finance", "Inventory", "Settings"];
-  const rows = industry === "salon" ? salonPermissions : automotivePermissions;
+  const headings = industry === "pet_care" ? ["Access role", "Pet owners", "Appointments", "Services", "Inventory", "Settings"] : industry === "salon" ? ["Access role", "Clients", "Appointments", "Treatments", "Inventory", "Settings"] : ["Access role", "Customers", "Appointments", "Jobs", "Finance", "Inventory", "Settings"];
+  const rows = industry !== "automotive" ? salonPermissions : automotivePermissions;
   return <aside id={`${prefix}-permission-matrix`} aria-labelledby={`${prefix}-permission-info-title`} className="mt-4 min-w-0 rounded-xl border border-admin-border bg-admin-surface-muted p-3 text-sm text-admin-text-secondary">
     <div className="flex items-start gap-2"><Info aria-hidden="true" size={16} className="mt-0.5 shrink-0"/><div className="min-w-0"><h2 id={`${prefix}-permission-info-title`} className="text-sm font-medium">About access permissions</h2><p className="mt-1 text-xs">Access roles control what staff can do in the system. They are separate from job functions and apply within assigned access branches.</p></div></div>
     <details id={`${prefix}-permission-details`} className="mt-2">

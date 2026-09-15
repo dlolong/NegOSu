@@ -16,9 +16,13 @@ export async function reviewBooking(data: FormData) {
   const supabase = await createClient();
   const request = await supabase.from("public_booking_requests").select("id").eq("id", parsed.data.id).eq("organization_id", activeMembership.organizationId).eq("branch_id", activeMembership.branchId).maybeSingle();
   if (request.error || !request.data) redirect("/dashboard/bookings?error=Booking+request+not+available+in+this+branch.");
-  const { error } = await supabase.rpc("review_public_booking", { p_booking_id: parsed.data.id, p_action: parsed.data.action, p_reason: parsed.data.reason || null });
+  const petConfirmation = activeMembership.industry === "pet_care" && parsed.data.action === "confirm";
+  const assignment = z.object({petId:z.uuid().nullable(),staffId:z.uuid(),resourceId:z.uuid()}).safeParse({petId:formValue(data,"petId")||null,staffId:formValue(data,"staffId"),resourceId:formValue(data,"resourceId")});
+  if (petConfirmation && !assignment.success) redirect("/dashboard/bookings?error=Select+a+groomer+and+resource.");
+  const { error } = petConfirmation && assignment.success ? await supabase.rpc("confirm_pet_public_booking", { p_booking_id:parsed.data.id, p_pet_id:assignment.data.petId, p_staff_id:assignment.data.staffId, p_resource_id:assignment.data.resourceId }) : await supabase.rpc("review_public_booking", { p_booking_id: parsed.data.id, p_action: parsed.data.action, p_reason: parsed.data.reason || null });
   if (error) redirect("/dashboard/bookings?error=Unable+to+update+this+booking.+Refresh+and+try+again.");
   revalidatePath("/dashboard/bookings");
   revalidatePath("/dashboard/appointments");
+  revalidatePath("/dashboard/pet-care");
   redirect(`/dashboard/bookings?message=${parsed.data.action === "confirm" ? "Booking+confirmed." : "Booking+declined."}`);
 }

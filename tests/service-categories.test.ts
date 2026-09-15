@@ -63,5 +63,7 @@ test("Back links resolve real parent routes for new/edit/detail and settings pag
   };
   for (const [pathname, href] of Object.entries(cases)) assert.equal(dashboardBackDestination(pathname)?.href, href, pathname);
   assert.equal(dashboardBackDestination("/dashboard/services/new", true)?.label, "Back to treatments");
+  assert.equal(dashboardBackDestination("/dashboard/appointments/new", true), null);
+  assert.equal(dashboardBackDestination("/dashboard/appointments/appointment-id/edit", true), null);
   for (const pathname of ["/dashboard", "/dashboard/services", "/shop/salon", "/dashboard/customers/import", "/dashboard/jobs/job-id/work", "/dashboard/vehicles/vehicle-id/history"]) assert.equal(dashboardBackDestination(pathname), null);
 });

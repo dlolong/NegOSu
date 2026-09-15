@@ -1,0 +1,70 @@
+-- Synthetic, rollback-only Pet Care and shared-boundary checks.
+begin;
+create extension if not exists pgtap with schema extensions;
+set search_path=public,extensions;
+select no_plan();
+insert into auth.users(id,instance_id,aud,role,email,encrypted_password,email_confirmed_at,raw_app_meta_data,raw_user_meta_data,created_at,updated_at) values
+('7c100000-0000-4000-8000-000000000001','00000000-0000-0000-0000-000000000000','authenticated','authenticated','pet-a@example.test','',now(),'{}','{}',now(),now()),
+('7c100000-0000-4000-8000-000000000002','00000000-0000-0000-0000-000000000000','authenticated','authenticated','pet-b@example.test','',now(),'{}','{}',now(),now());
+insert into organizations(id,name,slug,industry,pet_care_pilot_enabled,appointment_parallel_enabled) values
+('7c200000-0000-4000-8000-000000000001','Milo Grooming Test','pet-a-test','pet_care',true,true),
+('7c200000-0000-4000-8000-000000000002','Other Grooming Test','pet-b-test','pet_care',true,true);
+insert into organization_subscriptions(organization_id,plan_id,status) select id,'pro','active' from organizations where id in('7c200000-0000-4000-8000-000000000001','7c200000-0000-4000-8000-000000000002');
+insert into organization_memberships(organization_id,user_id,role) values('7c200000-0000-4000-8000-000000000001','7c100000-0000-4000-8000-000000000001','owner'),('7c200000-0000-4000-8000-000000000002','7c100000-0000-4000-8000-000000000002','owner');
+insert into branches(id,organization_id,name,is_primary) values('7c300000-0000-4000-8000-000000000001','7c200000-0000-4000-8000-000000000001','Main',true),('7c300000-0000-4000-8000-000000000002','7c200000-0000-4000-8000-000000000002','Other',true);
+update branches set opening_hours=(select jsonb_object_agg(d,jsonb_build_object('open','00:00','close','23:59')) from unnest(array['monday','tuesday','wednesday','thursday','friday','saturday','sunday'])d) where id in('7c300000-0000-4000-8000-000000000001','7c300000-0000-4000-8000-000000000002');
+insert into customers(id,organization_id,full_name) values('7c400000-0000-4000-8000-000000000001','7c200000-0000-4000-8000-000000000001','Maria Test'),('7c400000-0000-4000-8000-000000000002','7c200000-0000-4000-8000-000000000002','Other Test');
+insert into pet_profiles(id,organization_id,customer_id,name,species,handling_cautions) values('7c500000-0000-4000-8000-000000000001','7c200000-0000-4000-8000-000000000001','7c400000-0000-4000-8000-000000000001','Milo','dog','INTERNAL_DO_NOT_EXPOSE'),('7c500000-0000-4000-8000-000000000002','7c200000-0000-4000-8000-000000000001','7c400000-0000-4000-8000-000000000001','Luna','cat',null),('7c500000-0000-4000-8000-000000000003','7c200000-0000-4000-8000-000000000002','7c400000-0000-4000-8000-000000000002','Other Pet','dog',null);
+insert into organization_staff_profiles(id,organization_id,full_name,job_function) values('7c600000-0000-4000-8000-000000000001','7c200000-0000-4000-8000-000000000001','Ana Test','Groomer'),('7c600000-0000-4000-8000-000000000002','7c200000-0000-4000-8000-000000000001','Bo Test','Groomer');
+insert into services(id,organization_id,name,duration_minutes,base_price_centavos) values('7c700000-0000-4000-8000-000000000001','7c200000-0000-4000-8000-000000000001','Bath and brush',60,50000);
+insert into scheduling_resources(id,organization_id,branch_id,name,resource_type,capacity) values('7c800000-0000-4000-8000-000000000001','7c200000-0000-4000-8000-000000000001','7c300000-0000-4000-8000-000000000001','Grooming Room','room',2);
+-- Keep test arrivals in a stable daytime hour regardless of runner time.
+update branches set timezone=(select name from pg_timezone_names where name like 'Etc/GMT%' and extract(hour from now() at time zone name)=10 limit 1) where id in('7c300000-0000-4000-8000-000000000001','7c300000-0000-4000-8000-000000000002');
+update organizations set industry='salon' where id='7c200000-0000-4000-8000-000000000002';
+insert into services(id,organization_id,name,duration_minutes,base_price_centavos) values('7c700000-0000-4000-8000-000000000002','7c200000-0000-4000-8000-000000000002','Facial',30,40000);
+create temporary table arrival_ids(k text primary key,id uuid);
+grant all on arrival_ids to authenticated;
+set local role authenticated;
+set local "request.jwt.claims"='{"sub":"7c100000-0000-4000-8000-000000000001","role":"authenticated"}';
+insert into arrival_ids values('pet',create_appointment_walk_in('7c900000-0000-4000-8000-000000000001','7c300000-0000-4000-8000-000000000001',null,'7c500000-0000-4000-8000-000000000001',array['7c700000-0000-4000-8000-000000000001']::uuid[],array['7c600000-0000-4000-8000-000000000001']::uuid[],array['7c800000-0000-4000-8000-000000000001']::uuid[]));
+set constraints all immediate;
+select is((select status::text from appointments where id=(select id from arrival_ids where k='pet')),'checked_in','Pet walk-in arrives atomically');
+select is((select source::text from appointments where id=(select id from arrival_ids where k='pet')),'walk_in','Pet source is walk-in');
+select is((select expected_total_centavos from appointments where id=(select id from arrival_ids where k='pet')),50000::bigint,'Pet prices come from catalog');
+select is((select count(*) from queue_entries)::integer,0,'Pet arrival creates no vehicle queue record');
+select is(create_appointment_walk_in('7c900000-0000-4000-8000-000000000001','7c300000-0000-4000-8000-000000000001',null,'7c500000-0000-4000-8000-000000000001',array['7c700000-0000-4000-8000-000000000001']::uuid[],array['7c600000-0000-4000-8000-000000000001']::uuid[],array['7c800000-0000-4000-8000-000000000001']::uuid[]),(select id from arrival_ids where k='pet'),'Exact Pet retry returns original visit');
+select throws_ok($$select create_appointment_walk_in('7c900000-0000-4000-8000-000000000002','7c300000-0000-4000-8000-000000000001',null,'7c500000-0000-4000-8000-000000000001',array['7c700000-0000-4000-8000-000000000001']::uuid[],array['7c600000-0000-4000-8000-000000000001']::uuid[],array['7c800000-0000-4000-8000-000000000001']::uuid[])$$,null,null,'Conflicting Pet arrival rejected');
+select is((select count(*) from appointments)::integer,1,'Conflict leaves no partial appointment');
+select throws_ok($$select create_appointment_walk_in(gen_random_uuid(),'7c300000-0000-4000-8000-000000000002','7c400000-0000-4000-8000-000000000002',null,array['7c700000-0000-4000-8000-000000000002']::uuid[])$$,'42501',null,'Foreign branch and tenant denied');
+select throws_ok($$select create_appointment_walk_in('7c900000-0000-4000-8000-000000000003','7c300000-0000-4000-8000-000000000001',null,'7c500000-0000-4000-8000-000000000003',array['7c700000-0000-4000-8000-000000000001']::uuid[],array['7c600000-0000-4000-8000-000000000001']::uuid[],array['7c800000-0000-4000-8000-000000000001']::uuid[])$$,null,null,'Foreign pet denied');
+set constraints all deferred;
+select transition_pet_appointment((select id from arrival_ids where k='pet'),'cancel');
+select throws_ok($$select create_appointment_walk_in('7c900000-0000-4000-8000-000000000004','7c300000-0000-4000-8000-000000000001',null,'7c500000-0000-4000-8000-000000000001',array['7c700000-0000-4000-8000-000000000001']::uuid[],array['00000000-0000-4000-8000-000000000000']::uuid[],array['7c800000-0000-4000-8000-000000000001']::uuid[])$$,null,null,'Invalid groomer denied');
+set local "request.jwt.claims"='{"sub":"7c100000-0000-4000-8000-000000000002","role":"authenticated"}';
+insert into arrival_ids values('salon',create_appointment_walk_in('7c900000-0000-4000-8000-000000000005','7c300000-0000-4000-8000-000000000002','7c400000-0000-4000-8000-000000000002',null,array['7c700000-0000-4000-8000-000000000002']::uuid[]));
+set constraints all immediate;
+select is((select status::text from appointments where id=(select id from arrival_ids where k='salon')),'checked_in','Salon walk-in arrives atomically');
+select ok((select vehicle_id is null and source='walk_in' from appointments where id=(select id from arrival_ids where k='salon')),'Salon arrival needs no vehicle');
+select is(create_appointment_walk_in('7c900000-0000-4000-8000-000000000005','7c300000-0000-4000-8000-000000000002','7c400000-0000-4000-8000-000000000002',null,array['7c700000-0000-4000-8000-000000000002']::uuid[]),(select id from arrival_ids where k='salon'),'Exact Salon retry returns original visit');
+select transition_salon_appointment((select id from arrival_ids where k='salon'),'cancel');
+reset role;
+update branches set opening_hours='{}' where id='7c300000-0000-4000-8000-000000000002';
+set local role authenticated;
+select throws_ok($$select create_appointment_walk_in('7c900000-0000-4000-8000-000000000006','7c300000-0000-4000-8000-000000000002','7c400000-0000-4000-8000-000000000002',null,array['7c700000-0000-4000-8000-000000000002']::uuid[])$$,'P0001','Walk-in is outside branch hours','Closed branch rejects arrival');
+select is((select count(*) from appointments)::integer,1,'Closed-hours rejection rolls back new appointment');
+reset role;
+insert into branches(id,organization_id,name) values('7c300000-0000-4000-8000-000000000004','7c200000-0000-4000-8000-000000000002','Restricted branch');
+update organization_memberships set role='advisor' where user_id='7c100000-0000-4000-8000-000000000002';
+insert into membership_branch_assignments(membership_id,organization_id,branch_id) select id,organization_id,'7c300000-0000-4000-8000-000000000004' from organization_memberships where user_id='7c100000-0000-4000-8000-000000000002';
+set local role authenticated;
+select throws_ok($$select create_appointment_walk_in('7c900000-0000-4000-8000-000000000005','7c300000-0000-4000-8000-000000000002','7c400000-0000-4000-8000-000000000002',null,array['7c700000-0000-4000-8000-000000000002']::uuid[])$$,'42501',null,'Same-tenant restricted branch denied even on retry');
+reset role;
+update organization_memberships set role='cashier'  where user_id='7c100000-0000-4000-8000-000000000002';
+set local role authenticated;
+select throws_ok($$select create_appointment_walk_in('7c900000-0000-4000-8000-000000000005','7c300000-0000-4000-8000-000000000002','7c400000-0000-4000-8000-000000000002',null,array['7c700000-0000-4000-8000-000000000002']::uuid[])$$,'42501',null,'Cashier cannot create or replay walk-ins');
+reset role;
+set local role anon;
+set local "request.jwt.claims"='{"role":"anon"}';
+select throws_ok($$select create_appointment_walk_in('7c900000-0000-4000-8000-000000000005','7c300000-0000-4000-8000-000000000002','7c400000-0000-4000-8000-000000000002',null,array['7c700000-0000-4000-8000-000000000002']::uuid[])$$,'42501',null,'Anonymous RPC invocation denied');
+select * from finish();
+rollback;

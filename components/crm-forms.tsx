@@ -1,6 +1,7 @@
 
 import { Save as SaveIcon } from "lucide-react";
 
+import { VisitEntityFields } from "@/components/visit-entity-fields";
 import { FormActions } from "@/components/form-actions";
 import Link from "next/link";
 
@@ -52,7 +53,7 @@ export type VehicleRecord = { id: string; customer_id: string; make: string; mod
 export function VehicleForm({ vehicle, customers, presetCustomerId, error, warning, duplicateId, embedded = false, returnTo }: { vehicle?: VehicleRecord; customers: {id:string;full_name:string}[]; presetCustomerId?: string; error?: string; warning?: string; duplicateId?: string; embedded?: boolean; returnTo?: string }) {
   const content=<><FormMessage error={error}/>{warning?<div id="vehicle-duplicate-warning" role="alert" className="mb-4 rounded-xl border border-status-warning/25 bg-status-warning-tint p-4 text-sm text-status-warning"><p className="font-bold">{warning}</p>{duplicateId?<Link id="vehicle-duplicate-link" className="mt-2 inline-block underline" href={`/dashboard/vehicles/${duplicateId}`}>View existing vehicle</Link>:null}<label className="mt-3 flex min-h-11 items-center gap-2"><input id="vehicle-accept-duplicate-checkbox" type="checkbox" name="acceptDuplicate" form="vehicle-form"/> Save anyway</label></div>:null}<form id="vehicle-form" action={saveVehicle} className="grid gap-4 sm:grid-cols-2">
     {vehicle?<input type="hidden" name="id" value={vehicle.id}/>:null}{returnTo?<input type="hidden" name="returnTo" value={returnTo}/>:null}
-    <div className="sm:col-span-2"><Field label="Customer *"><select id="vehicle-customer-select" className={select} name="customerId" required autoFocus defaultValue={vehicle?.customer_id??presetCustomerId??""}><option value="" disabled>Select customer</option>{customers.map(customer=><option key={customer.id} value={customer.id}>{customer.full_name}</option>)}</select></Field></div>
+    <div className="sm:col-span-2"><VisitEntityFields prefix="vehicle" vehiclePrefix="vehicle" customerLabel="Customer" selectId="vehicle-customer-select" requiresVehicle={false} vehicles={[]} customers={customers.map(customer=>({id:customer.id,name:customer.full_name}))} defaultCustomerId={vehicle?.customer_id??presetCustomerId}/></div>
     <Field label="Make *"><Input id="vehicle-make-input" name="make" required maxLength={80} placeholder="Toyota" defaultValue={vehicle?.make}/></Field>
     <Field label="Model *"><Input id="vehicle-model-input" name="model" required maxLength={80} placeholder="Fortuner" defaultValue={vehicle?.model}/></Field>
     <Field label="Year"><Input id="vehicle-year-input" name="modelYear" type="number" min={1900} max={new Date().getFullYear()+1} defaultValue={vehicle?.model_year??""}/></Field>

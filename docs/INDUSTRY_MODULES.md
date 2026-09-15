@@ -4,11 +4,11 @@
 
 The guarded non-production QA fixture creates one Automotive owner tenant and one Salon owner tenant so both vertical route sets can be exercised through real authentication. The shared release smoke asserts that each persona sees working routes for its own industry. This fixture is test infrastructure only, is blocked in production, and does not weaken server-side industry gates.
 
-NegOSu is the commercial master brand. Its supported customer-facing solutions are NegOSu Automotive and NegOSu Salon & Beauty. ServiceCore, KarKR, `automotive`, and `salon` remain stable internal architecture or compatibility terms where renaming would not add customer value.
+NegOSu is the commercial master brand. Its supported customer-facing solutions are NegOSu Automotive, NegOSu Salon & Beauty, and NegOSu Pet Care. ServiceCore, KarKR, `automotive`, and `salon` remain stable internal architecture or compatibility terms where renaming would not add customer value.
 
 ## Product entry configuration
 
-Only `automotive` and `salon` are enabled signup products. `modules/platform/product-entry.ts` maps customer-facing categories and specific business types to those persisted keys; arbitrary or future reserved industry keys are not accepted during signup. PostgreSQL repeats that allowlist and business-type pairing inside transactional first-organization creation.
+`automotive`, `salon`, and `pet_care` are enabled signup products. `modules/platform/product-entry.ts` maps customer-facing categories and specific business types to those persisted keys; arbitrary or future reserved industry keys are not accepted during signup. PostgreSQL repeats that allowlist and business-type pairing inside transactional first-organization creation.
 
 Public copy may follow an entry context, but application behavior never does. The active membership's persisted organization industry is authoritative for product navigation, onboarding terminology, and direct route gating. Vertical checklist definitions live in `modules/platform/onboarding.ts` and completion is derived from domain records rather than stored flags.
 
@@ -18,16 +18,22 @@ Organization industry is explicit data, not inferred from a URL, organization na
 
 Ordinary authenticated users cannot change an organization industry. Trusted migrations or service-role operational tooling must perform any deliberate vertical conversion after its data compatibility has been reviewed.
 
-| Capability | Core | Automotive | Salon |
-| --- | --- | --- | --- |
-| Customer / Client | Owns | Presentation | Presentation |
-| Staff and branch access | Owns | Technician terminology | Staff/specialist terminology |
-| Service | Owns | Vehicle pricing extension | Treatment presentation |
-| Appointment / Availability | Owns | Vehicle adapter/policy | Direct Core consumer |
-| Scheduling resource | Owns | Service bay | Chair/room/station |
-| Product / Inventory | Owns | Parts execution adapter | Product stock |
-| Payment | Shared ledger/reference boundary | Invoice + Job Order integration | Appointment reference |
-| Vehicle / Inspection / Job Order / Maintenance | — | Owns | — |
+| Capability | Core | Automotive | Salon | Pet Care |
+| --- | --- | --- | --- | --- |
+| Customer / Client / Pet Owner | Owns | Presentation | Presentation | Presentation |
+| Staff and branch access | Owns | Technician terminology | Staff/specialist terminology | Groomer terminology |
+| Service/category | Owns | Vehicle pricing extension | Treatment presentation | Grooming catalog |
+| Appointment / Availability | Owns | Vehicle adapter/policy | Direct Core consumer | Pet scheduling adapter |
+| Scheduling resource | Owns | Service bay | Chair/room/station | Grooming resources |
+| Product / Inventory | Owns | Parts execution adapter | Product stock | Product stock |
+| Payments workspace | Shared ledger, balances, history | Invoice reference | Appointment reference | Appointment reference |
+| Reports / CSV | Shared access and presentation | Invoice/job aggregates | Appointment aggregates | Appointment aggregates |
+| Public booking / Notifications | Shared request/delivery mechanisms | Vehicle adapter | Appointment adapter | Pet intake adapter |
+| Subscription / Billing | Shared platform | Available | Available | Available |
+| Vehicle / Inspection / Job Order / Maintenance | — | Owns | — | — |
+| Pet profile / Grooming / Pickup | — | — | — | Owns |
+
+All three supported industries expose Payments and Reports through shared routes. Reports retain plan and role requirements. Operational appointment payments remain separate from Automotive invoice issuance. The former `/dashboard/pet-care/payments` URL remains an alias of the common financial workspace.
 
 Automotive-only routes are both removed from Salon navigation and blocked at their server layouts/actions. Vehicle RLS denies Salon-tenant Vehicle reads/writes. Industry checks supplement tenant, role, and branch authorization; they never replace it.
 
@@ -45,7 +51,7 @@ industry capability + subscription entitlement + permission
                     server authorization and RLS
 ```
 
-No Beauty, Hospitality, or Field Service implementation exists. Those keys reserve a typed vocabulary only. Avoid scattered industry string comparisons: behavior belongs in a module or typed configuration.
+Hospitality and Field Service are reserved keys with no active implementation. Automotive, Salon/Beauty, and Pet Care are the supported industries. Avoid scattered industry string comparisons: behavior belongs in a module or typed configuration.
 
 Database tables do not need cosmetic automotive prefixes. Logical ownership, typed contracts, authorization, and documentation provide the boundary without destructive renames.
 
@@ -79,3 +85,11 @@ KarKR's Automotive Scheduling Adapter supplies vehicle policy and passes shared 
 `modules/automotive/command-center` and `modules/salon/command-center` are explicit contributors to the shared Command Center contract. Automotive derives estimate, Job Order, ready-for-release, invoice, and maintenance actions. Salon derives Client Appointment confirmation, waiting, service, and payment context. Shared Core only sorts and presents their neutral action records.
 
 The dashboard page is the composition root. Dependency direction remains `Automotive -> Core` and `Salon -> Core`; Core and Salon never import Automotive. Shared low-stock state may be presented by either contributor with vertical-appropriate wording.
+
+## Pet Care grooming
+
+`modules/pet-care` owns pet identity, grooming transitions, pickup/collection and private grooming observations. It consumes Core customers, services, staff, resources, scheduling, payments, public requests and notifications. No Pet copies of those Core entities exist. Active Pet businesses require no pilot opt-in; `pet_care_pilot_enabled` remains deprecated for older readers.
+
+The Pet adapter supplies a normalized pet name/species subject key to the private Core public-request persistence function. Its public wrapper retains rate limits, service snapshots and duplicate checks. Staff explicitly select a matching existing pet or create a new owner/pet from intake, and assign staff/resources. Confirmation revalidates under scheduling locks. Anonymous intake never chooses an internal customer or pet ID. Requests do not reserve capacity.
+
+Grooming notes are append-only, branch-scoped, idempotent, and excluded from public projections. Owners/managers/advisors write them after arrival. Completed visits retain notes and optional recommended return dates. These recommendations do not automatically create recurring appointments. Payment and collection remain separate.

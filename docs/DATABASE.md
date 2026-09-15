@@ -77,3 +77,17 @@ Migration `0038_vehicle_service_history_maintenance.sql` exposes a bounded servi
 Migration `0039_maintenance_rebooking_snooze_backfill.sql` adds the Automotive maintenance-to-appointment foreign key (`ON DELETE SET NULL`), snooze actor/time/reason fields, source/backfill trace fields, and a notification activation flag. The partial appointment index supports directory/scheduler linkage reads; the existing unique active organization/vehicle/service index remains authoritative.
 
 `save_maintenance_appointment` locks the due row and atomically delegates appointment persistence to `save_appointment_with_assignments`, links the result, cancels stale reminder work, and audits the relationship. Browser roles retain SELECT-only access to maintenance due rows; mutation uses tenant- and branch-checked RPCs. The service-role backfill planner is read-only. Explicit apply processes no more than 100 records per batch, uses per-record subtransactions, and leaves legacy projections notification-disabled. Migration 0039 removes the service-role grant from the older global write-only `backfill_vehicle_service_records(limit)` utility; operations must use the scoped planner/apply boundary.
+
+## Pet Care standard availability (0070–0074)
+
+0070–0072 introduced pet profiles and atomic appointment associations using Core appointments, payments and delivery links. 0073 enables self-service Pet Care organization creation with the existing free subscription and removes pilot conditions from shared appointment functions. It configures parallel appointments for Pet Care while protecting industry/policy changes from clients; organization status, roles, branch access and entitlements remain authoritative.
+
+0074 adds `public_booking_requests.subject_key`, `pet_booking_details`, and `pet_grooming_notes`. The shared public-request persistence function is private; existing Automotive/Salon RPC signatures remain available through its wrapper. Pet intake and confirmation use explicit adapters. New tables have RLS and restricted grants. Note scope is validated against the appointment, and writes derive organization, branch and author from the authenticated appointment context. Pet and owner archival cannot strand active visits.
+
+Apply migrations in order, without rewriting earlier history. Existing Pet records and price snapshots are retained. No organization is automatically published and no paid entitlement is granted. Roll back application artifacts where compatible; database recovery should use a reviewed forward migration or an explicitly authorized restore, not automatic deletion of grooming records.
+
+## Shared appointment reporting
+
+Append-only migration `0075_shared_appointment_reporting.sql` adds `get_appointment_report(uuid,date,date,uuid)` for service-business report pages and CSV. It changes no tables or existing RLS policies. The read-only security-definer function uses a fixed search path, report permission, advanced-report entitlement, explicit tenant predicates, and accessible-branch filtering. Anonymous execution is revoked. Date ranges are bounded to 731 days. The existing Automotive invoice-report functions remain unchanged.
+
+Apply 0075 in migration order before enabling the new Salon/Pet report UI in a target environment. The common Payments page and Pet dashboard use existing Core ledger/appointment/invoice tables and no longer require `pet_care_financial_summary`; they require no migration from this phase. Existing payment-write RPCs still require the earlier scheduling/payment migrations.

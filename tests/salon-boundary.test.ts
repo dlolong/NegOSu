@@ -31,11 +31,11 @@ test("Shared public-page actions enforce supported industry features at the acti
 
 test("Salon operational routes expose dialogs and responsive list contracts",()=>{
   const expectations:Record<string,string[]>={
-    "app/dashboard/appointments/page.tsx":["salon-appointments-table","salon-appointments-mobile-list","salon-appointment-link-"],
-    "components/service-catalog.tsx":["salon-treatments-table","salon-treatments-mobile-list","-link-"],
-    "app/dashboard/settings/resources/page.tsx":["salon-resources-table","salon-resources-mobile-list","salon-resource-create-dialog"],
+    "app/dashboard/appointments/page.tsx":["salon-appointments-table","RecordTable","-link-"],
+    "components/service-catalog.tsx":["salon-treatments-table","RecordTable","-link-"],
+    "app/dashboard/settings/resources/page.tsx":["salon-resources-table","RecordTable","-create-dialog"],
     "app/dashboard/settings/staff/page.tsx":["salon-staff-page","loadStaffManagementDirectory","listOperationalStaffDirectory"],
-    "components/staff-management.tsx":["salon-staff-table","salon-staff-mobile-list"],
+    "components/staff-management.tsx":["salon-staff-table","RecordTable"],
     "app/dashboard/appointments/new/page.tsx":["salon-appointment-create-dialog"],
     "app/dashboard/services/new/page.tsx":["salon-treatment-create-dialog"],
   };

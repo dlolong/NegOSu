@@ -56,14 +56,14 @@ test("Salon enables shared scheduling and inventory while disabling Automotive o
   assert.equal(industrySupportsFeature(salonConfig,"vehicles"),false);
   assert.equal(industrySupportsFeature(salonConfig,"job_orders"),false);
   assert.equal(industrySupportsFeature(salonConfig,"queue"),false);
-  assert.equal(industrySupportsFeature(salonConfig,"payments"),false);
+  assert.equal(industrySupportsFeature(salonConfig,"payments"),true);
 });
 
 test("Salon navigation contains only working shared capabilities and terminology", () => {
   const navigation=navigationForIndustry(salonConfig,"owner");
   assert.ok(navigation.some(item=>item.label==="Clients"&&item.href==="/dashboard/customers"));
   assert.ok(navigation.some(item=>item.label==="Treatments"&&item.href==="/dashboard/services"));
-  for(const path of ["/dashboard/vehicles","/dashboard/queue","/dashboard/jobs","/dashboard/payments","/dashboard/reminders"]){
+  for(const path of ["/dashboard/vehicles","/dashboard/queue","/dashboard/jobs","/dashboard/reminders"]){
     assert.equal(navigation.some(item=>item.href===path),false);
   }
 });

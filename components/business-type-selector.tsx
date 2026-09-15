@@ -1,11 +1,12 @@
 "use client";
 
-import { BriefcaseBusiness, Scissors } from "lucide-react";
+import { BriefcaseBusiness, Scissors, PawPrint } from "lucide-react";
 import { useState } from "react";
 
 import { productEntryConfigs, type PublicProductKey } from "@/modules/platform/product-entry";
 
 const choices = [
+  { industry: "pet_care" as const, title: "Pet Care", description: "Pet grooming, bath, styling, and pet spa services.", Icon: PawPrint },
   {
     industry: "automotive" as const,
     title: "Automotive",

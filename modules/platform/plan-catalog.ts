@@ -92,11 +92,11 @@ export function planMatchesLaunchCatalog(plan: {
 }
 
 export function visiblePlanFeatureLabels(industry: string, features: Record<string, boolean>) {
-  if (industry !== "automotive" && industry !== "salon") return [];
+  if (industry !== "automotive" && industry !== "salon" && industry !== "pet_care") return [];
 
   const labels: string[] = [];
   if (features.public_page) labels.push("Public business page");
-  if (features.reminders) labels.push(industry === "salon" ? "Appointment reminders" : "Maintenance reminders");
+  if (features.reminders) labels.push(industry !== "automotive" ? "Appointment reminders" : "Maintenance reminders");
   if (industry === "automotive" && features.advanced_reports) labels.push("Advanced Automotive reports");
 
   // `ai` exists in the historical entitlement catalog but has no launch-ready

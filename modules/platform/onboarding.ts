@@ -1,7 +1,7 @@
 import type { PublicProductKey } from "@/modules/platform/product-entry";
 import { verticalBrands } from "@/modules/platform/brand";
 
-export const onboardingSignalKeys = ["branch", "services", "staff", "resources", "customers", "vehicles", "appointments"] as const;
+export const onboardingSignalKeys = ["branch", "services", "staff", "resources", "customers", "vehicles", "pets", "appointments"] as const;
 export type OnboardingSignalKey = (typeof onboardingSignalKeys)[number];
 
 export type OnboardingStepConfig = {
@@ -47,6 +47,18 @@ export const salonOnboarding: VerticalOnboardingConfig = {
 export const onboardingByIndustry: Record<PublicProductKey, VerticalOnboardingConfig> = {
   automotive: automotiveOnboarding,
   salon: salonOnboarding,
+  pet_care: {
+    title: "Welcome to NegOSu Pet Care", description: "Set up your pet grooming business. Staff accounts and contacts are optional.",
+    steps: [
+      { key: "branch", label: "Business and branch", description: "Set branch hours and timezone.", href: "/dashboard/settings/branches" },
+      { key: "services", label: "Grooming services", description: "Configure duration and price.", href: "/dashboard/services" },
+      { key: "staff", label: "Staff", description: "Add groomers, with or without login.", href: "/dashboard/settings/staff" },
+      { key: "resources", label: "Grooming resources", description: "Set tables, stations, or rooms and capacity.", href: "/dashboard/settings/resources" },
+      { key: "customers", label: "Pet owner", description: "Add the customer responsible for the pet.", href: "/dashboard/customers" },
+      { key: "pets", label: "Pet", description: "Record the pet and primary owner.", href: "/dashboard/pet-care/pets" },
+      { key: "appointments", label: "First grooming appointment", description: "Choose the pet, service, groomer, and resource.", href: "/dashboard/pet-care/appointments?dialog=create" },
+    ],
+  },
 };
 
 export function onboardingForIndustry(industry: PublicProductKey) {

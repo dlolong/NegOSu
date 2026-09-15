@@ -15,6 +15,7 @@ export type EvaluateAppointmentAvailabilityInput = z.input<typeof evaluateAppoin
 type ValidatedInput = z.output<typeof evaluateAppointmentAvailabilityInputSchema>;
 
 export type AvailabilityContext = {
+  parallelAppointments?: boolean;
   branch: { timezone: string; openingHours: Record<string, { open?: string; close?: string; closed?: boolean }> } | null;
   services: Array<{ id: string; durationMinutes: number; available: boolean }>;
   appointments: Array<{ id: string; startsAt: string; endsAt: string }>;
@@ -70,7 +71,7 @@ export async function evaluateAppointmentAvailability(input: EvaluateAppointment
   const conflicts: AvailabilityConflict[] = [];
   conflicts.push(...evaluateBranchHours(start, end, context));
   for (const serviceId of uniqueServiceIds) if (!context.services.some((service) => service.id === serviceId && service.available)) conflicts.push({ type: "service_unavailable", code: "SERVICE_NOT_AVAILABLE", message: "A selected service is unavailable at this branch.", serviceId });
-  for (const appointment of context.appointments) if (appointment.id !== parsed.data.appointmentId && doTimeRangesOverlap(start, end, new Date(appointment.startsAt), new Date(appointment.endsAt))) conflicts.push({ type: "appointment_conflict", code: "APPOINTMENT_OVERLAP", message: "Another appointment overlaps this time.", appointmentId: appointment.id });
+  for (const appointment of context.appointments) if (!context.parallelAppointments && appointment.id !== parsed.data.appointmentId && doTimeRangesOverlap(start, end, new Date(appointment.startsAt), new Date(appointment.endsAt))) conflicts.push({ type: "appointment_conflict", code: "APPOINTMENT_OVERLAP", message: "Another appointment overlaps this time.", appointmentId: appointment.id });
   for (const assignment of parsed.data.staffAssignments) {
     const staff = (context.staff ?? []).find(({ id }) => id === assignment.staffId);
     if (!staff?.available) conflicts.push({ type: "staff_conflict", code: "STAFF_NOT_AVAILABLE", message: "A selected staff member is unavailable.", staffId: assignment.staffId });
@@ -83,9 +84,24 @@ export async function evaluateAppointmentAvailability(input: EvaluateAppointment
     else if (!resource.atBranch) conflicts.push({ type: "resource_conflict", code: "RESOURCE_NOT_AT_BRANCH", message: "A selected scheduling resource is not at this branch.", resourceId: assignment.resourceId });
     else if (!resource.active) conflicts.push({ type: "resource_conflict", code: "RESOURCE_INACTIVE", message: "A selected scheduling resource is inactive.", resourceId: assignment.resourceId });
     else {
-      const usedCapacity = (context.resourceOccupancy ?? []).filter((item) => item.resourceId === assignment.resourceId && item.appointmentId !== parsed.data.appointmentId && doTimeRangesOverlap(start, end, new Date(item.startsAt), new Date(item.endsAt))).reduce((total, item) => total + item.quantity, 0);
+      const usedCapacity = peakOccupancy((context.resourceOccupancy ?? []).filter((item) => item.resourceId === assignment.resourceId && item.appointmentId !== parsed.data.appointmentId), start, end);
       if (usedCapacity + 1 > resource.capacity) conflicts.push({ type: "resource_conflict", code: resource.capacity === 1 ? "RESOURCE_BUSY" : "RESOURCE_CAPACITY_EXCEEDED", message: resource.capacity === 1 ? "A selected scheduling resource is busy." : "A selected scheduling resource has no remaining capacity.", resourceId: assignment.resourceId });
     }
   }
   return { available: conflicts.length === 0, conflicts, scheduledEnd: end.toISOString(), durationMinutes };
+}
+
+/** Half-open intervals: departures at a timestamp release capacity before arrivals. */
+export function peakOccupancy(items: Array<{ startsAt: string; endsAt: string; quantity: number }>, start: Date, end: Date) {
+  const changes = new Map<number, number>();
+  for (const item of items) {
+    const from = Math.max(start.valueOf(), new Date(item.startsAt).valueOf());
+    const to = Math.min(end.valueOf(), new Date(item.endsAt).valueOf());
+    if (from >= to) continue;
+    changes.set(from, (changes.get(from) ?? 0) + item.quantity);
+    changes.set(to, (changes.get(to) ?? 0) - item.quantity);
+  }
+  let occupancy = 0, peak = 0;
+  for (const [, change] of [...changes].sort(([a], [b]) => a - b)) { occupancy += change; peak = Math.max(peak, occupancy); }
+  return peak;
 }

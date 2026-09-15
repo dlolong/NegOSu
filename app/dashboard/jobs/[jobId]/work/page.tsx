@@ -1,3 +1,4 @@
+import { SearchableSelect } from "@/components/searchable-select";
 
 import { ArrowLeft as ArrowLeftIcon, Plus as PlusIcon, UserRoundCheck as UserRoundCheckIcon, X as XIcon } from "lucide-react";
 
@@ -69,10 +70,7 @@ export default async function JobWorkPage({ params, searchParams }: { params: Pr
               <input type="hidden" name="jobId" value={jobId} />
               <input type="hidden" name="itemId" value={item.id} />
               <label className="sr-only" htmlFor={`job-order-work-technician-select-${item.id}`}>Technician for {item.service_name_snapshot}</label>
-              <select id={`job-order-work-technician-select-${item.id}`} name="staffId" defaultValue={item.technician_staff_id ?? ""} className="min-h-11 min-w-0 grow rounded-xl border border-admin-border-strong bg-white px-3 text-sm">
-                <option value="">No service technician</option>
-                {branchStaff.map((staff) => <option key={staff.staff_id} value={staff.staff_id}>{staff.full_name}</option>)}
-              </select>
+              <SearchableSelect id={`job-order-work-technician-select-${item.id}`} name="staffId" defaultValue={item.technician_staff_id??""} options={branchStaff.map(staff=>({id:staff.staff_id,name:staff.full_name??"Staff member"}))} placeholder="Search technician or leave unassigned"/>
               <FormActions id={`job-order-work-assignment-actions-${item.id}`}><SubmitButton id={`job-order-work-assign-button-${item.id}`} pendingText="Assigning…" variant="secondary"><UserRoundCheckIcon aria-hidden="true" size={16} className="shrink-0"/>Assign</SubmitButton></FormActions>
             </form> : null}
             {canManage && item.approval_status === "proposed" ? <div className="mt-3 flex flex-wrap gap-2">
@@ -88,10 +86,7 @@ export default async function JobWorkPage({ params, searchParams }: { params: Pr
         {loaded.servicesError ? <ErrorState id="job-order-services-load-error" title="Services unavailable" description="The service catalog could not be loaded. Refresh before adding work." /> : <form id="job-order-additional-work-form" action={addJobService} className="mt-4 grid gap-4">
           <input type="hidden" name="jobId" value={loaded.job.id} />
           <label className="text-sm font-medium" htmlFor="job-order-additional-service-select">Service
-            <select id="job-order-additional-service-select" required name="serviceId" className="mt-2 min-h-11 w-full rounded-xl border border-admin-border-strong bg-white px-3">
-              <option value="">Select service</option>
-              {loaded.services.map((service) => <option key={service.id} value={service.id}>{service.name} · {formatMoney(service.base_price_centavos)}</option>)}
-            </select>
+            <SearchableSelect id="job-order-additional-service-select" required name="serviceId" options={loaded.services} lookup="service" placeholder="Search service or category"/>
           </label>
           <label className="text-sm font-medium" htmlFor="job-order-additional-quantity-input">Quantity
             <Input id="job-order-additional-quantity-input" required name="quantity" type="number" min={1} max={100} defaultValue={1} />

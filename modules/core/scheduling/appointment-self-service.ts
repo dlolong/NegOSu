@@ -6,7 +6,7 @@ export function createAppointmentSelfServiceToken(){return randomBytes(32).toStr
 export function hashAppointmentSelfServiceToken(token:string){return createHash("sha256").update(appointmentSelfServiceTokenSchema.parse(token)).digest("hex");}
 
 const publicAppointmentSchema=z.discriminatedUnion("state",[
-  z.object({state:z.literal("active"),businessName:z.string(),logoUrl:z.string().nullable().optional(),branchName:z.string(),branchTimezone:z.string(),appointmentStatus:z.string(),startsAt:z.string(),endsAt:z.string().nullable(),treatments:z.array(z.object({name:z.string(),durationMinutes:z.number()})),assignedStaff:z.array(z.string()),paymentStatus:z.enum(["unpaid","partial","paid"]),totalCentavos:z.number(),paidCentavos:z.number()}),
+  z.object({state:z.literal("active"),businessName:z.string(),petName:z.string().nullable().optional(),scheduleRevision:z.number().int().nonnegative().optional(),logoUrl:z.string().nullable().optional(),branchName:z.string(),branchTimezone:z.string(),appointmentStatus:z.string(),startsAt:z.string(),endsAt:z.string().nullable(),treatments:z.array(z.object({name:z.string(),durationMinutes:z.number()})),assignedStaff:z.array(z.string()),paymentStatus:z.enum(["unpaid","partial","paid"]),totalCentavos:z.number(),paidCentavos:z.number()}),
   z.object({state:z.enum(["invalid","expired","revoked","unavailable"])}),
 ]);
 export type PublicAppointmentSelfService=z.infer<typeof publicAppointmentSchema>;

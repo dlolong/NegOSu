@@ -181,3 +181,11 @@ test("notification cron authentication requires the configured bearer secret",()
   assert.equal(isAuthorizedNotificationCron(new Request("https://example.test",{headers:{authorization:`Bearer ${secret}`}}),secret),true);
   assert.equal(isAuthorizedNotificationCron(new Request("https://example.test"),undefined),false);
 });
+
+test("reference eligibility is rechecked before a prepared message reaches a provider",async()=>{
+ const repository=new MemoryRepository([claimed({notificationType:"PET_CARE_READY",deliverySecretId:null,expiresAt:null})]);
+ const provider=new StubProvider();
+ const result=await processNotificationOutboxBatch({repository,providers:{email:provider,sms:provider},render:()=>({body:"Milo is ready for pickup."}),workerId:"pet-test",isReferenceCurrent:async()=>false});
+ assert.equal(result.cancelled,1);assert.equal(provider.calls.length,0);
+ assert.equal(repository.results[0].errorCode,"REFERENCE_NO_LONGER_ELIGIBLE");
+});

@@ -78,7 +78,7 @@ test("Staff settings use canonical profile RPCs, safe directory reads, dialogs, 
   assert.doesNotMatch(page, /from\("organization_memberships"/);
   for (const service of ["saveStaffProfileService", "inviteStaffProfileService", "updateStaffProfileAccessService"]) assert.match(actions, new RegExp(service));
   assert.doesNotMatch(actions, /\.rpc\("(?:save_staff_profile|create_staff_profile_invitation|update_staff_profile_access)"/);
-  for (const id of ["salon-staff-table", "salon-staff-mobile-list", "staff-table", "staff-mobile-list", "-create-dialog", "-edit-dialog", "-access-dialog", "-login-email-input", "-access-status-"]) {
+  for (const id of ["salon-staff-table", "staff-table", "RecordTable", "-create-dialog", "-edit-dialog", "-access-dialog", "-login-email-input", "-access-status-"]) {
     assert.match(`${page}\n${presentation}`, new RegExp(id));
   }
   assert.match(presentation, /Contact details are optional and do not create a login/);

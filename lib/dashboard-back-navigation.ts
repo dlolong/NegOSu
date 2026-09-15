@@ -3,6 +3,8 @@ export function dashboardBackDestination(pathname: string, salon = false): { hre
   const parts = pathname.replace(/\/$/, "").split("/").filter(Boolean);
   if (parts[0] !== "dashboard" || parts.length < 3) return null;
   const section = parts[1];
+  // Salon appointment forms provide a Close control to the same destination.
+  if (salon && section === "appointments" && (parts[2] === "new" || parts[3] === "edit")) return null;
   if (section === "settings") {
     if (parts.length > 3 && ["branches", "resources"].includes(parts[2])) return { href: `/dashboard/settings/${parts[2]}`, label: parts[2] === "branches" ? "Back to branches" : "Back to resources" };
     return { href: "/dashboard/settings", label: "Back to settings" };

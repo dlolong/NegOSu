@@ -41,7 +41,7 @@ The core `saveAppointment` service accepts only organization, branch, customer, 
 
 The existing `save_appointment` SQL function remains a lower persistence boundary. Its optional storage field supports an atomic vertical association but does not make that association part of the core scheduling contract.
 
-Core stops at scheduling and the Appointment record. Job Orders, inspections, automotive technician execution, QC, and vehicle release are not Core concepts. A future Beauty vertical can use Customer, Appointment, Scheduling, Staff, Services, and Payments without importing automotive work execution.
+Core stops at scheduling and the Appointment record. Job Orders, inspections, automotive technician execution, QC, and vehicle release are not Core concepts. Salon and Pet Care consume Customer, Appointment, Scheduling, Staff, Services, and Payments without importing automotive work execution.
 
 Core Inventory owns the append-only physical movement ledger plus generic reservations addressed by an opaque external reference. Its terms are organization, branch, inventory item, reserved quantity, consumed quantity, released quantity, and idempotency key. It does not derive estimate requirements or know Job Orders, vehicles, inspections, or technician workflow. Vertical adapters supply those policies.
 
@@ -90,3 +90,9 @@ Availability inputs contain only organization, branch, appointment, services, an
 Core Command Center owns only the shared presentation contract, owner/manager branch-scope resolution, paid Payment totals, shared Appointment counts and standalone balances, Core Inventory low-stock counts, deterministic action ordering, and composition helpers. It has no Automotive or Salon action codes and imports neither vertical.
 
 The active vertical supplies current actions, operational rows, staff context, terminology, and deep links. The application page composes those pieces. No Action Inbox business state is persisted, and reading the dashboard creates no audit event. Detailed metric and role semantics are in `docs/COMMAND_CENTER.md`.
+
+## Shared financial workspace and reporting
+
+`modules/core/payments/payment-workspace.ts` reads the authenticated tenant/branch ledger and invoice or appointment documents. UI composition selects the document kind. Full-result pagination avoids silently capped totals; query errors fail visibly instead of becoming zero balances. The common payment UI lists history and outstanding documents, which open existing authoritative collection forms. Pet dashboard finance uses the same reader and does not depend on a Pet-only summary RPC.
+
+`modules/core/reporting/report-reader.ts` supplies one UI/CSV report contract. Invoice reporting preserves existing Automotive aggregates; `get_appointment_report` aggregates service snapshots, cash receipts, staff activity, and current outstanding balances for appointments. SQL enforces report permission, plan entitlement, and branch scope; report viewers can read approved aggregates without receiving direct payment-ledger access. Appointment sales use the scheduled branch-local date of completed appointments, cash uses payment date, and outstanding uses current balances of appointments scheduled in the selected period. Legacy report field names are translated into appointment/staff wording at the presentation boundary.

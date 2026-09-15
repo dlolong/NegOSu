@@ -20,6 +20,7 @@ type DashboardQuery = { branch?: string; error?: string };
 export default async function DashboardPage({ searchParams }: { searchParams: Promise<DashboardQuery> }) {
   const [query, context] = await Promise.all([searchParams, getDashboardContext()]);
   const { activeMembership, profile } = context;
+  if (activeMembership.industry === "pet_care") redirect("/dashboard/pet-care");
   const isCommandCenterRole = activeMembership.role === "owner" || activeMembership.role === "manager";
   if (!isCommandCenterRole) {
     if (activeMembership.industry === "automotive" && activeMembership.role === "technician") redirect("/dashboard/my-work");
@@ -99,6 +100,7 @@ async function StaffOperationalDashboard({ query, context }: { query: DashboardQ
 
 function quickActions(industry: string, role: Parameters<typeof roleHasPermission>[0], scopeMode: "branch" | "all"): CommandCenterQuickAction[] {
   const candidates = industry === "salon" ? [
+    { id: "add-walk-in", label: "Add Walk-In", description: "Check in an arriving client", href: "/dashboard/appointments/new?mode=walk-in", permission: "appointments.manage" as const },
     { id: "new-appointment", label: "New Appointment", description: "Book a Client visit", href: "/dashboard/appointments/new", permission: "appointments.manage" as const },
     { id: "add-client", label: "Add Client", description: "Create a Client record", href: "/dashboard/customers/new", permission: "customers.write" as const },
     { id: "add-treatment", label: "Add Treatment", description: "Configure a Treatment", href: "/dashboard/services/new", permission: "services.manage" as const },

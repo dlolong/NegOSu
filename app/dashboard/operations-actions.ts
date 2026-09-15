@@ -7,6 +7,7 @@ import { writeServiceCategory, servicesCatalogHref, type CategoryActionState } f
 import { getDashboardContext } from "@/lib/auth/context";
 import { firstError, formValue, normalizePlate } from "@/lib/crm";
 import { reportActionError } from "@/lib/errors/action-error";
+import { walkInErrorMessage } from "@/lib/errors/walk-in-error";
 import { parseMoneyToCentavos, selectedValues, serviceSchema, walkInSchema, zonedDateTimeToUtc } from "@/lib/operations";
 import { createClient } from "@/lib/supabase/server";
 import { assertIndustryFeature } from "@/lib/auth/industry-access";
@@ -121,5 +122,38 @@ export async function saveAppointment(data:FormData) {
 
 export async function transitionAppointment(data:FormData){const id=formValue(data,"id"),supabase=await createClient();const{error}=await supabase.rpc("transition_appointment",{p_appointment_id:id,p_action:formValue(data,"action"),p_reason:formValue(data,"reason")||null});if(error)go(`/dashboard/appointments/${id}`,"error","That appointment transition is not allowed.");revalidatePath("/dashboard");go(`/dashboard/appointments/${id}`,"message","Appointment updated.");}
 export async function enqueueAppointment(data:FormData){const id=formValue(data,"id"),{activeMembership}=await getDashboardContext();assertIndustryFeature(activeMembership,"queue");const supabase=await createClient();const{error}=await supabase.rpc("enqueue_appointment",{p_appointment_id:id});if(error)go(`/dashboard/appointments/${id}`,"error",error.code==="23505"?"This appointment is already in the queue.":"Unable to add this appointment to the queue. Refresh and try again.");revalidatePath("/dashboard");redirect("/dashboard/queue?message=Appointment+added+to+queue.");}
-export async function createWalkIn(data:FormData){const back="/dashboard/queue/new",{activeMembership}=await getDashboardContext();assertIndustryFeature(activeMembership,"queue");if(!operator(activeMembership.role))go("/dashboard/queue","error","You have read-only access.");const resolved=await resolveVisitEntities(data,activeMembership.organizationId,back);const parsed=walkInSchema.safeParse({branchId:formValue(data,"branchId"),customerId:resolved.customerId,vehicleId:resolved.vehicleId,serviceIds:selectedValues(data,"serviceIds"),notes:formValue(data,"notes")});if(!parsed.success)go(back,"error",firstError(parsed.error));if(!activeMembership.branches.some(branch=>branch.id===parsed.data.branchId))go(back,"error","Select an active branch in this organization.");const supabase=await createClient();const{error}=await supabase.rpc("create_walk_in",{p_branch_id:parsed.data.branchId,p_customer_id:parsed.data.customerId,p_vehicle_id:parsed.data.vehicleId,p_service_ids:parsed.data.serviceIds,p_notes:parsed.data.notes});if(error)go(back,"error","Unable to add this walk-in. Review the customer, vehicle, and services, then try again.");revalidatePath("/dashboard");redirect("/dashboard/queue?message=Walk-in+added+to+queue.");}
+export async function createWalkIn(data: FormData): Promise<{ error: string }> {
+  const back = "/dashboard/queue/new";
+  const { activeMembership } = await getDashboardContext();
+  assertIndustryFeature(activeMembership, "queue");
+  if (!operator(activeMembership.role)) return { error: "You have read-only access." };
+  if (!activeMembership.branches.some(branch => branch.id === formValue(data, "branchId"))) {
+    return { error: "Select an active branch in this organization." };
+  }
+  const resolved = await resolveVisitEntities(data, activeMembership.organizationId, back);
+  const parsed = walkInSchema.safeParse({
+    branchId: formValue(data, "branchId"), customerId: resolved.customerId,
+    vehicleId: resolved.vehicleId, serviceIds: selectedValues(data, "serviceIds"), notes: formValue(data, "notes"),
+  });
+  if (!parsed.success) return { error: firstError(parsed.error) };
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("create_walk_in", {
+    p_branch_id: parsed.data.branchId, p_customer_id: parsed.data.customerId,
+    p_vehicle_id: parsed.data.vehicleId, p_service_ids: parsed.data.serviceIds, p_notes: parsed.data.notes,
+  });
+  if (error) return { error: reportActionError("queue.create_walk_in", error, walkInErrorMessage(error)) };
+  revalidatePath("/dashboard");
+  redirect("/dashboard/queue?message=Walk-in+added+to+queue.");
+}
+
 export async function transitionQueue(data:FormData){const{activeMembership}=await getDashboardContext();assertIndustryFeature(activeMembership,"queue");const supabase=await createClient();const{error}=await supabase.rpc("transition_queue_entry",{p_queue_id:formValue(data,"id"),p_status:formValue(data,"status")});if(error)go("/dashboard/queue","error","That queue transition is not allowed.");revalidatePath("/dashboard");go("/dashboard/queue","message","Queue updated.");}
+
+export async function addStarterServices() {
+  const { activeMembership } = await getDashboardContext();
+  const { installStarterServices } = await import("@/modules/core/catalog/install-starter-services");
+  const result = await installStarterServices(await createClient(), activeMembership);
+  if (result.error) go("/dashboard/services?dialog=starter-services", "error", result.error);
+  revalidatePath("/dashboard/services");
+  revalidatePath("/onboarding/setup");
+  go("/dashboard/services", "message", result.added ? `${result.added} starter services added. Review their prices and durations before use.` : "Your starter services are already in the catalog.");
+}

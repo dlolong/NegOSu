@@ -62,7 +62,7 @@ async function readStaffCount(
 
 export async function getOnboardingSignals(supabase: SupabaseClient, membership: OrganizationMembership, userId: string): Promise<Record<OnboardingSignalKey, boolean>> {
   const organizationId = membership.organizationId;
-  const [branches, services, otherStaff, resources, customers, appointments, vehicles] = await Promise.all([
+  const [branches, services, otherStaff, resources, customers, appointments, vehicles, pets] = await Promise.all([
     readCount(supabase.from("branches").select("id", { count: "exact", head: true }).eq("organization_id", organizationId).eq("is_active", true)),
     readCount(supabase.from("services").select("id", { count: "exact", head: true }).eq("organization_id", organizationId).eq("is_active", true)),
     readStaffCount(supabase, membership, userId),
@@ -73,6 +73,7 @@ export async function getOnboardingSignals(supabase: SupabaseClient, membership:
     membership.industry === "automotive"
       ? readCount(supabase.from("vehicles").select("id", { count: "exact", head: true }).eq("organization_id", organizationId).eq("is_archived", false))
       : Promise.resolve(0),
+    membership.industry === "pet_care" ? readCount(supabase.from("pet_profiles").select("id", { count: "exact", head: true }).eq("organization_id", organizationId).eq("is_active", true)) : Promise.resolve(0),
   ]);
 
   return {
@@ -82,6 +83,7 @@ export async function getOnboardingSignals(supabase: SupabaseClient, membership:
     resources: resources > 0,
     customers: customers > 0,
     vehicles: vehicles > 0,
+    pets: pets > 0,
     appointments: appointments > 0,
   };
 }

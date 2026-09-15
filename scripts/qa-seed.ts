@@ -1,3 +1,4 @@
+import { seedPetCareFixtures } from "./qa-pet-care-fixture";
 import { createClient, type SupabaseClient, type User } from "@supabase/supabase-js";
 
 import {
@@ -338,6 +339,8 @@ async function main() {
     allowRemoteDevelopment: process.env.QA_SEED_ALLOW_REMOTE_DEVELOPMENT,
     confirmation: process.env.QA_SEED_CONFIRM,
   });
+  const includePetCare = process.argv.includes("--pet-care");
+  if (includePetCare && safety.target !== "local") throw new Error("Pet Care demo fixtures are local-only.");
   const credentials = qaCredentials(safety.target);
   const personas: QaPersona[] = [
     {
@@ -367,6 +370,7 @@ async function main() {
     return;
   }
 
+  if (includePetCare) for (const name of ["QA_OWNER_PASSWORD", "QA_PET_OWNER_EMAIL", "QA_PET_OTHER_EMAIL"]) requiredEnvironmentValue(name);
   const serviceRoleKey = requiredEnvironmentValue("SUPABASE_SERVICE_ROLE_KEY");
   const client = createClient(requiredEnvironmentValue("NEXT_PUBLIC_SUPABASE_URL"), serviceRoleKey, {
     auth: { autoRefreshToken: false, persistSession: false, detectSessionInUrl: false },
@@ -412,6 +416,7 @@ async function main() {
   // cannot leave login-capable personas pointing at an incomplete tenant.
   for (const fixture of fixtures) await ensureVerticalFixture(client, fixture);
   for (const persona of personas) await applyPersona(client, persona);
+  if (includePetCare) await seedPetCareFixtures(client, requiredEnvironmentValue("NEXT_PUBLIC_SUPABASE_URL"));
   console.log("[qa-seed] Complete. Re-running this command updates the same users and memberships without duplicates.");
 }
 

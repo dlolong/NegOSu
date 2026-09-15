@@ -22,7 +22,7 @@ const activeOrganizationCookieOptions = {
 
 function organizationCreationErrorMessage(errorCode: string | null) {
   if (errorCode === "P0001") return "This account has already started business setup.";
-  if (errorCode === "ONBOARDING_SCHEMA_OUTDATED") return "Salon & Beauty setup is temporarily unavailable while the database is being updated.";
+  if (errorCode === "ONBOARDING_SCHEMA_OUTDATED") return "Business setup is temporarily unavailable while the database is being updated.";
   return "Unable to create the business. Check the details and try again.";
 }
 
@@ -51,6 +51,10 @@ export async function createOrganization(formData: FormData) {
     const message = organizationCreationErrorMessage(result.errorCode);
     redirect(`/onboarding/business?error=${encodeURIComponent(message)}`);
   }
+
+  const { installStarterServices } = await import("@/modules/core/catalog/install-starter-services");
+  const starterResult = await installStarterServices(supabase, { organizationId: result.organizationId, role: "owner" });
+  if (starterResult.error) console.error("onboarding.starter_catalog_unavailable");
 
   const cookieStore = await cookies();
   cookieStore.set(ACTIVE_ORGANIZATION_COOKIE, result.organizationId, activeOrganizationCookieOptions);

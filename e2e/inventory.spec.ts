@@ -1,3 +1,4 @@
+import { selectRecord } from "./helpers/searchable-select";
 import { expect, test, type Page } from "@playwright/test";
 import { renderFormFixture } from "./fixtures/form-browser";
 test.use({ browserName: "chromium" });
@@ -9,6 +10,7 @@ test.beforeAll(async () => { html = await renderFormFixture("e2e/fixtures/invent
 test.beforeEach(async ({ page }) => {
   calls.length = 0; failure = undefined; release = undefined;
   await page.exposeFunction("recordFormAction", async (name: string, entries: Array<[string, string]>) => {
+    if(name==="lookupRecords")return {data:[{id:"87000000-0000-4000-8000-000000000001",name:"Cleaning service"}]};
     calls.push({ name, data: Object.fromEntries(entries) });
     if (entries.some(([key, value]) => key === "note" && value === "WAIT")) await new Promise<void>(resolve => { release = resolve; });
     return failure ? { error: failure } : {};
@@ -17,10 +19,11 @@ test.beforeEach(async ({ page }) => {
 });
 async function contained(page: Page) {
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(page.viewportSize()!.width);
-  for (const element of await page.locator('button:visible, a:visible, input:visible, select:visible').all()) {
-    const box = await element.boundingBox();
-    expect(box!.x).toBeGreaterThanOrEqual(0);
-    expect(box!.x + box!.width).toBeLessThanOrEqual(page.viewportSize()!.width + 1);
+  // Capture one layout snapshot; searchable options can close while assertions run.
+  const boxes=await page.locator('button:visible, a:visible, input:visible, select:visible').evaluateAll(elements=>elements.map(element=>{const box=element.getBoundingClientRect();return {x:box.x,width:box.width};}));
+  for (const box of boxes) {
+    expect(box.x).toBeGreaterThanOrEqual(0);
+    expect(box.x + box.width).toBeLessThanOrEqual(page.viewportSize()!.width + 1);
   }
 }
 test("stock list is focused, responsive and handles long product metadata", async ({ page }) => {
@@ -84,17 +87,17 @@ test("pending movement disables Save and Cancel to prevent duplicate submissions
 });
 test("transfers filter destination SKUs, reset stale selections and submit chosen stock", async ({ page }) => {
   await page.goto("https://forms.test/dashboard/inventory?dialog=transfer");
-  const source = page.locator("#inventory-transfer-source"), target = page.locator("#inventory-transfer-target");
+  const target = page.locator("#inventory-transfer-target");
   await expect(target).toBeDisabled();
-  await source.selectOption("a7000000-0000-4000-8000-000000000001");
-  await expect(target.locator("option")).toHaveCount(2);
-  await target.selectOption("a7000000-0000-4000-8000-000000000004");
-  await source.selectOption("a7000000-0000-4000-8000-000000000002");
+  await selectRecord(page,"inventory-transfer-source",{id:"a7000000-0000-4000-8000-000000000001"});
+  await target.click(); await expect(page.locator("#inventory-transfer-target-options").getByRole("option")).toHaveCount(1);
+  await selectRecord(page,"inventory-transfer-target",{id:"a7000000-0000-4000-8000-000000000004"});
+  await selectRecord(page,"inventory-transfer-source",{id:"a7000000-0000-4000-8000-000000000002"});
   await expect(target).toHaveValue("");
   await expect(page.locator("#inventory-transfer-button")).toBeDisabled();
   await expect(page.getByText(/No matching product in another accessible branch/)).toBeVisible();
-  await source.selectOption("a7000000-0000-4000-8000-000000000001");
-  await target.selectOption("a7000000-0000-4000-8000-000000000004");
+  await selectRecord(page,"inventory-transfer-source",{id:"a7000000-0000-4000-8000-000000000001"});
+  await selectRecord(page,"inventory-transfer-target",{id:"a7000000-0000-4000-8000-000000000004"});
   await page.locator("#inventory-transfer-quantity").fill("2");
   await contained(page);
   await page.locator("#inventory-transfer-button").click();
@@ -103,9 +106,9 @@ test("transfers filter destination SKUs, reset stale selections and submit chose
 });
 test("recipe Save submits the selected service and branch product", async ({ page }) => {
   await page.goto("https://forms.test/dashboard/inventory?dialog=recipe");
-  await page.locator("#inventory-recipe-service-select").selectOption("87000000-0000-4000-8000-000000000001");
-  await expect(page.locator("#inventory-recipe-item-select option")).toHaveCount(4);
-  await page.locator("#inventory-recipe-item-select").selectOption("a7000000-0000-4000-8000-000000000001");
+  await selectRecord(page,"inventory-recipe-service-select",{id:"87000000-0000-4000-8000-000000000001"});
+  await page.locator("#inventory-recipe-item-select").click(); await expect(page.locator("#inventory-recipe-item-select-options").getByRole("option")).toHaveCount(3);
+  await selectRecord(page,"inventory-recipe-item-select",{id:"a7000000-0000-4000-8000-000000000001"});
   await page.locator("#inventory-recipe-quantity-input").fill("0.5");
   await page.locator("#inventory-recipe-save-button").click();
   await expect.poll(() => calls.length).toBe(1);
@@ -116,7 +119,7 @@ test("history displays dated signed movements and Close dismisses a dialog witho
   await page.goto("https://forms.test/dashboard/inventory");
   await page.locator("#inventory-history-tab").click();
   await expect(page.locator("#inventory-history")).toContainText("+5 L");
-  await expect(page.locator("time")).toHaveAttribute("datetime", "2026-09-14T03:00:00Z");
+  await expect(page.locator("time:visible")).toHaveAttribute("datetime", "2026-09-14T03:00:00Z");
   await page.locator("#inventory-transfer-open-button").click();
   await page.locator("#inventory-transfer-dialog-close-button").click();
   await expect(page).toHaveURL("https://forms.test/dashboard/inventory?view=history");
@@ -187,4 +190,9 @@ test("stock items open read-only details from their name and row/card content", 
   expect(calls).toEqual([]);
   await expect(page.locator("#inventory-details-dialog").getByRole("link", { name: "Record movement", exact: true })).toHaveCount(0);
   await contained(page);
+});
+
+test("product categories are searchable and adding a new value requires confirmation",async({page})=>{
+ await page.goto("https://forms.test/dashboard/inventory?dialog=create");await page.locator("#inventory-item-name-input").fill("Category product");await selectRecord(page,"inventory-item-category-input",{name:"Supplies"});await page.locator("#inventory-item-category-input").fill("New Supplies");await page.locator("#inventory-item-category-input-create").click();await page.locator("#inventory-item-category-input-new-actions-cancel-button").click();await expect(page.locator("#inventory-item-category-input")).toHaveValue("Supplies");await expect(page.locator("#inventory-item-name-input")).toHaveValue("Category product");expect(calls).toEqual([]);
+ await page.locator("#inventory-item-category-input").fill("New Supplies");await page.locator("#inventory-item-category-input-create").click();await page.locator("#inventory-item-category-input-new-save").click();await page.locator("#inventory-item-save-button").click();await expect.poll(()=>calls.length).toBe(1);expect(calls[0].data.category).toBe("New Supplies");
 });

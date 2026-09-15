@@ -42,6 +42,8 @@ export const environmentVariableCatalog = {
   QA_SEED_CONFIRM: { classification: "TEST_ONLY", purpose: "Confirms the destructive-safe QA seed operation.", secret: false },
   QA_AUTOMOTIVE_OWNER_EMAIL: { classification: "TEST_ONLY", purpose: "Creates the deterministic Automotive QA persona.", secret: false },
   QA_SALON_OWNER_EMAIL: { classification: "TEST_ONLY", purpose: "Creates the deterministic Salon QA persona.", secret: false },
+  QA_PET_OWNER_EMAIL: { classification: "TEST_ONLY", purpose: "Authenticates the first local Pet Care QA business.", secret: false },
+  QA_PET_OTHER_EMAIL: { classification: "TEST_ONLY", purpose: "Authenticates the isolated second local Pet Care QA business.", secret: false },
   QA_OWNER_PASSWORD: { classification: "TEST_ONLY", purpose: "Authenticates non-production QA personas.", secret: true },
 } as const satisfies Record<string, EnvironmentVariableDefinition>;
 

@@ -1,6 +1,6 @@
 # NegOSu
 
-**NegOSu** is a Philippines-first, multi-tenant operating platform for service businesses. The current products are **NegOSu Automotive** and **NegOSu Salon & Beauty**. ServiceCore and KarKR remain internal/legacy engineering names where changing them would create needless migration risk.
+**NegOSu** is a Philippines-first, multi-tenant operating platform for service businesses. The current products are **NegOSu Automotive**, **NegOSu Salon & Beauty**, and **NegOSu Pet Care**. ServiceCore and KarKR remain internal/legacy engineering names where changing them would create needless migration risk.
 
 Positioning: **The Operating System for Your Negosyo.**
 
@@ -8,7 +8,7 @@ Positioning: **The Operating System for Your Negosyo.**
 This repository includes:
 - Next.js App Router + TypeScript + Tailwind;
 - Supabase browser/server client setup;
-- a responsive product shell with Automotive and Salon operational workflows;
+- a responsive product shell with Automotive, Salon, and Pet Care grooming workflows;
 - PostgreSQL/Supabase schema for organizations, branches, customers, vehicles, services, appointments, job orders, payments, inventory, subscriptions, and audit events;
 - RLS helper functions and baseline policies;
 - Codex-specific `AGENTS.md`;

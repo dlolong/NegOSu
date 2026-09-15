@@ -18,7 +18,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const { slug } = await params;
   const publicShop = await loadPublicBusiness(slug);
   if (!publicShop) return { title: "Business not found" };
-  const description = publicShop.description ?? `Book ${publicShop.industry === "salon" ? "salon treatments" : "automotive services"} with ${publicShop.name}.`;
+  const description = publicShop.description ?? `Book ${publicShop.industry === "pet_care" ? "pet grooming" : publicShop.industry === "salon" ? "salon treatments" : "automotive services"} with ${publicShop.name}.`;
   return {
     ...businessMetadata(publicShop.name, publicShop.logoUrl),
     description,
@@ -37,7 +37,7 @@ export default async function Page({ params }: { params: Promise<{ slug: string 
   const bookingHref = `/shop/${encodeURIComponent(slug)}/book`;
   const jsonLd = {
     "@context": "https://schema.org",
-    "@type": industry === "salon" ? "BeautySalon" : "AutomotiveBusiness",
+    "@type": industry === "pet_care" ? "LocalBusiness" : industry === "salon" ? "BeautySalon" : "AutomotiveBusiness",
     name: publicShop.name,
     description: publicShop.description,
     telephone: publicShop.phone,
@@ -46,7 +46,7 @@ export default async function Page({ params }: { params: Promise<{ slug: string 
     address: publicShop.branches[0]?.address.filter(Boolean).join(", "),
   };
 
-  return <main id={industry === "salon" ? "public-salon-shop-page" : "public-automotive-shop-page"} className="min-h-dvh bg-admin-canvas text-admin-text">
+  return <main id={industry === "pet_care" ? "public-pet-care-shop-page" : industry === "salon" ? "public-salon-shop-page" : "public-automotive-shop-page"} className="min-h-dvh bg-admin-canvas text-admin-text">
     <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replaceAll("<", "\\u003c") }} />
 
     <header id="public-shop-header" className="border-b border-admin-border bg-white">
@@ -61,9 +61,9 @@ export default async function Page({ params }: { params: Promise<{ slug: string 
     <section id="public-automotive-shop-hero" className="overflow-hidden bg-white">
       <div className="mx-auto grid max-w-6xl items-center gap-8 px-4 py-10 sm:px-6 sm:py-14 lg:grid-cols-[minmax(0,1fr)_minmax(22rem,0.9fr)] lg:py-16">
         <div>
-          <p className="text-sm font-semibold text-brand-primary-strong">{industry === "salon" ? "Salon & beauty" : "Automotive care"}</p>
+          <p className="text-sm font-semibold text-brand-primary-strong">{industry === "pet_care" ? "Pet grooming" : industry === "salon" ? "Salon & beauty" : "Automotive care"}</p>
           <h1 className="mt-3 max-w-3xl text-4xl font-semibold tracking-tight text-brand-ink sm:text-5xl lg:text-6xl">{publicShop.name}</h1>
-          <p className="mt-5 max-w-2xl text-lg leading-8 text-admin-text-secondary">{publicShop.description ?? (industry === "salon" ? "Professional salon care with a simple online booking experience." : "Professional vehicle care with a simple online booking experience.")}</p>
+          <p className="mt-5 max-w-2xl text-lg leading-8 text-admin-text-secondary">{publicShop.description ?? (industry === "pet_care" ? "Thoughtful pet grooming with a simple online booking experience." : industry === "salon" ? "Professional salon care with a simple online booking experience." : "Professional vehicle care with a simple online booking experience.")}</p>
           <div className="mt-7 flex flex-col gap-3 sm:flex-row sm:flex-wrap"><Button id="public-automotive-shop-book-button" asChild size="lg"><Link href={bookingHref}>View available dates<ArrowRight aria-hidden="true" size={18}/></Link></Button></div>
           <div id="public-shop-quick-details" className="mt-7 flex flex-wrap gap-x-6 gap-y-3 text-sm text-admin-text-secondary">{primaryBranch ? <span className="inline-flex items-center gap-2"><MapPin aria-hidden="true" className="text-brand-primary" size={17}/>{primaryBranch.name}</span> : null}{publicShop.phone ? <a className="inline-flex items-center gap-2 hover:text-brand-primary-strong" href={`tel:${publicShop.phone.replace(/[^\d+]/g, "")}`}><Phone aria-hidden="true" className="text-brand-primary" size={17}/>{publicShop.phone}</a> : null}</div>
         </div>

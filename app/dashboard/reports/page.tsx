@@ -3,6 +3,7 @@ import { ArrowRight as ArrowRightIcon, Download as DownloadIcon, RefreshCw as Re
 import Link from "next/link";
 import type { ReactNode } from "react";
 
+import { loadBusinessReport } from "@/modules/core/reporting/report-reader";
 import { StatCard } from "@/components/stat-card";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -55,26 +56,12 @@ export default async function Page({ searchParams }: { searchParams: Promise<Rec
     );
   }
 
-  const { data, error } = await supabase.rpc("get_owner_report", {
-    p_organization_id: activeMembership.organizationId,
-    p_start_date: range.start,
-    p_end_date: range.end,
-    p_branch_id: branch === "all" ? null : branch,
-  });
-  const report = data as OwnerReport | null;
-  if (error || !report) {
+  const appointmentBased = activeMembership.industry !== "automotive";
+  let report: OwnerReport;
+  try {
+    report = await loadBusinessReport(supabase, { organizationId: activeMembership.organizationId, branchId: branch === "all" ? null : branch, start: range.start, end: range.end, basis: appointmentBased ? "appointment" : "invoice" });
+  } catch {
     return <ReportState title="Could not load reports" description="Try loading this page again. No business data was changed." retry />;
-  }
-
-  const { data: revenue } = await supabase.rpc("get_invoice_revenue_breakdown", {
-    p_organization_id: activeMembership.organizationId,
-    p_start_date: range.start,
-    p_end_date: range.end,
-    p_branch_id: branch === "all" ? null : branch,
-  });
-  if (revenue) {
-    report.services = (revenue as Pick<OwnerReport, "services" | "categories">).services;
-    report.categories = (revenue as Pick<OwnerReport, "services" | "categories">).categories;
   }
 
   const repeatRate = report.summary.customersServed
@@ -133,13 +120,13 @@ export default async function Page({ searchParams }: { searchParams: Promise<Rec
         </label>
         <Button id="reports-apply-filters-button" type="submit"><SearchIcon aria-hidden="true" size={16} className="shrink-0"/>Apply</Button>
       </form>
-      <p className="mt-2 text-xs text-zinc-500">{range.start} to {range.end} · local calendar dates per branch timezone</p>
+      <p className="mt-2 text-xs text-zinc-500">{range.start} to {range.end} · local calendar dates per branch timezone{appointmentBased ? " · Sales: completed appointments by scheduled date. Receipts: payment date. Outstanding: current balances for appointments in this period." : ""}</p>
 
       <section id="reports-summary" aria-label="Report summary" className="mt-4 grid grid-cols-2 gap-3 lg:grid-cols-5">
         <StatCard label="Gross sales" value={formatMoney(report.summary.grossSalesCentavos)} />
         <StatCard label="Payments received" value={formatMoney(report.summary.paymentsReceivedCentavos)} />
         <StatCard label="Outstanding" value={formatMoney(report.summary.outstandingCentavos)} />
-        <StatCard label="Completed jobs" value={String(report.summary.jobsCompleted)} />
+        <StatCard label={appointmentBased ? "Completed appointments" : "Completed jobs"} value={String(report.summary.jobsCompleted)} />
         <StatCard label="Average ticket" value={formatMoney(report.summary.averageTicketCentavos)} />
       </section>
 
@@ -151,10 +138,10 @@ export default async function Page({ searchParams }: { searchParams: Promise<Rec
             <div className="border-b border-zinc-100 p-4"><h2 className="font-semibold">Daily totals</h2></div>
             {report.daily.length ? <>
               <table id="reports-daily-table" className="hidden w-full text-left text-sm sm:table">
-                <thead className="bg-zinc-50 text-zinc-500"><tr><th className="px-4 py-2 font-medium">Date</th><th className="px-4 py-2 font-medium">Gross sales</th><th className="px-4 py-2 font-medium">Received</th><th className="px-4 py-2 font-medium">Jobs</th></tr></thead>
+                <thead className="bg-zinc-50 text-zinc-500"><tr><th className="px-4 py-2 font-medium">Date</th><th className="px-4 py-2 font-medium">Gross sales</th><th className="px-4 py-2 font-medium">Received</th><th className="px-4 py-2 font-medium">{appointmentBased ? "Appointments" : "Jobs"}</th></tr></thead>
                 <tbody>{report.daily.map((row) => <tr className="border-t" key={row.day}><td className="px-4 py-2.5">{row.day}</td><td className="px-4 py-2.5">{formatMoney(row.grossSalesCentavos)}</td><td className="px-4 py-2.5">{formatMoney(row.paymentsReceivedCentavos)}</td><td className="px-4 py-2.5">{row.jobsCompleted}</td></tr>)}</tbody>
               </table>
-              <div id="reports-daily-mobile-list" className="divide-y sm:hidden">{report.daily.map((row) => <article className="p-4" key={row.day}><div className="flex justify-between gap-3"><span>{row.day}</span><span>{row.jobsCompleted} jobs</span></div><p className="mt-1 text-sm text-zinc-600">{formatMoney(row.grossSalesCentavos)} gross · {formatMoney(row.paymentsReceivedCentavos)} received</p></article>)}</div>
+              <div id="reports-daily-mobile-list" className="divide-y sm:hidden">{report.daily.map((row) => <article className="p-4" key={row.day}><div className="flex justify-between gap-3"><span>{row.day}</span><span>{row.jobsCompleted} {appointmentBased ? "appointments" : "jobs"}</span></div><p className="mt-1 text-sm text-zinc-600">{formatMoney(row.grossSalesCentavos)} gross · {formatMoney(row.paymentsReceivedCentavos)} received</p></article>)}</div>
             </> : <p className="p-5 text-sm text-zinc-500">No activity in this period.</p>}
           </Card>
           <Card id="reports-customer-summary" className="p-4">
@@ -170,8 +157,8 @@ export default async function Page({ searchParams }: { searchParams: Promise<Rec
       ) : null}
 
       {section === "revenue" ? <section id="reports-revenue-section" className="mt-4 grid gap-4 lg:grid-cols-2"><ReportList id="reports-service-revenue" title="Service revenue" rows={report.services.map((row) => [row.service, `${formatMoney(row.revenueCentavos)} · ${row.quantity}`])} /><ReportList id="reports-category-revenue" title="Category revenue" rows={report.categories.map((row) => [row.category, formatMoney(row.revenueCentavos)])} /></section> : null}
-      {section === "team" ? <section id="reports-team-section" className="mt-4"><ReportList id="reports-technician-workload" title="Technician workload" rows={report.technicians.map((row) => [row.name, `${row.completedJobs}/${row.assignedJobs} completed`])} /></section> : null}
-      {section === "branches" && branch === "all" ? <BranchComparison rows={report.branches} /> : null}
+      {section === "team" ? <section id="reports-team-section" className="mt-4"><ReportList id="reports-technician-workload" title={appointmentBased ? "Staff workload" : "Technician workload"} rows={report.technicians.map((row) => [row.name, `${row.completedJobs}/${row.assignedJobs} completed`])} /></section> : null}
+      {section === "branches" && branch === "all" ? <BranchComparison rows={report.branches} appointmentBased={appointmentBased} /> : null}
     </main>
   );
 }
@@ -184,6 +171,6 @@ function ReportList({ id, title, rows }: { id: string; title: string; rows: Arra
   return <Card id={id} className="p-4"><h2 className="font-semibold">{title}</h2><div className="mt-3 divide-y">{rows.map(([label, value], index) => <div className="flex justify-between gap-3 py-2.5 text-sm" key={`${label}-${index}`}><span>{label}</span><span className="text-right font-medium">{value}</span></div>)}{!rows.length ? <p className="py-4 text-sm text-zinc-500">No data in this period.</p> : null}</div></Card>;
 }
 
-function BranchComparison({ rows }: { rows: OwnerReport["branches"] }) {
-  return <Card id="reports-branch-comparison" className="mt-4 p-4"><h2 className="font-semibold">Branch comparison</h2><div className="mt-3 grid gap-3 sm:grid-cols-2">{rows.map((row) => <article id={`reports-branch-${row.id}`} className="flex justify-between gap-3 rounded-xl border p-3" key={row.id}><span>{row.name}</span><span className="text-right"><span className="block font-medium">{formatMoney(row.grossSalesCentavos)}</span><small className="text-zinc-500">{row.invoices} invoices</small></span></article>)}{!rows.length ? <p className="text-sm text-zinc-500">No branch activity in this period.</p> : null}</div></Card>;
+function BranchComparison({ rows, appointmentBased }: { rows: OwnerReport["branches"]; appointmentBased: boolean }) {
+  return <Card id="reports-branch-comparison" className="mt-4 p-4"><h2 className="font-semibold">Branch comparison</h2><div className="mt-3 grid gap-3 sm:grid-cols-2">{rows.map((row) => <article id={`reports-branch-${row.id}`} className="flex justify-between gap-3 rounded-xl border p-3" key={row.id}><span>{row.name}</span><span className="text-right"><span className="block font-medium">{formatMoney(row.grossSalesCentavos)}</span><small className="text-zinc-500">{row.invoices} {appointmentBased ? "appointments" : "invoices"}</small></span></article>)}{!rows.length ? <p className="text-sm text-zinc-500">No branch activity in this period.</p> : null}</div></Card>;
 }

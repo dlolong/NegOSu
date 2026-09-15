@@ -1,3 +1,30 @@
-import{NextRequest,NextResponse}from"next/server";import{requireIndustryFeature}from"@/lib/auth/industry-access";import{csvCell,reportQuerySchema,resolveReportRange,type OwnerReport}from"@/lib/reporting";import{roleHasPermission}from"@/lib/rbac";import{createClient}from"@/lib/supabase/server";import{verticalBrands}from"@/modules/platform/brand";
-export async function GET(request:NextRequest){const{activeMembership}=await requireIndustryFeature("job_orders");if(!roleHasPermission(activeMembership.role,"reports.view"))return new NextResponse("Forbidden",{status:403});const parsed=reportQuerySchema.safeParse(Object.fromEntries(request.nextUrl.searchParams));if(!parsed.success)return new NextResponse("Invalid report filters",{status:400});if(parsed.data.branch!=="all"&&!activeMembership.branches.some(({id})=>id===parsed.data.branch))return new NextResponse("Forbidden",{status:403});const range=resolveReportRange(parsed.data,activeMembership.timezone),supabase=await createClient();
-const{data:reportAccess}=await supabase.rpc("get_org_entitlements",{p_organization_id:activeMembership.organizationId});if(!(reportAccess as {features?:{advanced_reports?:boolean}}|null)?.features?.advanced_reports)return new NextResponse("Advanced reports require an eligible plan",{status:403});const{data,error}=await supabase.rpc("get_owner_report",{p_organization_id:activeMembership.organizationId,p_start_date:range.start,p_end_date:range.end,p_branch_id:parsed.data.branch==="all"?null:parsed.data.branch});if(error||!data)return new NextResponse("Unable to export report",{status:500});const report=data as OwnerReport;const{data:revenue}=await supabase.rpc("get_invoice_revenue_breakdown",{p_organization_id:activeMembership.organizationId,p_start_date:range.start,p_end_date:range.end,p_branch_id:parsed.data.branch==="all"?null:parsed.data.branch});if(revenue){report.services=(revenue as Pick<OwnerReport,"services"|"categories">).services;report.categories=(revenue as Pick<OwnerReport,"services"|"categories">).categories}const rows:Array<Array<string|number>>=[[`${verticalBrands.automotive.displayName} owner report`,activeMembership.organizationName],["Period",`${range.start} to ${range.end}`],[],["Metric","Value (centavos/count)"],["Gross sales",report.summary.grossSalesCentavos],["Payments received",report.summary.paymentsReceivedCentavos],["Outstanding",report.summary.outstandingCentavos],["Completed jobs",report.summary.jobsCompleted],["Average ticket",report.summary.averageTicketCentavos],[],["Day","Gross sales centavos","Payments received centavos","Completed jobs"],...report.daily.map(row=>[row.day,row.grossSalesCentavos,row.paymentsReceivedCentavos,row.jobsCompleted]),[],["Service","Category","Revenue centavos","Quantity"],...report.services.map(row=>[row.service,row.category,row.revenueCentavos,row.quantity])];const csv=`\uFEFF${rows.map(row=>row.map(csvCell).join(",")).join("\r\n")}`;return new NextResponse(csv,{headers:{"Content-Type":"text/csv; charset=utf-8","Content-Disposition":`attachment; filename="negosu-automotive-report-${range.start}-${range.end}.csv"`,"Cache-Control":"private, no-store"}})}
+import { NextRequest, NextResponse } from "next/server";
+import { requireIndustryFeature } from "@/lib/auth/industry-access";
+import { csvCell, reportQuerySchema, resolveReportRange } from "@/lib/reporting";
+import { roleHasPermission } from "@/lib/rbac";
+import { createClient } from "@/lib/supabase/server";
+import { loadBusinessReport } from "@/modules/core/reporting/report-reader";
+
+export async function GET(request: NextRequest) {
+  const { activeMembership } = await requireIndustryFeature("reports");
+  if (!roleHasPermission(activeMembership.role, "reports.view")) return new NextResponse("Forbidden", { status: 403 });
+  const parsed = reportQuerySchema.safeParse(Object.fromEntries(request.nextUrl.searchParams));
+  if (!parsed.success) return new NextResponse("Invalid report filters", { status: 400 });
+  if (parsed.data.branch !== "all" && !activeMembership.branches.some(({ id }) => id === parsed.data.branch)) return new NextResponse("Forbidden", { status: 403 });
+  const range = resolveReportRange(parsed.data, activeMembership.timezone), db = await createClient();
+  const { data: access } = await db.rpc("get_org_entitlements", { p_organization_id: activeMembership.organizationId });
+  if (!access?.features?.advanced_reports) return new NextResponse("Advanced reports require an eligible plan", { status: 403 });
+  const appointmentBased = activeMembership.industry !== "automotive";
+  try {
+    const report = await loadBusinessReport(db, { organizationId: activeMembership.organizationId, branchId: parsed.data.branch === "all" ? null : parsed.data.branch, start: range.start, end: range.end, basis: appointmentBased ? "appointment" : "invoice" });
+    const completed = appointmentBased ? "Completed appointments" : "Completed jobs";
+    const rows: Array<Array<string | number>> = [
+      ["Business report", activeMembership.organizationName], ["Period", `${range.start} to ${range.end}`],
+      ...(appointmentBased ? [["Basis", "Completed appointments by scheduled date; receipts by payment date; current balances of period appointments"]] : []),
+      [], ["Metric", "Value (centavos/count)"], ["Gross sales", report.summary.grossSalesCentavos], ["Payments received", report.summary.paymentsReceivedCentavos], ["Outstanding", report.summary.outstandingCentavos], [completed, report.summary.jobsCompleted], ["Average ticket", report.summary.averageTicketCentavos],
+      [], ["Day", "Gross sales centavos", "Payments received centavos", completed], ...report.daily.map(row => [row.day, row.grossSalesCentavos, row.paymentsReceivedCentavos, row.jobsCompleted]),
+      [], ["Service", "Category", "Revenue centavos", "Quantity"], ...report.services.map(row => [row.service, row.category, row.revenueCentavos, row.quantity]),
+    ];
+    return new NextResponse(`\uFEFF${rows.map(row => row.map(csvCell).join(",")).join("\r\n")}`, { headers: { "Content-Type": "text/csv; charset=utf-8", "Content-Disposition": `attachment; filename="negosu-${activeMembership.industry}-report-${range.start}-${range.end}.csv"`, "Cache-Control": "private, no-store" } });
+  } catch { return new NextResponse("Unable to export report", { status: 500 }); }
+}

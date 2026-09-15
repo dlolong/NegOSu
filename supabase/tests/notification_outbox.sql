@@ -55,8 +55,8 @@ select is((select status from notification_outbox where channel='email' and refe
 select is((select status from notification_outbox where channel='sms' and reference_id=(select id from estimate_approval_links where token_hash=repeat('a',64))),'pending','eligible SMS is pending');
 select is((select count(distinct deduplication_key) from notification_outbox where reference_id=(select id from estimate_approval_links where token_hash=repeat('a',64))),2::bigint,'each channel has a unique deterministic key');
 select ok(not exists(select 1 from notification_outbox where payload::text like '%'||repeat('a',64)||'%'),'outbox payload excludes token hashes and raw tokens');
-select is((select recipient_address from notification_outbox where channel='email' limit 1),'customer@example.com','email destination is normalized and snapshotted');
-select is((select recipient_address from notification_outbox where channel='sms' limit 1),'+639171234567','Philippine mobile is normalized and snapshotted');
+select is((select recipient_address from notification_outbox where organization_id='2e000000-0000-4000-8000-000000000001' and channel='email' limit 1),'customer@example.com','email destination is normalized and snapshotted');
+select is((select recipient_address from notification_outbox where organization_id='2e000000-0000-4000-8000-000000000001' and channel='sms' limit 1),'+639171234567','Philippine mobile is normalized and snapshotted');
 
 set local role service_role;
 set local "request.jwt.claims"='{"role":"service_role"}';
@@ -99,7 +99,7 @@ set local "request.jwt.claims"='{"role":"anon"}';
 select is(decide_public_estimate_approval(repeat('a',64),'approve',null)->>'state','approved','customer approval succeeds while reminders are claimed');
 reset role;
 select is((select count(*) from notification_outbox where notification_type='ESTIMATE_APPROVAL_REMINDER' and status in ('pending','processing')),0::bigint,'customer decision cancels outstanding reminders');
-select ok((select destroyed_at is not null and ciphertext is null from notification_delivery_secrets limit 1),'approval decision destroys encrypted delivery material');
+select ok((select destroyed_at is not null and ciphertext is null from notification_delivery_secrets where organization_id='2e000000-0000-4000-8000-000000000001' limit 1),'approval decision destroys encrypted delivery material');
 select ok(exists(select 1 from audit_events where event_type='notification.cancelled' and metadata->>'reason'='CUSTOMER_APPROVED'),'obsolete delivery cancellation is audited safely');
 
 update customer_communication_preferences set email_opt_in=false,sms_opt_in=false where customer_id='5e000000-0000-4000-8000-000000000001';

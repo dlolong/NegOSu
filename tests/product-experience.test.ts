@@ -53,16 +53,19 @@ test("high-traffic schedules and catalog avoid tablet-width overflow traps", () 
   const services = source("app/dashboard/services/page.tsx") + source("components/service-catalog.tsx");
   assert.match(appointments, /sm:grid-cols-2 xl:grid-cols-/);
   assert.match(appointments, />Search<input/);
-  assert.match(appointments, />Range<select/);
+  assert.match(appointments, /appointment-range-tabs/);
+  assert.match(appointments, /type="hidden" name="view"/);
   assert.match(appointments, />Status<select/);
   assert.match(services, /service-catalog-sections/);
   assert.doesNotMatch(services, /240px_minmax/);
-  assert.match(services, /table-fixed/);
-  assert.match(services, /xl:block/);
-  assert.match(services, /xl:hidden/);
-  assert.match(services, /min-w-0/);
-  assert.match(services, /overflow-wrap:anywhere/);
-  assert.match(services, /-card-\$\{service\.id\}/);
+  const table = source("components/record-table.tsx");
+  assert.match(services, /RecordTable/);
+  assert.match(table, /table-fixed/);
+  assert.match(table, /hidden lg:table-cell/);
+  assert.match(table, /lg:hidden/);
+  assert.match(table, /min-w-0/);
+  assert.match(table, /overflow-wrap:anywhere/);
+  assert.match(services, /-row-\$\{service\.id\}/);
   assert.match(services, /services-empty-state/);
 });
 

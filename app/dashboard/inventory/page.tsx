@@ -5,7 +5,7 @@ import type { InventoryQuery } from "@/lib/inventory-workspace";
 
 export default async function Page({ searchParams }: { searchParams: Promise<InventoryQuery> }) {
   const [query, { activeMembership }, supabase] = await Promise.all([searchParams, getDashboardContext(), createClient()]);
-  const salon = activeMembership.industry === "salon";
+  const salon = activeMembership.industry !== "automotive";
   const canManage = ["owner", "manager"].includes(activeMembership.role);
   const [stock, movements, branches, services] = await Promise.all([
     supabase.from("inventory_stock").select("id,branch_id,name,sku,category,unit,description,lot_number,expires_on,quantity_on_hand,reorder_level,valuation_centavos").eq("organization_id", activeMembership.organizationId).order("low_stock", { ascending: false }).order("name"),

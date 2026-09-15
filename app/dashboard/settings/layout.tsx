@@ -9,7 +9,7 @@ export default async function Layout({children}:{children:React.ReactNode}){
     {id:`${prefix}-tab-profile`,label:"Profile",href:"/dashboard/settings"},
     {id:`${prefix}-tab-branches`,label:"Branches",href:"/dashboard/settings/branches"},
     {id:`${prefix}-tab-staff`,label:"Staff",href:"/dashboard/settings/staff"},
-    {id:`${prefix}-tab-resources`,label:salon?"Resources":"Service bays",href:"/dashboard/settings/resources"},
+    {id:`${prefix}-tab-resources`,label:activeMembership.industry === "automotive" ? "Service bays" : "Resources",href:"/dashboard/settings/resources"},
     {id:`${prefix}-tab-public-page`,label:"Public page",href:"/dashboard/settings/public-page"},
     {id:`${prefix}-tab-billing`,label:"Billing",href:"/dashboard/settings/billing"},
   ];

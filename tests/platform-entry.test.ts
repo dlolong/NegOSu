@@ -35,7 +35,7 @@ test("vertical onboarding uses config-driven terminology and derived progress", 
     staff: false,
     resources: false,
     customers: false,
-    vehicles: false,
+    vehicles: false, pets: false,
     appointments: false,
   }), { completed: 2, total: 6, percentage: 33 });
 });

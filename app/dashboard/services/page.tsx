@@ -1,5 +1,12 @@
-import { Plus, Search, List, FolderOpen } from "lucide-react";
+import { addStarterServices } from "@/app/dashboard/operations-actions";
+import { starterServices, hasStarterCatalog } from "@/modules/core/catalog/starter-services";
+import { SubmitButton } from "@/components/submit-button";
+import { FormActions } from "@/components/form-actions";
+import { RecordTable } from "@/components/record-table";
+import { formatMoney } from "@/lib/operations";
+import { Plus, Search, ListPlus } from "lucide-react";
 import Link from "next/link";
+import { Tabs } from "@/components/ui/tabs";
 import { notFound } from "next/navigation";
 import { FormMessage } from "@/components/form-message";
 import { FormDialog } from "@/components/management-ui";
@@ -35,12 +42,12 @@ export default async function Page({ searchParams }: { searchParams: Promise<Cat
   if (mode && !categoryResult.error && (!canManage || (mode !== "create" && !selected))) notFound();
   const closeHref = servicesCatalogHref({ q: params.q, category: params.category, tab: "categories" });
   return <main id={salon ? "salon-treatments-page" : "services-page"} className="mx-auto min-w-0 max-w-7xl">
-    <PageHeader id={salon ? "salon-treatments-page-header" : "services-page-header"} eyebrow="Catalog and pricing" title={`${config.terminology.service}s`} description="Manage your offerings, pricing, and categories in one place." action={canManage ? <Button asChild><Link id={salon ? "salon-treatment-create-button" : "service-create-button"} href="/dashboard/services/new"><Plus aria-hidden="true" size={16} className="shrink-0"/>Add {config.terminology.service.toLowerCase()}</Link></Button> : undefined}/>
+    <PageHeader id={salon ? "salon-treatments-page-header" : "services-page-header"} eyebrow="Catalog and pricing" title={`${config.terminology.service}s`} description="Manage your offerings, pricing, and categories in one place." action={canManage ? <div className="flex flex-wrap justify-end gap-2">{hasStarterCatalog(activeMembership.industry) ? <Button asChild variant="secondary"><Link id="starter-services-open-button" href="/dashboard/services?dialog=starter-services"><ListPlus size={16} aria-hidden="true"/>Starter services</Link></Button> : null}<Button asChild><Link id={salon ? "salon-treatment-create-button" : "service-create-button"} href="/dashboard/services/new"><Plus aria-hidden="true" size={16} className="shrink-0"/>Add {config.terminology.service.toLowerCase()}</Link></Button></div> : undefined}/>
     <FormMessage message={params.message} error={params.error ?? (categoryResult.error ? "Unable to load categories. Please refresh and try again." : serviceResult.error ? "Unable to load the catalog. Please refresh and try again." : undefined)}/>
-    <nav id="service-catalog-sections" aria-label="Catalog sections" className="mt-5 flex min-w-0 flex-wrap gap-2 border-b border-admin-border pb-3">
-      <Button id="service-catalog-services-tab" asChild variant={categoryTab ? "ghost" : "secondary"}><Link href={servicesCatalogHref({ q: params.q, category: params.category })} aria-current={!categoryTab ? "page" : undefined}><List aria-hidden="true" size={16} className="shrink-0"/>{config.terminology.service}s</Link></Button>
-      <Button id="service-catalog-categories-tab" asChild variant={categoryTab ? "secondary" : "ghost"}><Link href={closeHref} aria-current={categoryTab ? "page" : undefined}><FolderOpen aria-hidden="true" size={16} className="shrink-0"/>Categories</Link></Button>
-    </nav>
+    <Tabs id="service-catalog-sections" className="mt-5" ariaLabel="Catalog sections" items={[
+      {id:"service-catalog-services-tab",label:`${config.terminology.service}s`,href:servicesCatalogHref({q:params.q,category:params.category}),active:!categoryTab},
+      {id:"service-catalog-categories-tab",label:"Categories",href:closeHref,active:categoryTab,count:categories.length},
+    ]}/>
     {categoryTab ? <div className="mt-4"><ServiceCategoryList categories={categories} canManage={canManage && !categoryResult.error} salon={salon} q={params.q} category={params.category}/></div> : <>
       <FilterBar id={salon ? "salon-treatments-filter-bar" : "services-filter-bar"}><form id={salon ? "salon-treatments-filter-form" : "services-filter-form"} className="grid min-w-0 gap-2 sm:grid-cols-[minmax(0,1fr)_minmax(0,14rem)_auto]">
         <Input id={salon ? "salon-treatments-search-input" : "services-search-input"} aria-label={`Search ${config.terminology.service.toLowerCase()}s`} name="q" defaultValue={params.q} placeholder={`Search ${config.terminology.service.toLowerCase()} name`}/>
@@ -49,6 +56,11 @@ export default async function Page({ searchParams }: { searchParams: Promise<Cat
       </form></FilterBar>
       <div className="mt-4"><ServiceCatalogList services={services} salon={salon} canManage={canManage}/></div>
     </>}
+    {params.dialog === "starter-services" && canManage && hasStarterCatalog(activeMembership.industry) ? <FormDialog id="starter-services-dialog" title="Add starter services" closeHref="/dashboard/services" size="lg">
+      <p className="mb-4 text-sm text-admin-text-muted">Add these 10 services with editable sample prices. Existing services and prices are preserved. New services stay hidden from public booking until you publish them.</p>
+      <RecordTable id="starter-services-preview" caption="Starter services" columns={[{key:"name",label:"Service"},{key:"duration",label:"Minutes",secondary:true},{key:"price",label:"Sample price",align:"right"}]} rows={starterServices[activeMembership.industry].map((service,index)=>({id:`starter-service-${index}`,cells:{name:service.name,duration:service.durationMinutes,price:formatMoney(service.priceCentavos)},mobile:<span>{service.durationMinutes} minutes</span>}))}/>
+      <form id="starter-services-form" action={addStarterServices} className="mt-4"><FormActions id="starter-services-actions" cancelHref="/dashboard/services"><SubmitButton id="starter-services-add-button" pendingText="Adding services…"><ListPlus size={16} aria-hidden="true"/>Add starter services</SubmitButton></FormActions></form>
+    </FormDialog> : null}
     {mode && canManage && !categoryResult.error ? <FormDialog id={`${prefix}-${mode}-dialog`} title={mode === "create" ? "Add category" : mode === "edit" ? "Edit category" : "Delete category"} closeHref={closeHref} size="md"><ServiceCategoryForm key={`${mode}-${selected?.id ?? "new"}`} mode={mode} category={selected} prefix={prefix} q={params.q} filterCategory={params.category} nextOrder={Math.min(9999, Math.max(-1, ...categories.map(category => category.sort_order)) + 1)}/></FormDialog> : null}
   </main>;
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowRightLeft as ArrowRightLeftIcon, LogOut as LogOutIcon, Armchair, BarChart3, Bell, Building2, CalendarCheck, CalendarDays, CarFront, ChevronDown, ClipboardList, CreditCard, Gauge, ListOrdered, MoreHorizontal, Package, Settings, Timer, Users, Wrench, type LucideIcon } from "lucide-react";
+import { ArrowRightLeft as ArrowRightLeftIcon, LogOut as LogOutIcon, Armchair, BarChart3, Bell, Building2, CalendarCheck, CalendarDays, CarFront, ChevronDown, ClipboardList, CreditCard, Gauge, ListOrdered, MoreHorizontal, PawPrint, Package, Settings, Timer, Users, Wrench, type LucideIcon } from "lucide-react";
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -21,6 +21,7 @@ import type { DashboardThemeId } from "@/modules/platform/dashboard-theme";
 const navigationIcons: Record<string, LucideIcon> = {
   dashboard: Gauge,
   customers: Users,
+  pets: PawPrint,
   vehicles: CarFront,
   appointments: CalendarDays,
   queue: ListOrdered,
@@ -40,7 +41,7 @@ const navigationIcons: Record<string, LucideIcon> = {
 
 const navigationStyles = {
   groupLabel: "text-slate-400",
-  sidebarActive: "bg-white/10 text-white before:absolute before:inset-y-2 before:left-0 before:w-0.5 before:rounded-full before:bg-brand-primary",
+  sidebarActive: "bg-white/10 text-white before:absolute before:inset-y-2 before:left-0 before:w-0.5 before:rounded-full before:bg-brand-on-dark",
   sidebarInactive: "text-slate-300 hover:bg-white/10 hover:text-white",
   sidebarIcon: "text-slate-400",
   lightActive: "bg-brand-tint text-brand-primary-strong",
@@ -165,9 +166,9 @@ export function AppShell({ children, activeMembership, memberships, profileName,
   const navigationGroups = groupNavigation(nav);
   const dashboardNavigation = navigationGroups.find((group) => group.key === "dashboard")?.items[0];
   const sidebarGroups = navigationGroups.filter((group) => group.key !== "dashboard");
-  const mobileKeys = new Set(["/dashboard", "/dashboard/appointments", "/dashboard/customers"]);
-  const mobileNav = nav.filter(({ href }) => mobileKeys.has(href));
-  const overflowNavigationGroups = groupNavigation(nav.filter(({ href }) => !mobileKeys.has(href)));
+  const mobileKeys = new Set(industryConfig.key === "pet_care" ? ["dashboard", "appointments", "pets"] : ["dashboard", "appointments", "customers"]);
+  const mobileNav = nav.filter(({ key }) => mobileKeys.has(key));
+  const overflowNavigationGroups = groupNavigation(nav.filter(({ key }) => !mobileKeys.has(key)));
   const activeHref = [...nav]
     .filter(({ href }) => navigationPathMatches(pathname, href))
     .sort((first, second) => second.href.length - first.href.length)[0]?.href;

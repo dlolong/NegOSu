@@ -7,6 +7,7 @@ test.describe("public release smoke", () => {
     ["/", "negosu-home-page"],
     ["/automotive", "negosu-automotive-page"],
     ["/salon", "negosu-salon-page"],
+    ["/pet-care", "negosu-pet-care-page"],
     ["/plans", "negosu-plans-page"],
     ["/login", "negosu-login-page"],
     ["/signup", "negosu-signup-page"],

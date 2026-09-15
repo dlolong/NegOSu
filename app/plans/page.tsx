@@ -5,7 +5,7 @@ import { MarketingCta, MarketingFooter, MarketingHeader } from "@/components/mar
 
 export const metadata: Metadata = {
   title: { absolute: "Plans and Pricing | NegOSu" },
-  description: "Compare NegOSu plans for Automotive and Salon & Beauty businesses.",
+  description: "Compare NegOSu plans for Automotive, Salon & Beauty, and Pet Care grooming.",
   alternates: { canonical: "/plans" },
 };
 

@@ -16,7 +16,7 @@ import { Card } from "@/components/ui/card";
 import { createClient } from "@/lib/supabase/server";
 
 type Status = {
-  industry?: "automotive" | "salon";
+  industry?: "automotive" | "salon" | "pet_care";
   timezone?: string;
   reference: string;
   status: string;
