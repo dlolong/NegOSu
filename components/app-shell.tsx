@@ -17,7 +17,7 @@ import { BusinessIdentity } from "@/components/business-identity";
 import { PoweredBy } from "@/components/powered-by";
 import type { OrganizationMembership } from "@/lib/auth/context";
 import { resolveIndustryConfig } from "@/modules/platform/industry";
-import { groupNavigation, navigationForIndustry, type NavigationGroup } from "@/modules/platform/navigation";
+import { groupNavigation, navigationForIndustry, primaryMobileNavigation, type NavigationGroup } from "@/modules/platform/navigation";
 import type { DashboardThemeId } from "@/modules/platform/dashboard-theme";
 
 const navigationIcons: Record<string, LucideIcon> = {
@@ -169,8 +169,8 @@ export function AppShell({ children, activeMembership, memberships, profileName,
   const navigationGroups = groupNavigation(nav);
   const dashboardNavigation = navigationGroups.find((group) => group.key === "dashboard")?.items[0];
   const sidebarGroups = navigationGroups.filter((group) => group.key !== "dashboard");
-  const mobileKeys = new Set(industryConfig.key === "pet_care" ? ["dashboard", "appointments", "pets"] : ["dashboard", "appointments", "customers"]);
-  const mobileNav = nav.filter(({ key }) => mobileKeys.has(key));
+  const mobileNav = primaryMobileNavigation(nav);
+  const mobileKeys = new Set(mobileNav.map(({ key }) => key));
   const overflowNavigationGroups = groupNavigation(nav.filter(({ key }) => !mobileKeys.has(key)));
   const activeHref = [...nav]
     .filter(({ href }) => navigationPathMatches(pathname, href))

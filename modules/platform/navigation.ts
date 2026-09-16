@@ -30,36 +30,36 @@ export type NavigationGroup = {
 
 export const karkrNavigation = [
   { key: "dashboard", label: "Dashboard", href: "/dashboard", group: "dashboard" },
-  { key: "appointments", label: "Appointments", mobileLabel: "Bookings", href: "/dashboard/appointments", group: "operations", industryFeature: "appointments", permission: "appointments.manage" },
   { key: "queue", label: "Queue", href: "/dashboard/queue", group: "operations", industryFeature: "queue", permission: "appointments.manage" },
   { key: "jobs", label: "Job Orders", href: "/dashboard/jobs", group: "operations", industryFeature: "job_orders", permission: "jobs.execute" },
   { key: "my_work", label: "My Work", href: "/dashboard/my-work", group: "operations", industryFeature: "job_orders", permission: "jobs.execute" },
-  { key: "bookings", label: "Booking Requests", href: "/dashboard/bookings", group: "operations", industryFeature: "booking_requests", permission: "appointments.manage" },
+  { key: "appointments", label: "Appointments", mobileLabel: "Appointments", href: "/dashboard/appointments", group: "operations", industryFeature: "appointments", permission: "appointments.manage" },
+  { key: "bookings", label: "Booking Requests", mobileLabel: "Requests", href: "/dashboard/bookings", group: "operations", industryFeature: "booking_requests", permission: "appointments.manage" },
   { key: "inbox", label: "Customer Inbox", href: "/dashboard/inbox", group: "operations", permission: "appointments.manage" },
+  { key: "payments", label: "Payments", href: "/dashboard/payments", group: "operations", industryFeature: "payments", permission: "payments.record" },
   { key: "customers", label: "Customers", href: "/dashboard/customers", group: "customers", permission: "customers.read" },
   { key: "vehicles", label: "Vehicles", href: "/dashboard/vehicles", group: "customers", industryFeature: "vehicles", permission: "vehicles.read" },
+  { key: "reminders", label: "Maintenance", href: "/dashboard/reminders", group: "customers", industryFeature: "maintenance", subscriptionFeature: "reminders" },
+  { key: "inventory", label: "Inventory", href: "/dashboard/inventory", group: "business", industryFeature: "inventory", permission: "inventory.manage" },
+  { key: "reports", label: "Reports", href: "/dashboard/reports", group: "business", industryFeature: "reports", subscriptionFeature: "advanced_reports", permission: "reports.view" },
   { key: "services", label: "Services", href: "/dashboard/services", group: "business", permission: "services.manage" },
   { key: "staff", label: "Staff", href: "/dashboard/settings/staff", group: "business", permission: "settings.manage" },
-  { key: "inventory", label: "Inventory", href: "/dashboard/inventory", group: "business", industryFeature: "inventory", permission: "inventory.manage" },
-  { key: "payments", label: "Payments", href: "/dashboard/payments", group: "business", industryFeature: "payments", permission: "payments.record" },
-  { key: "reminders", label: "Maintenance", href: "/dashboard/reminders", group: "more", industryFeature: "maintenance", subscriptionFeature: "reminders" },
-  { key: "branches", label: "Branches", href: "/dashboard/settings/branches", group: "more", permission: "branches.manage" },
   { key: "resources", label: "Service Bays", href: "/dashboard/settings/resources", group: "more", industryFeature: "resources", permission: "settings.manage" },
-  { key: "reports", label: "Reports", href: "/dashboard/reports", group: "more", industryFeature: "reports", subscriptionFeature: "advanced_reports", permission: "reports.view" },
+  { key: "branches", label: "Branches", href: "/dashboard/settings/branches", group: "more", permission: "branches.manage" },
   { key: "settings", label: "Settings", href: "/dashboard/settings", group: "more", permission: "settings.manage" },
 ] as const satisfies readonly NavigationItem[];
 
 const salonNavigation = [
   { key: "dashboard", label: "Dashboard", href: "/dashboard", group: "dashboard" },
-  { key: "appointments", label: "Appointments", mobileLabel: "Bookings", href: "/dashboard/appointments", group: "operations", industryFeature: "appointments", permission: "appointments.manage" },
-  { key: "bookings", label: "Booking Requests", href: "/dashboard/bookings", group: "operations", industryFeature: "booking_requests", permission: "appointments.manage" },
+  { key: "appointments", label: "Appointments", mobileLabel: "Appointments", href: "/dashboard/appointments", group: "operations", industryFeature: "appointments", permission: "appointments.manage" },
+  { key: "bookings", label: "Booking Requests", mobileLabel: "Requests", href: "/dashboard/bookings", group: "operations", industryFeature: "booking_requests", permission: "appointments.manage" },
   { key: "inbox", label: "Customer Inbox", href: "/dashboard/inbox", group: "operations", permission: "appointments.manage" },
+  { key: "payments", label: "Payments", href: "/dashboard/payments", group: "operations", industryFeature: "payments", permission: "payments.record" },
   { key: "customers", label: "Clients", href: "/dashboard/customers", group: "customers", permission: "customers.read" },
+  { key: "inventory", label: "Inventory", href: "/dashboard/inventory", group: "business", industryFeature: "inventory", permission: "inventory.manage" },
+  { key: "reports", label: "Reports", href: "/dashboard/reports", group: "business", industryFeature: "reports", subscriptionFeature: "advanced_reports", permission: "reports.view" },
   { key: "services", label: "Treatments", href: "/dashboard/services", group: "business", permission: "services.manage" },
   { key: "staff", label: "Staff", href: "/dashboard/settings/staff", group: "business", permission: "settings.manage" },
-  { key: "inventory", label: "Inventory", href: "/dashboard/inventory", group: "business", industryFeature: "inventory", permission: "inventory.manage" },
-  { key: "payments", label: "Payments", href: "/dashboard/payments", group: "business", industryFeature: "payments", permission: "payments.record" },
-  { key: "reports", label: "Reports", href: "/dashboard/reports", group: "more", industryFeature: "reports", subscriptionFeature: "advanced_reports", permission: "reports.view" },
   { key: "resources", label: "Resources", href: "/dashboard/settings/resources", group: "more", industryFeature: "resources", permission: "settings.manage" },
   { key: "branches", label: "Branches", href: "/dashboard/settings/branches", group: "more", permission: "branches.manage" },
   { key: "settings", label: "Settings", href: "/dashboard/settings", group: "more", permission: "settings.manage" },
@@ -68,17 +68,17 @@ const salonNavigation = [
 const petCareNavigation: readonly NavigationItem[] = [
   { key: "dashboard", label: "Dashboard", href: "/dashboard/pet-care", group: "dashboard" },
   { key: "appointments", label: "Appointments", href: "/dashboard/pet-care/appointments", group: "operations", permission: "customers.read" },
-  { key: "bookings", label: "Booking Requests", href: "/dashboard/bookings", group: "operations", industryFeature: "booking_requests", permission: "appointments.manage" },
+  { key: "bookings", label: "Booking Requests", mobileLabel: "Requests", href: "/dashboard/bookings", group: "operations", industryFeature: "booking_requests", permission: "appointments.manage" },
   { key: "inbox", label: "Customer Inbox", href: "/dashboard/inbox", group: "operations", permission: "appointments.manage" },
-  { key: "branches", label: "Branches", href: "/dashboard/settings/branches", group: "more", permission: "branches.manage" },
+  { key: "payments", label: "Payments", href: "/dashboard/payments", group: "operations", industryFeature: "payments", permission: "payments.record" },
   { key: "pets", label: "Pets", href: "/dashboard/pet-care/pets", group: "customers", permission: "customers.read" },
   { key: "customers", label: "Pet Owners", href: "/dashboard/customers", group: "customers", permission: "customers.read" },
+  { key: "inventory", label: "Inventory", href: "/dashboard/inventory", group: "business", permission: "inventory.manage" },
+  { key: "reports", label: "Reports", href: "/dashboard/reports", group: "business", industryFeature: "reports", subscriptionFeature: "advanced_reports", permission: "reports.view" },
   { key: "services", label: "Services", href: "/dashboard/services", group: "business", permission: "services.manage" },
   { key: "staff", label: "Staff", href: "/dashboard/settings/staff", group: "business", permission: "settings.manage" },
-  { key: "payments", label: "Payments", href: "/dashboard/payments", group: "business", industryFeature: "payments", permission: "payments.record" },
-  { key: "inventory", label: "Inventory", href: "/dashboard/inventory", group: "business", permission: "inventory.manage" },
-  { key: "reports", label: "Reports", href: "/dashboard/reports", group: "more", industryFeature: "reports", subscriptionFeature: "advanced_reports", permission: "reports.view" },
   { key: "resources", label: "Resources", href: "/dashboard/settings/resources", group: "more", permission: "settings.manage" },
+  { key: "branches", label: "Branches", href: "/dashboard/settings/branches", group: "more", permission: "branches.manage" },
   { key: "settings", label: "Settings", href: "/dashboard/settings", group: "more", permission: "settings.manage" },
 ];
 
@@ -100,4 +100,9 @@ export function groupNavigation(items: readonly NavigationItem[]): NavigationGro
       ? [{ key, label, items: groupItems }]
       : [];
   });
+}
+
+// Mobile shortcuts follow the same business priority after permission filtering.
+export function primaryMobileNavigation(items: readonly NavigationItem[]): readonly NavigationItem[] {
+  return groupNavigation(items).flatMap(group => group.items).slice(0, 3);
 }

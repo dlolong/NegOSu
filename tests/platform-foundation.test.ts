@@ -3,7 +3,7 @@ import test from "node:test";
 
 import { hasFeatureAccess } from "../modules/platform/features";
 import { industrySupportsFeature, karkrAutomotiveConfig, resolveIndustryConfig, salonConfig } from "../modules/platform/industry";
-import { groupNavigation, karkrNavigation, navigationForIndustry } from "../modules/platform/navigation";
+import { groupNavigation, karkrNavigation, navigationForIndustry, primaryMobileNavigation } from "../modules/platform/navigation";
 import { isStaffRoleAvailableForIndustry, staffRoleLabelForIndustry, staffRoleOptionsForIndustry } from "../lib/rbac";
 
 test("KarKR enables current automotive capabilities without future engines", () => {
@@ -47,6 +47,34 @@ test("navigation is grouped into compact vertical-appropriate sections", () => {
   assert.ok(automotiveGroups[4].items.some(({ key }) => key === "branches"));
   assert.ok(automotiveGroups[4].items.some(({ key }) => key === "resources"));
   assert.ok(salonGroups[4].items.some(({ key }) => key === "settings"));
+});
+
+test("business menus prioritize daily work and payments ahead of setup", () => {
+  for (const industry of ["automotive", "salon", "pet_care"] as const) {
+    const groups = groupNavigation(navigationForIndustry(resolveIndustryConfig(industry), "owner"));
+    const operations = groups.find(group => group.key === "operations")!.items.map(item => item.key);
+    assert.deepEqual(operations.slice(0, 2), industry === "automotive" ? ["queue", "jobs"] : ["appointments", "bookings"]);
+    assert.ok(operations.includes("payments"));
+    assert.deepEqual(groups.find(group => group.key === "business")!.items.map(item => item.key), ["inventory", "reports", "services", "staff"]);
+    assert.deepEqual(groups.at(-1)!.items.map(item => item.key), ["resources", "branches", "settings"]);
+  }
+});
+
+test("mobile shortcuts follow business priority without adding inaccessible destinations", () => {
+  for (const industry of ["automotive", "salon", "pet_care"] as const) {
+    const config = resolveIndustryConfig(industry);
+    const owner = primaryMobileNavigation(navigationForIndustry(config, "owner"));
+    assert.deepEqual(owner.map(item => item.key), industry === "automotive" ? ["dashboard", "queue", "jobs"] : ["dashboard", "appointments", "bookings"]);
+    for (const role of ["cashier", "technician", "viewer"] as const) {
+      const allowed = navigationForIndustry(config, role);
+      const primary = primaryMobileNavigation(allowed);
+      assert.ok(primary.length <= 3);
+      assert.ok(primary.every(item => allowed.includes(item)));
+      const overflow = allowed.filter(item => !primary.includes(item));
+      assert.equal(new Set([...primary, ...overflow].map(item => item.key)).size, allowed.length);
+    }
+  }
+  assert.deepEqual(primaryMobileNavigation([]), []);
 });
 
 test("Salon enables shared scheduling and inventory while disabling Automotive operations", () => {
