@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { normalizeMapInput } from "@/lib/location-map";
 import { businessLogoUrlSchema } from "@/modules/platform/business-branding";
 export type PublicBranch={id:string;name:string;timezone:string;description:string|null;phone:string|null;email:string|null;address:(string|null)[];mapUrl:string|null;hours:Record<string,{open?:string;close?:string;closed?:boolean}>;acceptsBookings:boolean};
 export type PublicService={id:string;name:string;description:string|null;durationMinutes:number;priceCentavos:number;category:string|null};
@@ -51,7 +52,7 @@ export function publicOpeningHoursFromFormData(data: FormData) {
   }));
 }
 export const branchPublicSchema = z.object({
-  branchId: z.uuid(), description: z.string().trim().max(1000), mapUrl: z.union([z.literal(""), httpUrl]), acceptsBookings: z.boolean(),
+  branchId: z.uuid(), description: z.string().trim().max(1000), mapUrl: z.string().max(8000).transform((value,ctx)=>{const url=normalizeMapInput(value);if(url===null){ctx.addIssue({code:"custom",message:"Use a valid map link or Google Maps embed code."});return z.NEVER;}return url;}), acceptsBookings: z.boolean(),
   openingHours: z.string().max(5000).transform((value, ctx) => {
     try { return JSON.parse(value) as unknown; } catch { ctx.addIssue({ code: "custom", message: "Opening hours must be valid JSON." }); return z.NEVER; }
   }).pipe(openingHours),

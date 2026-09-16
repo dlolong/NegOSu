@@ -109,19 +109,15 @@ export function CustomerQueueDisplay({ branchId, initialData, reservationToken }
   // refresh is unavailable. The server remains authoritative for queue order.
   const currentDay = !snapshot || !now || snapshot.date === localDate(now, snapshot.timezone);
   const visible = currentDay ? snapshot : null;
-  const timezone = snapshot?.timezone ?? "UTC";
-  const clock = now ? new Intl.DateTimeFormat("en", { timeZone: timezone, hour: "numeric", minute: "2-digit" }).format(now) : "—";
-  const date = now ? new Intl.DateTimeFormat("en", { timeZone: timezone, weekday: "long", month: "long", day: "numeric" }).format(now) : "";
   const lastUpdated = visible ? new Intl.DateTimeFormat("en", { timeZone: visible.timezone, hour: "numeric", minute: "2-digit", second: "2-digit" }).format(new Date(visible.refreshedAt)) : null;
   const status = connection === "unavailable" ? (reservationToken ? "This queue is only available for a confirmed reservation today. Please return to your booking details." : "Display unavailable. Ask a team member to reopen this display.")
     : connection === "retrying" ? "Connection interrupted. Reconnecting automatically…"
     : !currentDay ? "Updating today’s queue…"
-    : connection === "loading" ? "Connecting to the queue…" : "Live queue · Updates automatically";
+    : connection === "loading" ? "Connecting to the queue…" : null;
 
   return <main ref={root} id="queue-display-page" className="flex h-dvh min-h-[480px] w-full flex-col gap-4 overflow-auto bg-slate-950 p-4 text-white sm:gap-6 sm:p-6 lg:p-8">
     <header id="queue-display-header" className="flex shrink-0 flex-wrap items-start justify-between gap-x-6 gap-y-3">
       <div className="min-w-0"><BusinessIdentity id="queue-display-organization" name={visible?.organizationName ?? "Welcome"} logoUrl={visible?.logoUrl} inverse/><h1 id="queue-display-branch" className="mt-1 break-words text-2xl font-bold sm:text-3xl lg:text-4xl">{visible?.branchName ?? "Customer queue"}</h1></div>
-      <div className="shrink-0 text-right"><p id="queue-display-clock" className="text-2xl font-semibold tabular-nums sm:text-4xl">{clock}</p><p id="queue-display-date" className="mt-1 text-sm text-slate-400 sm:text-base">{date}</p></div>
     </header>
 
     {visible ? <div id="queue-display-queues" className="grid min-h-[520px] flex-1 grid-cols-1 gap-4 sm:min-h-[280px] sm:grid-cols-2 sm:gap-6">
@@ -129,13 +125,13 @@ export function CustomerQueueDisplay({ branchId, initialData, reservationToken }
       <QueuePanel key={`${endpoint}-${visible.date}-waiting`} id="queue-display-waiting" title="Waiting" items={visible.waiting}/>
     </div> : <section id="queue-display-unavailable" className="flex min-h-0 flex-1 items-center justify-center rounded-3xl border border-slate-800 bg-slate-900 p-6 text-center"><div><h2 className="text-2xl font-semibold sm:text-4xl">{connection === "unavailable" ? "Queue display unavailable" : "The queue will appear here"}</h2><p className="mt-4 text-lg text-slate-400">{status}</p></div></section>}
 
-    <PoweredBy id="queue-display-powered-by" inverse/>
     <footer id="queue-display-footer" className="flex shrink-0 flex-wrap items-center justify-between gap-3 text-sm text-slate-400">
-      <div role="status"><p id="queue-display-connection" className="flex items-center gap-2"><span aria-hidden="true" className={`size-2 shrink-0 rounded-full ${connection === "connected" && currentDay ? "bg-emerald-400" : "bg-amber-400"}`}/>{status}</p>{connection === "retrying" && lastUpdated ? <p id="queue-display-last-updated" className="mt-1">Last updated at {lastUpdated}</p> : null}</div>
+      {visible && status ? <div role="status" className="w-full text-amber-300"><p id="queue-display-connection">{status}</p>{connection === "retrying" && lastUpdated ? <p id="queue-display-last-updated" className="mt-1 text-slate-400">Last updated at {lastUpdated}</p> : null}</div> : null}
+      <PoweredBy id="queue-display-powered-by" inverse/>
       <div className="flex flex-wrap items-center gap-2">
         {reservationToken ? <a id="queue-display-reservation-link" href={`/booking/${encodeURIComponent(reservationToken)}`} className="inline-flex min-h-11 items-center px-3 text-cyan-300 underline">Your reservation</a> : null}
-        <button id="queue-display-refresh" type="button" disabled={refreshing} onClick={() => refresh.current?.()} className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-slate-700 px-3 text-white hover:bg-slate-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-300 disabled:opacity-50"><RefreshCw size={16} aria-hidden="true" className={refreshing ? "animate-spin" : undefined}/>{refreshing ? "Refreshing" : "Refresh"}</button>
-        <button id="queue-display-fullscreen" type="button" onClick={() => { void toggleFullscreen(); }} aria-pressed={fullscreen} className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-white px-3 font-semibold text-slate-950 hover:bg-slate-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-300">{fullscreen ? <Minimize size={16} aria-hidden="true"/> : <Maximize size={16} aria-hidden="true"/>}{fullscreen ? "Exit fullscreen" : "Fullscreen"}</button>
+        <button id="queue-display-refresh" type="button" disabled={refreshing} aria-label={refreshing ? "Refreshing queue" : "Refresh queue"} title="Refresh queue" onClick={() => refresh.current?.()} className="inline-flex size-11 items-center justify-center rounded-xl border border-slate-700 text-white hover:bg-slate-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-300 disabled:opacity-50"><RefreshCw size={16} aria-hidden="true" className={refreshing ? "animate-spin" : undefined}/></button>
+        <button id="queue-display-fullscreen" type="button" onClick={() => { void toggleFullscreen(); }} aria-pressed={fullscreen} aria-label={fullscreen ? "Exit fullscreen" : "Enter fullscreen"} title={fullscreen ? "Exit fullscreen" : "Enter fullscreen"} className="inline-flex size-11 items-center justify-center rounded-xl bg-white text-slate-950 hover:bg-slate-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-300">{fullscreen ? <Minimize size={16} aria-hidden="true"/> : <Maximize size={16} aria-hidden="true"/>}</button>
       </div>
       {fullscreenError ? <p id="queue-display-fullscreen-error" role="alert" className="w-full text-amber-300">{fullscreenError}</p> : null}
     </footer>
@@ -171,6 +167,6 @@ function QueuePanel({ id, title, items, emphasis = false }: { id: string; title:
     <div ref={body} id={`${id}-items`} className="grid min-h-0 flex-1 gap-3" style={{ gridTemplateRows: `repeat(${Math.max(1, pageItems.length)}, minmax(0, 1fr))` }}>
       {pageItems.length ? pageItems.map((item) => <article id={`${id}-item-${item.key}`} key={item.key} className={`flex min-h-0 flex-col items-center justify-center rounded-2xl px-3 py-2 text-center ${emphasis ? "bg-cyan-300 text-slate-950" : "bg-slate-800 text-white"}`}><h3 className={`max-w-full break-words font-bold leading-tight ${emphasis ? "text-3xl sm:text-4xl lg:text-5xl" : "text-2xl sm:text-3xl lg:text-4xl"}`}>{item.label}</h3>{item.detail ? <p className={`mt-1 max-w-full break-words text-sm sm:text-base ${emphasis ? "text-slate-700" : "text-slate-300"}`}>{item.detail}</p> : null}</article>) : <p id={`${id}-empty`} className="flex items-center justify-center text-center text-lg text-slate-400">{emphasis ? "No customers currently being served" : "No customers waiting"}</p>}
     </div>
-    <p id={`${id}-pagination`} className="mt-3 min-h-5 shrink-0 text-center text-xs text-slate-400">{pages > 1 ? `Page ${page + 1} of ${pages} · Rotates automatically` : "\u00a0"}</p>
+    {pages > 1 ? <p id={`${id}-pagination`} className="mt-3 shrink-0 text-center text-xs text-slate-400">{page + 1} / {pages}</p> : null}
   </section>;
 }

@@ -1,3 +1,4 @@
+import { LocationMap } from "@/components/location-map";
 import { RefreshCw as RefreshCwIcon, CalendarDays, ChevronLeft, ChevronRight, Clock3, MapPin } from "lucide-react";
 
 import Link from "next/link";
@@ -14,6 +15,7 @@ import { formatMoney } from "@/lib/operations";
 import { buildPublicBookingCalendar, selectPublicBookingDate } from "@/lib/public-booking-calendar";
 import { publicBookingDate } from "@/lib/public-booking";
 import { createClient } from "@/lib/supabase/server";
+import { reportActionError } from "@/lib/errors/action-error";
 import { loadPublicBusiness } from "@/lib/public-business";
 
 const selectClass = "mt-2 min-h-11 w-full rounded-ui-md border border-admin-border bg-white px-3 text-admin-text focus:outline-none focus:ring-2 focus:ring-brand-primary";
@@ -47,7 +49,10 @@ async function loadAvailabilityDates(supabase: SupabaseClient, input: { slug: st
     return { dates: ((range.data ?? []) as AvailabilityDate[]).map(row => row.available_date), error: false, upgradeRequired: false };
   }
 
-  if (!missingRpc(range.error)) return { dates: [], error: true, upgradeRequired: false };
+  if (!missingRpc(range.error)) {
+    reportActionError("public_booking.availability_dates", range.error, "Availability could not be loaded.");
+    return { dates: [], error: true, upgradeRequired: false };
+  }
   // Existing single-service storefronts remain available during migration rollout.
   if (input.serviceIds.length !== 1) return { dates: [], error: true, upgradeRequired: true };
   const legacyRange = await supabase.rpc("get_public_availability_dates", {
@@ -58,7 +63,10 @@ async function loadAvailabilityDates(supabase: SupabaseClient, input: { slug: st
     p_end_date: input.end,
   });
   if (!legacyRange.error) return { dates: ((legacyRange.data ?? []) as AvailabilityDate[]).map(row => row.available_date), error: false, upgradeRequired: false };
-  if (!missingRpc(legacyRange.error)) return { dates: [], error: true, upgradeRequired: false };
+  if (!missingRpc(legacyRange.error)) {
+    reportActionError("public_booking.legacy_availability_dates", legacyRange.error, "Availability could not be loaded.");
+    return { dates: [], error: true, upgradeRequired: false };
+  }
   const daily = await Promise.all(input.dates.map(async date => {
     const result = await supabase.rpc("get_public_availability", {
       p_slug: input.slug,
@@ -66,6 +74,7 @@ async function loadAvailabilityDates(supabase: SupabaseClient, input: { slug: st
       p_service_id: input.serviceIds[0],
       p_date: date,
     });
+    if (result.error) reportActionError("public_booking.daily_availability", result.error, "Availability could not be loaded.");
     return { date, available: !result.error && Boolean(result.data?.length), error: Boolean(result.error) };
   }));
   return { dates: daily.filter(day => day.available).map(day => day.date), error: daily.some(day => day.error), upgradeRequired: false };
@@ -79,6 +88,7 @@ async function loadSlots(supabase: SupabaseClient, input: { slug: string; branch
     p_date: input.date,
   });
   if (!result.error) return { slots: (result.data ?? []) as Array<{ slot_at: string }>, error: false, upgradeRequired: false };
+  if (!missingRpc(result.error)) reportActionError("public_booking.availability_slots", result.error, "Availability could not be loaded.");
   if (!missingRpc(result.error) || input.serviceIds.length !== 1) return { slots: [], error: true, upgradeRequired: missingRpc(result.error) };
   const legacy = await supabase.rpc("get_public_availability", {
     p_slug: input.slug,
@@ -86,6 +96,7 @@ async function loadSlots(supabase: SupabaseClient, input: { slug: string; branch
     p_service_id: input.serviceIds[0],
     p_date: input.date,
   });
+  if (legacy.error) reportActionError("public_booking.legacy_availability_slots", legacy.error, "Availability could not be loaded.");
   return { slots: (legacy.data ?? []) as Array<{ slot_at: string }>, error: Boolean(legacy.error), upgradeRequired: false };
 }
 
@@ -140,7 +151,7 @@ export default async function Page({ params, searchParams }: { params: Promise<{
 
   const dateFormatter = new Intl.DateTimeFormat("en-PH", { dateStyle: "full", timeZone: "UTC" });
 
-  return <main id="public-booking-page" className="min-h-dvh bg-admin-canvas text-admin-text">
+  return <main id="public-booking-page" className="min-h-dvh min-w-0 bg-admin-canvas text-admin-text [overflow-wrap:anywhere]">
     <header id="public-booking-header" className="border-b border-admin-border bg-white">
       <div className="mx-auto flex min-h-16 max-w-6xl items-center justify-between gap-4 px-4 sm:px-6">
         <Link id="public-booking-back-link" href={`/shop/${encodeURIComponent(slug)}`} className="flex min-w-0 items-center gap-1 font-semibold text-brand-ink hover:text-brand-primary"><span aria-hidden="true">←</span><BusinessIdentity name={shop.name} logoUrl={shop.logoUrl}/></Link>
@@ -199,8 +210,9 @@ export default async function Page({ params, searchParams }: { params: Promise<{
           </Card>
         </div>
 
-        <aside id="public-booking-summary" className="hidden lg:sticky lg:top-5 lg:block">
+        <aside id="public-booking-summary" className="min-w-0 space-y-4 lg:sticky lg:top-5">
           <Card elevation="none" className="p-5"><p className="text-xs font-semibold uppercase tracking-wide text-admin-text-muted">Your request</p><h2 className="mt-1 text-lg font-semibold">{shop.name}</h2><dl className="mt-4 space-y-3 text-sm"><div><dt className="text-admin-text-muted">Location</dt><dd className="mt-0.5 font-medium">{branch?.name ?? "Not available"}</dd></div><div><dt className="text-admin-text-muted">{shop.industry === "salon" ? "Treatments" : "Services"}</dt><dd className="mt-1"><ul className="space-y-1 font-medium">{selectedServices.map(item => <li key={item.id}>{item.name}</li>)}</ul>{!selectedServices.length ? "Choose at least one" : null}</dd></div><div><dt className="text-admin-text-muted">Date</dt><dd className="mt-0.5 font-medium">{selectedDate ? dateFormatter.format(new Date(`${selectedDate}T12:00:00Z`)) : "Choose an available date"}</dd></div></dl><p className="mt-5 border-t border-admin-border pt-4 text-xs leading-5 text-admin-text-muted">Submitting sends a request. The business will confirm the final appointment time.</p></Card>
+          {branch?<Card id="public-booking-location-card" elevation="none" className="p-4 sm:p-5"><h2 className="font-semibold">Find this location</h2><p className="mt-2 text-sm text-admin-text-secondary">{branch.address.filter(Boolean).join(", ")||branch.name}</p><div className="mt-4"><LocationMap id="public-booking-location-map" name={branch.name} address={branch.address} mapUrl={branch.mapUrl} compact/></div></Card>:null}
         </aside>
       </div>
     </div>
