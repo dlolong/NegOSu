@@ -19,25 +19,38 @@ insert into job_order_items(organization_id,job_order_id,service_id,service_name
 insert into invoices(id,organization_id,branch_id,job_order_id,invoice_number,status,customer_name_snapshot,vehicle_snapshot,subtotal_centavos,discount_centavos,tax_centavos,total_centavos,paid_centavos,balance_centavos,issued_at)values('ab000000-0000-4000-8000-000000000001','2b000000-0000-4000-8000-000000000001','4b000000-0000-4000-8000-000000000001','9b000000-0000-4000-8000-000000000001','INV-1','partially_paid','Repeat','Toyota Vios',25000,1000,6000,30000,12000,18000,'2026-01-01 16:30+00');
 insert into invoice_items(invoice_id,organization_id,service_id,category_name_snapshot,description_snapshot,quantity,unit_price_centavos,line_total_centavos)values('ab000000-0000-4000-8000-000000000001','2b000000-0000-4000-8000-000000000001','8b000000-0000-4000-8000-000000000001','Wash','Premium Wash',1,15000,15000),('ab000000-0000-4000-8000-000000000001','2b000000-0000-4000-8000-000000000001',null,'Other','Other Service',1,10000,10000);select allocate_invoice_revenue('ab000000-0000-4000-8000-000000000001');
 insert into payments(organization_id,branch_id,job_order_id,invoice_id,amount_centavos,status,method,paid_at)values('2b000000-0000-4000-8000-000000000001','4b000000-0000-4000-8000-000000000001','9b000000-0000-4000-8000-000000000001','ab000000-0000-4000-8000-000000000001',12000,'paid','cash','2026-01-01 16:30+00');
-select plan(20);select has_function('public','get_owner_report',array['uuid','date','date','uuid'],'report RPC exists');
-set local role anon;set local "request.jwt.claims"='{"role":"anon"}';select throws_ok($$select get_owner_report('2b000000-0000-4000-8000-000000000001','2026-01-02','2026-01-02',null)$$,'42501',null,'anon denied');
-reset role;set local role authenticated;set local "request.jwt.claims"='{"sub":"1b000000-0000-4000-8000-000000000001","role":"authenticated"}';
-select is((get_owner_report('2b000000-0000-4000-8000-000000000001','2026-01-02','2026-01-02',null)#>>'{summary,grossSalesCentavos}')::bigint,30000::bigint,'gross reconciles');
-select is((get_owner_report('2b000000-0000-4000-8000-000000000001','2026-01-02','2026-01-02',null)#>>'{summary,paymentsReceivedCentavos}')::bigint,12000::bigint,'payments reconcile');
-select is((get_owner_report('2b000000-0000-4000-8000-000000000001','2026-01-02','2026-01-02',null)#>>'{summary,outstandingCentavos}')::bigint,18000::bigint,'outstanding reconciles');
-select is((get_owner_report('2b000000-0000-4000-8000-000000000001','2026-01-02','2026-01-02',null)#>>'{summary,jobsCompleted}')::bigint,1::bigint,'jobs reconcile');
-select is((get_owner_report('2b000000-0000-4000-8000-000000000001','2026-01-02','2026-01-02',null)#>>'{summary,averageTicketCentavos}')::bigint,30000::bigint,'average ticket exact');
-select is((get_owner_report('2b000000-0000-4000-8000-000000000001','2026-01-02','2026-01-02',null)#>>'{summary,repeatCustomers}')::bigint,1::bigint,'repeat customer derived from lifetime jobs');
-select is((get_owner_report('2b000000-0000-4000-8000-000000000001','2026-01-02','2026-01-02',null)#>>'{summary,newCustomers}')::bigint,0::bigint,'returning customer not new');
-select is((get_owner_report('2b000000-0000-4000-8000-000000000001','2026-01-01','2026-01-01',null)#>>'{summary,grossSalesCentavos}')::bigint,0::bigint,'Manila midnight boundary respected');
-select is((get_owner_report('2b000000-0000-4000-8000-000000000001','2026-01-02','2026-01-02',null)#>>'{services,0,revenueCentavos}')::bigint,30000::bigint,'service revenue reconciles');
-select is(get_owner_report('2b000000-0000-4000-8000-000000000001','2026-01-02','2026-01-02',null)#>>'{categories,0,category}','Wash','category revenue resolved');
-select is(jsonb_array_length(get_owner_report('2b000000-0000-4000-8000-000000000001','2026-01-02','2026-01-02',null)->'branches'),2,'all branches returned');
-select is(jsonb_array_length(get_owner_report('2b000000-0000-4000-8000-000000000001','2026-01-02','2026-01-02','4b000000-0000-4000-8000-000000000001')->'branches'),1,'branch filter works');
-select throws_ok($$select get_owner_report('2b000000-0000-4000-8000-000000000002','2026-01-02','2026-01-02',null)$$,'42501','Reporting access required','owner A denied Org B report');
-select throws_ok($$select get_owner_report('2b000000-0000-4000-8000-000000000001','2026-01-02','2026-01-01',null)$$,'P0001','Invalid reporting range','invalid range rejected');
-reset role;set local role authenticated;set local "request.jwt.claims"='{"sub":"1b000000-0000-4000-8000-000000000003","role":"authenticated"}';select lives_ok($$select get_owner_report('2b000000-0000-4000-8000-000000000001','2026-01-02','2026-01-02',null)$$,'viewer with reports permission allowed');
-reset role;set local role authenticated;set local "request.jwt.claims"='{"sub":"1b000000-0000-4000-8000-000000000004","role":"authenticated"}';select throws_ok($$select get_owner_report('2b000000-0000-4000-8000-000000000001','2026-01-02','2026-01-02',null)$$,'42501','Reporting access required','cashier denied report');
-reset role;set local role authenticated;set local "request.jwt.claims"='{"sub":"1b000000-0000-4000-8000-000000000001","role":"authenticated"}';select is((select sum(recognized_revenue_centavos)from invoice_items where invoice_id='ab000000-0000-4000-8000-000000000001')::bigint,30000::bigint,'allocated service revenue reconciles to invoice gross after discount and tax');
-select is((get_invoice_revenue_breakdown('2b000000-0000-4000-8000-000000000001','2026-01-02','2026-01-02',null)#>>'{categories,0,revenueCentavos}')::bigint,18000::bigint,'largest invoice line receives its exact allocated revenue');
-select * from finish();rollback;
+
+-- Deliberately remove only the missing reporting prerequisites. This entire
+-- fixture is transactional and must never be run against a hosted database.
+drop function public.get_org_entitlements(uuid);
+drop function public.has_entitlement(uuid,text);
+drop function public.effective_entitlements(uuid);
+drop function public.allocate_invoice_revenue(uuid);
+alter table public.organization_subscriptions drop column grace_ends_at;
+alter table public.invoice_items drop column job_order_item_id,drop column service_id,drop column category_name_snapshot,drop column recognized_revenue_centavos;
+\ir ../migrations/0082_restore_report_dependencies.sql
+select no_plan();
+select has_function('public','get_org_entitlements',array['uuid'],'restores missing entitlement API');
+select has_column('public','organization_subscriptions','grace_ends_at','restores grace-period state');
+select has_column('public','invoice_items','recognized_revenue_centavos','restores revenue allocation');
+select is((select sum(recognized_revenue_centavos) from invoice_items where invoice_id='ab000000-0000-4000-8000-000000000001')::bigint,30000::bigint,'historical allocation reconciles with invoice total');
+select is((select total_centavos from invoices where id='ab000000-0000-4000-8000-000000000001'),30000::bigint,'invoice total unchanged');
+select is((select balance_centavos from invoices where id='ab000000-0000-4000-8000-000000000001'),18000::bigint,'invoice balance unchanged');
+select is((select amount_centavos from payments where invoice_id='ab000000-0000-4000-8000-000000000001'),12000::bigint,'payment unchanged');
+insert into job_order_items(organization_id,job_order_id,service_id,service_name_snapshot,quantity,unit_price_centavos,line_total_centavos)values('2b000000-0000-4000-8000-000000000001','9b000000-0000-4000-8000-000000000002','8b000000-0000-4000-8000-000000000001','Premium Wash',1,15000,15000);
+set local role authenticated;
+set local "request.jwt.claims"='{"sub":"1b000000-0000-4000-8000-000000000001","role":"authenticated"}';
+select is(get_org_entitlements('2b000000-0000-4000-8000-000000000001')->>'planId','starter','Starter effective plan can be read');
+select ok((get_org_entitlements('2b000000-0000-4000-8000-000000000001')->'features'->>'advanced_reports')::boolean,'Starter advanced reports retained');
+select is((get_invoice_revenue_breakdown('2b000000-0000-4000-8000-000000000001','2026-01-02','2026-01-02')->'categories'->0->>'revenueCentavos')::bigint,30000::bigint,'repaired revenue includes historical lines without guessing a category');
+select lives_ok($$select issue_invoice('9b000000-0000-4000-8000-000000000002')$$,'invoice issuing works after repair');
+select is((select sum(item.recognized_revenue_centavos) from invoice_items item join invoices i on i.id=item.invoice_id where i.job_order_id='9b000000-0000-4000-8000-000000000002')::bigint,15000::bigint,'new invoices allocate revenue for future reports');
+select throws_ok($$select get_org_entitlements('2b000000-0000-4000-8000-000000000002')$$,'42501','Organization not found','cross-tenant entitlement access denied');
+select throws_ok($$select allocate_invoice_revenue('ab000000-0000-4000-8000-000000000001')$$,'42501',null,'clients cannot invoke private revenue writes');
+set local role anon;
+select throws_ok($$select get_org_entitlements('2b000000-0000-4000-8000-000000000001')$$,'42501',null,'anonymous entitlement access denied');
+reset role;
+\ir ../migrations/0082_restore_report_dependencies.sql
+select is((select sum(recognized_revenue_centavos) from invoice_items where invoice_id='ab000000-0000-4000-8000-000000000001')::bigint,30000::bigint,'repeated repair preserves allocations');
+select * from finish();
+rollback;

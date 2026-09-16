@@ -11,6 +11,9 @@ const optionalNotificationProvider=z.preprocess(
 
 const serverSchema = z.object({
   SUPABASE_SERVICE_ROLE_KEY: optionalSecret(),
+  PAYMONGO_SECRET_KEY: optionalSecret(),
+  PAYMONGO_WEBHOOK_SECRET: optionalSecret(),
+  PAYMONGO_PAYMENT_METHOD_TYPES: optionalSecret(),
   STRIPE_SECRET_KEY: optionalSecret(),
   STRIPE_WEBHOOK_SECRET: optionalSecret(),
   BILLING_RECONCILIATION_SECRET: optionalSecret(24),
@@ -26,6 +29,9 @@ const serverSchema = z.object({
 
 export const serverEnv = serverSchema.parse({
   SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY,
+  PAYMONGO_SECRET_KEY: process.env.PAYMONGO_SECRET_KEY,
+  PAYMONGO_WEBHOOK_SECRET: process.env.PAYMONGO_WEBHOOK_SECRET,
+  PAYMONGO_PAYMENT_METHOD_TYPES: process.env.PAYMONGO_PAYMENT_METHOD_TYPES,
   STRIPE_SECRET_KEY: process.env.STRIPE_SECRET_KEY,
   STRIPE_WEBHOOK_SECRET: process.env.STRIPE_WEBHOOK_SECRET,
   BILLING_RECONCILIATION_SECRET: process.env.BILLING_RECONCILIATION_SECRET,

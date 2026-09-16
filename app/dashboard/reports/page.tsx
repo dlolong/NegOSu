@@ -10,9 +10,10 @@ import { Card } from "@/components/ui/card";
 import { Tabs } from "@/components/ui/tabs";
 import { getDashboardContext } from "@/lib/auth/context";
 import { formatMoney } from "@/lib/operations";
-import { reportQuerySchema, resolveReportRange, type OwnerReport } from "@/lib/reporting";
+import { reportAccessSchema, reportQuerySchema, resolveReportScope, type OwnerReport } from "@/lib/reporting";
 import { roleHasPermission } from "@/lib/rbac";
 import { createClient } from "@/lib/supabase/server";
+import { reportActionError } from "@/lib/errors/action-error";
 
 const inputClass = "min-h-11 w-full rounded-xl border border-zinc-200 bg-white px-3 text-sm";
 const reportSections = ["overview", "revenue", "team", "branches"] as const;
@@ -32,35 +33,27 @@ export default async function Page({ searchParams }: { searchParams: Promise<Rec
   const parsed = reportQuerySchema.safeParse(
     Object.fromEntries(Object.entries(raw).flatMap(([key, value]) => typeof value === "string" ? [[key, value]] : [])),
   );
-  const filters = parsed.success ? parsed.data : reportQuerySchema.parse({});
-  const branch = filters.branch === "all" || activeMembership.branches.some(({ id }) => id === filters.branch)
-    ? filters.branch
-    : "all";
-  const range = resolveReportRange({ ...filters, branch }, activeMembership.timezone);
-  const requestedSection = typeof raw.section === "string" ? raw.section : "overview";
-  const candidateSection: ReportSection = reportSections.includes(requestedSection as ReportSection)
-    ? requestedSection as ReportSection
-    : "overview";
-  const section: ReportSection = candidateSection === "branches" && branch !== "all" ? "overview" : candidateSection;
-
-  const { data: reportAccess } = await supabase.rpc("get_org_entitlements", {
+  const { data: reportAccess, error: accessError } = await supabase.rpc("get_org_entitlements", {
     p_organization_id: activeMembership.organizationId,
   });
-  if (!(reportAccess as { features?: { advanced_reports?: boolean } } | null)?.features?.advanced_reports) {
-    return (
-      <ReportState title="Advanced reports require an eligible plan" description="Review available plans and choose the reporting access that fits your business.">
-        <Button id="reports-view-plans-button" asChild className="mt-4">
-          <Link href="/dashboard/settings/billing"><ArrowRightIcon aria-hidden="true" size={16} className="shrink-0"/>View plans</Link>
-        </Button>
-      </ReportState>
-    );
+  const entitlement = reportAccessSchema.safeParse(reportAccess);
+  if (accessError || !entitlement.success) {
+    reportActionError("reports.entitlements", accessError ?? new Error("Invalid report entitlements"), "Could not check report access.");
+    return <ReportState title="Could not check report access" description="Try loading this page again shortly." retry />;
   }
+  const advanced = entitlement.data.features.advanced_reports;
+  const { filters, branch, range } = resolveReportScope(parsed.success ? parsed.data : reportQuerySchema.parse({}), activeMembership, advanced);
+  const requestedSection = typeof raw.section === "string" ? raw.section : "overview";
+  const candidateSection: ReportSection = reportSections.includes(requestedSection as ReportSection)
+    ? requestedSection as ReportSection : "overview";
+  const section: ReportSection = !advanced || (candidateSection === "branches" && branch !== "all") ? "overview" : candidateSection;
 
   const appointmentBased = activeMembership.industry !== "automotive";
   let report: OwnerReport;
   try {
-    report = await loadBusinessReport(supabase, { organizationId: activeMembership.organizationId, branchId: branch === "all" ? null : branch, start: range.start, end: range.end, basis: appointmentBased ? "appointment" : "invoice" });
-  } catch {
+    report = await loadBusinessReport(supabase, { organizationId: activeMembership.organizationId, branchId: branch === "all" ? null : branch, start: range.start, end: range.end, basis: appointmentBased ? "appointment" : "invoice", advanced });
+  } catch (error) {
+    reportActionError("reports.load", error, "Could not load reports.");
     return <ReportState title="Could not load reports" description="Try loading this page again. No business data was changed." retry />;
   }
 
@@ -96,12 +89,21 @@ export default async function Page({ searchParams }: { searchParams: Promise<Rec
           <h1 className="mt-1 text-2xl font-semibold sm:text-3xl">Reports</h1>
           <p className="mt-2 text-sm text-zinc-600 sm:text-base">Revenue, customers, workload, and branch trends from operational records.</p>
         </div>
-        <Button id="reports-export-button" className="ml-auto" asChild variant="secondary">
+        {advanced ? <Button id="reports-export-button" className="ml-auto" asChild variant="secondary">
           <Link href={`/dashboard/reports/export?${exportQuery}`}><DownloadIcon aria-hidden="true" size={16} className="shrink-0"/>Export CSV</Link>
-        </Button>
+        </Button> : null}
       </header>
 
-      <form id="reports-filter-form" className="mt-5 grid gap-3 rounded-2xl border border-zinc-200 bg-white p-4 sm:grid-cols-2 lg:grid-cols-[repeat(4,minmax(0,1fr))_auto] lg:items-end">
+      {!advanced ? <Card id="reports-free-plan-info" className="mt-5 flex min-w-0 flex-wrap items-center justify-between gap-3 p-4">
+        <div className="min-w-0 flex-1 basis-64">
+          <h2 className="text-sm font-semibold">Free reports · Last 30 days</h2>
+          <p className="mt-1 text-sm text-admin-text-secondary">Summary totals, daily activity, and customer insights for {activeMembership.branchName}.</p>
+          <p className="mt-1 text-xs text-admin-text-muted">Paid plans add custom dates, revenue and team breakdowns, branch comparisons, and CSV exports.</p>
+        </div>
+        {activeMembership.role === "owner" ? <Button id="reports-view-plans-button" asChild variant="secondary"><Link href="/dashboard/settings/billing"><ArrowRightIcon aria-hidden="true" size={16} className="shrink-0"/>View plans</Link></Button> : null}
+      </Card> : null}
+
+      {advanced ? <form id="reports-filter-form" className="mt-5 grid gap-3 rounded-2xl border border-zinc-200 bg-white p-4 sm:grid-cols-2 lg:grid-cols-[repeat(4,minmax(0,1fr))_auto] lg:items-end">
         <input type="hidden" name="section" value={section} />
         <label className="grid gap-1 text-xs font-medium" htmlFor="reports-period-select">
           Period
@@ -119,8 +121,8 @@ export default async function Page({ searchParams }: { searchParams: Promise<Rec
           </select>
         </label>
         <Button id="reports-apply-filters-button" type="submit"><SearchIcon aria-hidden="true" size={16} className="shrink-0"/>Apply</Button>
-      </form>
-      <p className="mt-2 text-xs text-zinc-500">{range.start} to {range.end} · local calendar dates per branch timezone{appointmentBased ? " · Sales: completed appointments by scheduled date. Receipts: payment date. Outstanding: current balances for appointments in this period." : ""}</p>
+      </form> : null}
+      <p id="reports-range-description" className="mt-2 text-xs text-zinc-500">{range.start} to {range.end} · local calendar dates per branch timezone{appointmentBased ? " · Sales: completed appointments by scheduled date. Receipts: payment date. Outstanding: current balances for appointments in this period." : ""}</p>
 
       <section id="reports-summary" aria-label="Report summary" className="mt-4 grid grid-cols-2 gap-3 lg:grid-cols-5">
         <StatCard label="Gross sales" value={formatMoney(report.summary.grossSalesCentavos)} />
@@ -130,7 +132,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<Rec
         <StatCard label="Average ticket" value={formatMoney(report.summary.averageTicketCentavos)} />
       </section>
 
-      <Tabs id="reports-section-tabs" ariaLabel="Report sections" className="mt-5" items={tabs} />
+      {advanced ? <Tabs id="reports-section-tabs" ariaLabel="Report sections" className="mt-5" items={tabs} /> : null}
 
       {section === "overview" ? (
         <section id="reports-overview-section" className="mt-4 grid gap-4 lg:grid-cols-2">

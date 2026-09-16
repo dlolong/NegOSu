@@ -48,7 +48,7 @@ select is((get_appointment_report('75200000-0000-4000-8000-000000000002','2026-0
 reset role;
 update organization_subscriptions set plan_id='free' where organization_id='75200000-0000-4000-8000-000000000002';
 set local role authenticated;
-select throws_ok($$select get_appointment_report('75200000-0000-4000-8000-000000000002','2026-01-02','2026-01-02')$$,'42501','Reporting access required','plan entitlement enforced in database');
+select throws_ok($$select get_appointment_report('75200000-0000-4000-8000-000000000002','2026-01-02','2026-01-02')$$,'42501','Free reports require one branch and dates within the last 30 days','Free cannot request unrestricted historical reports');
 set local role anon;
 select throws_ok($$select get_appointment_report('75200000-0000-4000-8000-000000000001','2026-01-02','2026-01-02')$$,'42501',null,'anonymous reporting denied');
 select * from finish();

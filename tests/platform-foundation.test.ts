@@ -55,6 +55,7 @@ test("business menus prioritize daily work and payments ahead of setup", () => {
     const operations = groups.find(group => group.key === "operations")!.items.map(item => item.key);
     assert.deepEqual(operations.slice(0, 2), industry === "automotive" ? ["queue", "jobs"] : ["appointments", "bookings"]);
     assert.ok(operations.includes("payments"));
+    assert.equal(navigationForIndustry(resolveIndustryConfig(industry), "owner").find(item => item.key === "reports")?.subscriptionFeature, undefined);
     assert.deepEqual(groups.find(group => group.key === "business")!.items.map(item => item.key), ["inventory", "reports", "services", "staff"]);
     assert.deepEqual(groups.at(-1)!.items.map(item => item.key), ["resources", "branches", "settings"]);
   }

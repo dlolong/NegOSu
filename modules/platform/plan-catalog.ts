@@ -23,7 +23,7 @@ export const launchPlanCatalog: readonly LaunchPlan[] = [
     yearlyPriceCentavos: 0,
     custom: false,
     summary: "Explore the essentials and prepare your first workflow.",
-    highlights: ["1 branch", "2 staff", "Customers or Clients", "Services or Treatments", "Appointments"],
+    highlights: ["1 branch", "2 staff", "Customers or Clients", "Services or Treatments", "Appointments", "Reports: last 30 days"],
   },
   {
     id: "starter",
@@ -32,7 +32,7 @@ export const launchPlanCatalog: readonly LaunchPlan[] = [
     yearlyPriceCentavos: 499_000,
     custom: false,
     summary: "For a small team ready to run daily work in one place.",
-    highlights: ["1 branch", "5 staff", "Customers or Clients", "Services or Treatments", "Appointments"],
+    highlights: ["1 branch", "5 staff", "Customers or Clients", "Services or Treatments", "Appointments", "Detailed reports and CSV exports"],
   },
   {
     id: "business",
@@ -42,7 +42,7 @@ export const launchPlanCatalog: readonly LaunchPlan[] = [
     custom: false,
     recommended: true,
     summary: "For growing businesses that need more capacity and industry-enabled tools.",
-    highlights: ["2 branches", "15 staff", "Growing-team capacity", "Additional capabilities where available for your industry"],
+    highlights: ["2 branches", "15 staff", "Growing-team capacity", "Additional capabilities where available for your industry", "Detailed reports and CSV exports"],
   },
   {
     id: "pro",
@@ -51,7 +51,7 @@ export const launchPlanCatalog: readonly LaunchPlan[] = [
     yearlyPriceCentavos: 1_999_000,
     custom: false,
     summary: "For established teams with higher volume and more locations.",
-    highlights: ["5 branches", "50 staff", "Higher operating capacity", "Includes Business capabilities available for your industry"],
+    highlights: ["5 branches", "50 staff", "Higher operating capacity", "Includes Business capabilities available for your industry", "Detailed reports and CSV exports"],
   },
   {
     id: "multi_branch",
@@ -60,7 +60,7 @@ export const launchPlanCatalog: readonly LaunchPlan[] = [
     yearlyPriceCentavos: null,
     custom: true,
     summary: "A tailored plan for larger multi-location operations.",
-    highlights: ["Custom branch and staff limits", "High-volume operations", "Launch support", "Tailored rollout"],
+    highlights: ["Custom branch and staff limits", "High-volume operations", "Launch support", "Tailored rollout", "Detailed reports and CSV exports"],
   },
 ] as const;
 
@@ -97,7 +97,7 @@ export function visiblePlanFeatureLabels(industry: string, features: Record<stri
   const labels: string[] = [];
   if (features.public_page) labels.push("Public business page");
   if (features.reminders) labels.push(industry !== "automotive" ? "Appointment reminders" : "Maintenance reminders");
-  if (industry === "automotive" && features.advanced_reports) labels.push("Advanced Automotive reports");
+  labels.push(features.advanced_reports ? "Detailed reports and CSV exports" : "Reports: last 30 days, one branch");
 
   // `ai` exists in the historical entitlement catalog but has no launch-ready
   // customer workflow. Do not advertise it until the product enables one.

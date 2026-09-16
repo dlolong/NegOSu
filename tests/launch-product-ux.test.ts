@@ -78,8 +78,8 @@ test("Billing isolates catalog drift and keeps Automotive-only limits out of Sal
   assert.doesNotMatch(billing, /feature\.replaceAll/);
 
   const enabledFeatures = { public_page: true, reminders: true, advanced_reports: true, ai: true };
-  assert.deepEqual(visiblePlanFeatureLabels("salon", enabledFeatures), ["Public business page", "Appointment reminders"]);
-  assert.deepEqual(visiblePlanFeatureLabels("automotive", enabledFeatures), ["Public business page", "Maintenance reminders", "Advanced Automotive reports"]);
+  assert.deepEqual(visiblePlanFeatureLabels("salon", enabledFeatures), ["Public business page", "Appointment reminders", "Detailed reports and CSV exports"]);
+  assert.deepEqual(visiblePlanFeatureLabels("automotive", enabledFeatures), ["Public business page", "Maintenance reminders", "Detailed reports and CSV exports"]);
   assert.deepEqual(visiblePlanFeatureLabels("hospitality", enabledFeatures), []);
 });
 
