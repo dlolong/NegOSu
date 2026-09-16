@@ -37,7 +37,7 @@ export type CommandCenterOperation = {
 export type CommandCenterStaffItem = {
   id: string;
   displayName: string;
-  status: "working" | "busy" | "available" | "off";
+  status: "working" | "busy" | "available" | "off" | "active";
   context?: string;
   nextAt?: string;
   href?: string;
@@ -71,6 +71,7 @@ export type SharedCommandCenterSnapshot = {
   operations: CommandCenterOperation[];
   staff: CommandCenterStaffItem[];
   branchPerformance: CommandCenterBranchPerformance[];
+  branchTimezones?: Readonly<Record<string, string>>;
 };
 
 export type CommandCenterBranch = {

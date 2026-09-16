@@ -12,7 +12,7 @@ export function PublicPlanCatalog({ compact = false }: { compact?: boolean }) {
         <div className="mt-2 flex flex-col justify-between gap-3 lg:flex-row lg:items-center">
           <div>
             <h2 id={compact ? "negosu-home-plans-title" : "negosu-plans-title"} className="text-3xl font-semibold tracking-tight sm:text-4xl">Start free. Upgrade when your business needs more.</h2>
-            <p className="mt-3 max-w-2xl leading-7 text-zinc-600">Choose Automotive or Salon &amp; Beauty at signup. Available tools vary by industry and plan. Prices are in Philippine pesos.</p>
+            <p className="mt-3 max-w-2xl leading-7 text-zinc-600">Choose Automotive, Salon &amp; Beauty, Pet Care, or Apartelle &amp; Inn at signup. Available tools vary by industry and plan. Prices are in Philippine pesos.</p>
           </div>
           {compact ? <Link id="negosu-view-all-plans-link" href="/plans" className="inline-flex min-h-11 items-center font-semibold text-brand-primary-strong hover:underline">Compare all plans</Link> : null}
         </div>

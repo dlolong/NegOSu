@@ -94,3 +94,7 @@ Production backfill was NOT executed.
 - A production notification delivery adapter before Email/SMS delivery can be called operational.
 - Scheduler/cron invocation secrets and schedules for enabled background endpoints.
 - Provider dashboards, logs, alerting, and backup-restore testing owned by the deployment operator.
+
+## Apartelle & Inn
+
+Review migrations 0086–0092 and the [Hospitality rollout instructions](HOSPITALITY.md) before deployment. They extend Core invoices/report policy and add the bounded room/stay domain. They do not change SaaS prices or provider credentials. Migration 0090 enables standard signup and removes invitation-based access. Migration 0091 adds fixed room packages and atomic paid check-in with optional guest identity and cash change. Apply the schema before releasing the updated UI, then configure each room’s real rates in Rooms administration. Migration 0092 makes checkout require cleaning before reuse, adds the staff Mark ready action and updates report counts. Existing stays and pre-migration room readiness remain intact. Deployment remains an operator action.

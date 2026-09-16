@@ -9,7 +9,7 @@ import { safeRedirectPath } from "@/lib/auth/redirect";
 import { ACTIVE_ORGANIZATION_COOKIE } from "@/lib/auth/context";
 import { resolveOnboardingDestination } from "@/lib/auth/onboarding";
 import { createClient } from "@/lib/supabase/server";
-import { resolveOptionalProductEntry } from "@/modules/platform/product-entry";
+import { resolveAuthProductEntry } from "@/modules/platform/product-entry";
 
 function value(formData: FormData, key: string) {
   const submitted = formData.get(key);
@@ -23,7 +23,7 @@ function withMessage(path: string, kind: "error" | "message", message: string) {
 
 function productContextPath(path: string, rawIndustry: string, values: Record<string, string> = {}) {
   const parameters = new URLSearchParams(values);
-  const entry = resolveOptionalProductEntry(rawIndustry);
+  const entry = resolveAuthProductEntry(rawIndustry);
   if (entry) parameters.set("industry", entry.industry);
   const query = parameters.toString();
   return `${path}${query ? `?${query}` : ""}`;

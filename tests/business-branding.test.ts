@@ -34,8 +34,11 @@ test("business identity uses its own image while platform attribution stays seco
   assert.match(html, /referrerPolicy="no-referrer"/i);
   assert.doesNotMatch(html, /_next\/image|NegOSu_logo/);
   const attribution = renderToStaticMarkup(createElement(PoweredBy));
-  assert.match(attribution, /Powered by NegOSu/);
-  assert.doesNotMatch(attribution, /<img/);
+  assert.match(attribution, /Powered by/);
+  assert.match(attribution, /<img[^>]+alt="NegOSu"/);
+  assert.match(attribution, /NegOSu_logo_dark\.png/);
+  const inverseAttribution = renderToStaticMarkup(createElement(PoweredBy, { inverse: true }));
+  assert.match(inverseAttribution, /NegOSu_logo_light\.png/);
 });
 
 test("owned page metadata overrides platform title and icon without exposing invalid image URLs", () => {

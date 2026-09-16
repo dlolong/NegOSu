@@ -20,6 +20,7 @@ type DashboardQuery = { branch?: string; error?: string };
 export default async function DashboardPage({ searchParams }: { searchParams: Promise<DashboardQuery> }) {
   const [query, context] = await Promise.all([searchParams, getDashboardContext()]);
   const { activeMembership, profile } = context;
+  if (activeMembership.industry === "hospitality") { const { HospitalityOverview } = await import("@/components/hospitality/overview"); return <HospitalityOverview branch={query.branch}/>; }
   if (activeMembership.industry === "pet_care") redirect("/dashboard/pet-care");
   const isCommandCenterRole = activeMembership.role === "owner" || activeMembership.role === "manager";
   if (!isCommandCenterRole) {

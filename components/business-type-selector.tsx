@@ -1,11 +1,12 @@
 "use client";
 
-import { BriefcaseBusiness, Scissors, PawPrint } from "lucide-react";
+import { Building2, BriefcaseBusiness, Scissors, PawPrint } from "lucide-react";
 import { useState } from "react";
 
 import { productEntryConfigs, type PublicProductKey } from "@/modules/platform/product-entry";
 
 const choices = [
+  { industry: "hospitality" as const, title: "Apartelle & Inn", description: "Rooms, guests, stays, payments, inventory and reports.", Icon: Building2 },
   { industry: "pet_care" as const, title: "Pet Care", description: "Pet grooming, bath, styling, and pet spa services.", Icon: PawPrint },
   {
     industry: "automotive" as const,

@@ -25,7 +25,7 @@ import { displayPhone } from "@/lib/crm";
 import { staffRoleLabelForIndustry, staffRoleOptionsForIndustry } from "@/lib/rbac";
 import type { StaffManagementItem } from "@/modules/core/staff";
 
-export type StaffManagementIndustry = "automotive" | "salon" | "pet_care";
+export type StaffManagementIndustry = "automotive" | "salon" | "pet_care" | "hospitality";
 
 export type StaffProfileRow = StaffManagementItem & {
   todayCount?: number;
@@ -74,11 +74,11 @@ export function StaffProfileForm({ profile, branches, industry, prefix }: {
     </label>
     <p className="-mt-2 text-xs text-slate-500 sm:col-span-2">Contact details are optional and do not create a login. System access is managed separately.</p>
     <label className="text-sm font-semibold">Job function <span className="font-normal text-slate-500">(optional)</span>
-      <Input id={`${prefix}-job-function-input`} name="jobFunction" list={`${prefix}-job-function-suggestions`} maxLength={80} defaultValue={profile?.jobFunction ?? ""} className="mt-2" placeholder={industry === "pet_care" ? "e.g. Groomer" : industry === "salon" ? "e.g. Senior Stylist" : "e.g. Master Technician"}/>
+      <Input id={`${prefix}-job-function-input`} name="jobFunction" list={`${prefix}-job-function-suggestions`} maxLength={80} defaultValue={profile?.jobFunction ?? ""} className="mt-2" placeholder={industry === "hospitality" ? "e.g. Receptionist" : industry === "pet_care" ? "e.g. Groomer" : industry === "salon" ? "e.g. Senior Stylist" : "e.g. Master Technician"}/>
       <datalist id={`${prefix}-job-function-suggestions`}>{suggestions.map((suggestion) => <option key={suggestion} value={suggestion}/>)}</datalist>
     </label>
     <label className="text-sm font-semibold">Specialties <span className="font-normal text-slate-500">(optional)</span>
-      <Input id={`${prefix}-specializations-input`} name="specializations" maxLength={1_000} defaultValue={profile?.specializations.join(", ") ?? ""} className="mt-2" placeholder={industry === "pet_care" ? "Coat care, nail trimming" : industry === "salon" ? "Hair color, facials" : "Diagnostics, electrical"}/>
+      <Input id={`${prefix}-specializations-input`} name="specializations" maxLength={1_000} defaultValue={profile?.specializations.join(", ") ?? ""} className="mt-2" placeholder={industry === "hospitality" ? "Guest service, supplies" : industry === "pet_care" ? "Coat care, nail trimming" : industry === "salon" ? "Hair color, facials" : "Diagnostics, electrical"}/>
     </label>
     <label className="text-sm font-semibold">Operational status
       <select id={`${prefix}-status-select`} name="isActive" defaultValue={String(profile?.isActive ?? true)} className="mt-2 min-h-11 w-full rounded-xl border border-slate-300 bg-white px-3">
@@ -138,15 +138,15 @@ export function StaffDirectoryViews({ staff, branches, timezone, industry, prefi
   prefix: string;
   managementAvailable?: boolean;
 }) {
-  return <RecordTable id={industry === "salon" ? "salon-staff-table" : "staff-table"} caption="Staff directory" className="mt-4" empty="No staff profiles match this view." columns={[{key:"staff",label:"Staff"},{key:"function",label:"Function / schedule",secondary:true},{key:"status",label:"Profile",secondary:true},{key:"access",label:"System access",secondary:true},{key:"actions",label:"Actions",align:"right"}]} rows={staff.map(profile=>({id:`${prefix}-row-${profile.id}`,cells:{
+  return <RecordTable id={industry === "salon" ? "salon-staff-table" : "staff-table"} caption="Staff directory" className="mt-4" empty="No staff profiles match this view." columns={[{key:"staff",label:"Staff"},{key:"function",label:industry === "hospitality" ? "Job function" : "Function / schedule",secondary:true},{key:"status",label:"Profile",secondary:true},{key:"access",label:"System access",secondary:true},{key:"actions",label:"Actions",align:"right"}]} rows={staff.map(profile=>({id:`${prefix}-row-${profile.id}`,cells:{
     staff:<><RecordLink id={`${prefix}-link-${profile.id}`} href={`/dashboard/settings/staff?dialog=${managementAvailable?"edit":"view"}&staffId=${profile.id}`}>{profile.fullName}</RecordLink><StaffContactLines profile={profile}/><small className="block text-admin-text-muted">{branchNames(profile.branchIds,branches)}</small></>,
-    function:<><strong>{profile.jobFunction||"Not set"}</strong><p className="text-xs text-admin-text-muted">{profile.specializations.join(", ")}</p><p className="mt-1 text-xs">{profile.todayCount??0} appointments · {profile.nextAt?formatTime(profile.nextAt,timezone):"No upcoming visit"}</p></>,status:<ProfileStatus active={profile.isActive}/>,access:<AccessStatus id={`${prefix}-access-status-${profile.id}`} profile={profile} industry={industry}/>,actions:<StaffActions profile={profile} prefix={prefix} managementAvailable={managementAvailable}/>,
-  },mobile:<><p>{profile.jobFunction||"Job function not set"}</p><p>{profile.todayCount??0} appointments · {profile.nextAt?formatTime(profile.nextAt,timezone):"No upcoming visit"}</p><ProfileStatus active={profile.isActive}/><AccessStatus id={`${prefix}-access-status-${profile.id}-mobile`} profile={profile} industry={industry}/></>}))}/>;
+    function:<><strong>{profile.jobFunction||"Not set"}</strong><p className="text-xs text-admin-text-muted">{profile.specializations.join(", ")}</p>{industry !== "hospitality" ? <p className="mt-1 text-xs">{profile.todayCount??0} appointments · {profile.nextAt?formatTime(profile.nextAt,timezone):"No upcoming visit"}</p> : null}</>,status:<ProfileStatus active={profile.isActive}/>,access:<AccessStatus id={`${prefix}-access-status-${profile.id}`} profile={profile} industry={industry}/>,actions:<StaffActions profile={profile} prefix={prefix} managementAvailable={managementAvailable}/>,
+  },mobile:<><p>{profile.jobFunction||"Job function not set"}</p>{industry !== "hospitality" ? <p>{profile.todayCount??0} appointments · {profile.nextAt?formatTime(profile.nextAt,timezone):"No upcoming visit"}</p> : null}<ProfileStatus active={profile.isActive}/><AccessStatus id={`${prefix}-access-status-${profile.id}-mobile`} profile={profile} industry={industry}/></>}))}/>;
 }
 
 export function PermissionMatrix({ industry, prefix }: { industry: StaffManagementIndustry; prefix: string }) {
-  const headings = industry === "pet_care" ? ["Access role", "Pet owners", "Appointments", "Services", "Inventory", "Settings"] : industry === "salon" ? ["Access role", "Clients", "Appointments", "Treatments", "Inventory", "Settings"] : ["Access role", "Customers", "Appointments", "Jobs", "Finance", "Inventory", "Settings"];
-  const rows = industry !== "automotive" ? salonPermissions : automotivePermissions;
+  const headings = industry === "hospitality" ? ["Access role", "Guests", "Check-in/out", "Charges & payments", "Inventory", "Settings"] : industry === "pet_care" ? ["Access role", "Pet owners", "Appointments", "Services", "Inventory", "Settings"] : industry === "salon" ? ["Access role", "Clients", "Appointments", "Treatments", "Inventory", "Settings"] : ["Access role", "Customers", "Appointments", "Jobs", "Finance", "Inventory", "Settings"];
+  const rows = industry === "hospitality" ? [["Owner", "Manage", "Manage", "Manage", "Manage", "Manage"], ["Manager", "Manage", "Manage", "Manage", "Manage", "Business settings"], ["Front Desk", "Manage", "Manage", "View", "—", "—"], ["Operations Staff", "View", "View", "—", "—", "—"], ["Cashier", "View", "View", "Manage", "—", "—"], ["Viewer", "View", "View", "—", "—", "—"]] : industry !== "automotive" ? salonPermissions : automotivePermissions;
   return <aside id={`${prefix}-permission-matrix`} aria-labelledby={`${prefix}-permission-info-title`} className="mt-4 min-w-0 rounded-xl border border-admin-border bg-admin-surface-muted p-3 text-sm text-admin-text-secondary">
     <div className="flex items-start gap-2"><Info aria-hidden="true" size={16} className="mt-0.5 shrink-0"/><div className="min-w-0"><h2 id={`${prefix}-permission-info-title`} className="text-sm font-medium">About access permissions</h2><p className="mt-1 text-xs">Access roles control what staff can do in the system. They are separate from job functions and apply within assigned access branches.</p></div></div>
     <details id={`${prefix}-permission-details`} className="mt-2">

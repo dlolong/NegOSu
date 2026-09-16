@@ -21,6 +21,12 @@ export type ProductEntryConfig = {
 };
 
 const productEntries: Record<PublicProductKey, ProductEntryConfig> = {
+  hospitality: {
+    industry: "hospitality", productName: verticalBrands.hospitality.displayName, eyebrow: "Apartelle & Inn",
+    loginTitle: "Welcome back", loginDescription: "Sign in to manage rooms, guests, stays and payments at your apartelle or inn.",
+    signupDescription: "Create your NegOSu account and set up your apartelle or inn. Manage rooms, guests, staff, payments, inventory and reports.",
+    businessTypeLabel: "Apartelle & Inn", businessTypes: [{ value: "apartelle", label: "Apartelle" }, { value: "inn", label: "Inn" }, { value: "guesthouse", label: "Guesthouse" }],
+  },
   automotive: {
     industry: "automotive",
     productName: verticalBrands.automotive.displayName,
@@ -93,3 +99,6 @@ export function isEnabledSignupIndustry(value: IndustryKey): value is PublicProd
 }
 
 export const productEntryConfigs = productEntries;
+
+// Shared entry configuration for signup, login and recovery.
+export const resolveAuthProductEntry = resolveOptionalProductEntry;

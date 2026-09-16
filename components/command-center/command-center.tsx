@@ -119,13 +119,13 @@ function formatTime(value: string | null | undefined, timeZone?: string) {
 }
 
 function branchTimezone(branchId: string | undefined, snapshot: SharedCommandCenterSnapshot) {
-  return snapshot.branchPerformance.find((branch) => branch.branchId === branchId)?.timezone;
+  return snapshot.branchPerformance.find((branch) => branch.branchId === branchId)?.timezone ?? (branchId ? snapshot.branchTimezones?.[branchId] : undefined);
 }
 
 function operationalDate(snapshot: SharedCommandCenterSnapshot) {
   if (snapshot.scope.mode === "all") return "Today · each branch’s local date";
   const selectedTimezone = snapshot.scope.selectedBranchId
-    ? snapshot.branchPerformance.find(({ branchId }) => branchId === snapshot.scope.selectedBranchId)?.timezone
+    ? branchTimezone(snapshot.scope.selectedBranchId, snapshot)
     : undefined;
   return new Intl.DateTimeFormat("en-PH", { timeZone: selectedTimezone, weekday: "short", month: "short", day: "numeric", year: "numeric" }).format(new Date());
 }
@@ -135,7 +135,7 @@ function priorityColor(priority: string) {
 }
 
 function staffColor(status: string) {
-  return status === "working" || status === "busy" ? "bg-amber-500" : status === "available" ? "bg-emerald-500" : "bg-slate-400";
+  return status === "working" || status === "busy" ? "bg-amber-500" : (status === "available" || status === "active") ? "bg-emerald-500" : "bg-slate-400";
 }
 
 function capitalize(value: string) {

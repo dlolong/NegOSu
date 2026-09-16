@@ -53,7 +53,7 @@ type InvitationRow = {
 
 export default async function StaffPage({ searchParams }: { searchParams: Promise<Params> }) {
   const [parameters, { activeMembership }, supabase] = await Promise.all([searchParams, getDashboardContext(), createClient()]);
-  const industry: StaffManagementIndustry = activeMembership.industry === "pet_care" ? "pet_care" : activeMembership.industry === "salon" ? "salon" : "automotive";
+  const industry: StaffManagementIndustry = activeMembership.industry === "hospitality" ? "hospitality" : activeMembership.industry === "pet_care" ? "pet_care" : activeMembership.industry === "salon" ? "salon" : "automotive";
   const prefix = industry === "salon" ? "salon-staff" : "staff";
 
   if (activeMembership.role !== "owner" && industry === "salon") {
@@ -68,7 +68,7 @@ export default async function StaffPage({ searchParams }: { searchParams: Promis
       .catch(() => ({ data: { items: [] as StaffProfileRow[], supportsIndependentProfiles: false } satisfies StaffManagementDirectory, error: true })),
     supabase.from("branches").select("id,name").eq("organization_id", activeMembership.organizationId).eq("is_active", true).order("name"),
     supabase.from("staff_invitations").select("id,email,role,status,expires_at,created_at").eq("organization_id", activeMembership.organizationId).order("created_at", { ascending: false }),
-    listStaffScheduleAssignments({
+    industry === "hospitality" ? Promise.resolve({ data: [] as StaffScheduleAssignment[], error: false }) : listStaffScheduleAssignments({
       organizationId: activeMembership.organizationId,
       branchId: activeMembership.branchId,
       startsAt: window.start.toISOString(),

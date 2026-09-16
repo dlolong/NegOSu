@@ -92,6 +92,7 @@ export function planMatchesLaunchCatalog(plan: {
 }
 
 export function visiblePlanFeatureLabels(industry: string, features: Record<string, boolean>) {
+  if (industry === "hospitality") return [features.advanced_reports ? "Detailed reports and CSV exports" : "Reports: last 30 days, one branch"];
   if (industry !== "automotive" && industry !== "salon" && industry !== "pet_care") return [];
 
   const labels: string[] = [];

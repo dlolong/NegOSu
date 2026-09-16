@@ -52,9 +52,11 @@ export async function createOrganization(formData: FormData) {
     redirect(`/onboarding/business?error=${encodeURIComponent(message)}`);
   }
 
-  const { installStarterServices } = await import("@/modules/core/catalog/install-starter-services");
-  const starterResult = await installStarterServices(supabase, { organizationId: result.organizationId, role: "owner" });
-  if (starterResult.error) console.error("onboarding.starter_catalog_unavailable");
+  if (parsed.data.industry !== "hospitality") {
+    const { installStarterServices } = await import("@/modules/core/catalog/install-starter-services");
+    const starterResult = await installStarterServices(supabase, { organizationId: result.organizationId, role: "owner" });
+    if (starterResult.error) console.error("onboarding.starter_catalog_unavailable");
+  }
 
   const cookieStore = await cookies();
   cookieStore.set(ACTIVE_ORGANIZATION_COOKIE, result.organizationId, activeOrganizationCookieOptions);

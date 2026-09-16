@@ -10,9 +10,9 @@ import { csvCell } from "../lib/reporting";
 for (const industry of supportedVerticalKeys) {
   test(`${industry} exposes every shared operational capability with role boundaries`, () => {
     const config = resolveIndustryConfig(industry);
-    for (const capability of ["appointments", "inventory", "payments", "reports", "booking_requests", "resources"] as const) assert.equal(config.features[capability], true);
+    for (const capability of (industry === "hospitality" ? ["inventory", "payments", "reports"] : ["appointments", "inventory", "payments", "reports", "booking_requests", "resources"]) as Array<keyof typeof config.features>) assert.equal(config.features[capability], true);
     const owner = navigationForIndustry(config, "owner");
-    for (const key of ["dashboard", "appointments", "bookings", "customers", "services", "staff", "inventory", "payments", "reports", "resources", "branches", "settings"]) assert.ok(owner.some(item => item.key === key), `${industry} lacks ${key}`);
+    for (const key of (industry === "hospitality" ? ["dashboard", "rooms", "customers", "staff", "inventory", "payments", "reports", "branches", "settings"] : ["dashboard", "appointments", "bookings", "customers", "services", "staff", "inventory", "payments", "reports", "resources", "branches", "settings"])) assert.ok(owner.some(item => item.key === key), `${industry} lacks ${key}`);
     assert.equal(owner.find(row => row.key === "payments")?.href, "/dashboard/payments");
     assert.ok(navigationForIndustry(config, "cashier").some(row => row.key === "payments"));
     assert.equal(navigationForIndustry(config, "viewer").some(row => row.key === "payments"), false);

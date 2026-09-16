@@ -2,11 +2,10 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 
 import { BrandWordmark } from "@/components/brand-wordmark";
-import { productBrand, verticalBrands } from "@/modules/platform/brand";
-import type { PublicProductKey } from "@/modules/platform/product-entry";
+import { productBrand, marketingBrands, type MarketingVerticalKey } from "@/modules/platform/brand";
 
-export function AuthShell({ title, description, children, footer, industry, id = "negosu-auth-page" }: { title: string; description: string; children: ReactNode; footer?: ReactNode; industry?: PublicProductKey; id?: string }) {
-  const vertical = industry ? verticalBrands[industry] : null;
+export function AuthShell({ title, description, children, footer, industry, id = "negosu-auth-page" }: { title: string; description: string; children: ReactNode; footer?: ReactNode; industry?: MarketingVerticalKey; id?: string }) {
+  const vertical = industry ? marketingBrands[industry] : null;
   const homeHref = vertical?.path ?? "/";
   return (
     <main id={id} className="grid min-h-dvh place-items-center bg-slate-50 px-4 py-8 sm:px-5 sm:py-10">

@@ -14,6 +14,11 @@ import { verticalBrands } from "@/modules/platform/brand";
 
 export default async function Page({params,searchParams}:{params:Promise<{invoiceId:string}>;searchParams:Promise<{message?:string;error?:string}>}) {
   const [{invoiceId},query,{activeMembership},supabase]=await Promise.all([params,searchParams,getDashboardContext(),createClient()]);
+  if (activeMembership.industry === "hospitality") {
+    const { data: link } = await supabase.from("hospitality_stay_bills").select("stay_id").eq("organization_id", activeMembership.organizationId).eq("invoice_id", invoiceId).maybeSingle();
+    if (!link) notFound();
+    const { redirect } = await import("next/navigation"); redirect(`/dashboard/hospitality/stays/${link.stay_id}?tab=charges`);
+  }
   const [{data:invoice},{data:payments}]=await Promise.all([
     supabase.from("invoices").select("*,invoice_items(*)").eq("id",invoiceId).eq("organization_id",activeMembership.organizationId).maybeSingle(),
     supabase.from("payments").select("id,amount_centavos,method,status,reference,paid_at,notes").eq("invoice_id",invoiceId).order("paid_at"),

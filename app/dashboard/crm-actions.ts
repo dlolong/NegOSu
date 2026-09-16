@@ -83,8 +83,8 @@ export async function saveCustomer(data: FormData) {
     message(back, "error", schemaOutdated ? "The database is missing Phase 02 migrations. Apply migrations 0009 and 0010, then try again." : "Unable to save this customer.");
   }
   revalidatePath("/dashboard/customers");
-  if (formValue(data, "returnTo")) message(listReturnPath(data, "/dashboard/customers"), "message", `Customer ${id ? "updated" : "created"}.`);
-  redirect(`/dashboard/customers/${result.data.id}?message=${encodeURIComponent(`Customer ${id ? "updated" : "created"}.`)}`);
+  if (formValue(data, "returnTo")) message(listReturnPath(data, "/dashboard/customers"), "message", `${activeMembership.industry === "hospitality" ? "Guest" : "Customer"} ${id ? "updated" : "created"}.`);
+  redirect(`/dashboard/customers/${result.data.id}?message=${encodeURIComponent(`${activeMembership.industry === "hospitality" ? "Guest" : "Customer"} ${id ? "updated" : "created"}.`)}`);
 }
 
 export async function archiveCustomer(data: FormData) {

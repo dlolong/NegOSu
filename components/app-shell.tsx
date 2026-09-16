@@ -22,6 +22,7 @@ import type { DashboardThemeId } from "@/modules/platform/dashboard-theme";
 
 const navigationIcons: Record<string, LucideIcon> = {
   dashboard: Gauge,
+  rooms: Building2,
   customers: Users,
   pets: PawPrint,
   vehicles: CarFront,
@@ -222,7 +223,7 @@ export function AppShell({ children, activeMembership, memberships, profileName,
             </DismissibleDetails>
           </div>
         </header>
-        <main id="dashboard-main-content" className="admin-main-surface min-h-0 min-w-0 flex-1 touch-pan-y overflow-x-hidden overflow-y-auto overscroll-y-contain p-4 pb-[calc(5.5rem+env(safe-area-inset-bottom))] sm:p-5 sm:pb-24 lg:p-6 lg:pb-6"><DashboardBackLink salon={activeMembership.industry === "salon"}/>{children}</main>
+        <main id="dashboard-main-content" className="admin-main-surface min-h-0 min-w-0 flex-1 touch-pan-y overflow-x-hidden overflow-y-auto overscroll-y-contain p-4 pb-[calc(5.5rem+env(safe-area-inset-bottom))] sm:p-5 sm:pb-24 lg:p-6 lg:pb-6"><DashboardBackLink salon={activeMembership.industry === "salon"} industry={activeMembership.industry}/>{children}</main>
       </div>
       <nav id="dashboard-mobile-navigation" className={`fixed inset-x-0 bottom-0 z-30 grid ${mobileColumnClass} border-t border-admin-border bg-admin-surface/95 px-2 pb-[max(.5rem,env(safe-area-inset-bottom))] pt-2 shadow-ui-md backdrop-blur lg:hidden`}>
         {mobileNav.map((item) => {

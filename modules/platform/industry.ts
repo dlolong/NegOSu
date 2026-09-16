@@ -106,11 +106,18 @@ const disabledIndustryConfig = (key: "hospitality" | "field_service"): IndustryC
   features: Object.fromEntries(industryFeatureKeys.map((feature) => [feature, false])) as Record<IndustryFeatureKey, boolean>,
 });
 
+export const hospitalityConfig: IndustryConfig = {
+  ...disabledIndustryConfig("hospitality"),
+  productName: "NegOSu Apartelle & Inn",
+  terminology: { customer: "Guest", staff: "Staff", booking: "Stay", location: "Branch", service: "Charge", resource: "Room", product: "Product" },
+  features: { ...disabledIndustryConfig("hospitality").features, inventory: true, payments: true, reports: true },
+};
+
 const industryConfigs: Record<IndustryKey, IndustryConfig> = {
   automotive: karkrAutomotiveConfig,
   salon: salonConfig,
   pet_care: petCareConfig,
-  hospitality: disabledIndustryConfig("hospitality"),
+  hospitality: hospitalityConfig,
   field_service: disabledIndustryConfig("field_service"),
 };
 

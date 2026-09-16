@@ -7,7 +7,8 @@ import { BrandWordmark } from "@/components/brand-wordmark";
 import {
   productBrand,
   petCareBrand,
-  verticalBrands,
+  marketingBrands,
+  hospitalityBrand,
   type MarketingVerticalKey,
 } from "@/modules/platform/brand";
 
@@ -18,8 +19,8 @@ export type MarketingFeature = {
 };
 
 export function MarketingHeader({ vertical }: { vertical?: MarketingVerticalKey }) {
-  const signupPath = vertical ? verticalBrands[vertical].signupPath : "/signup";
-  const loginPath = vertical ? verticalBrands[vertical].loginPath : "/login";
+  const signupPath = vertical ? marketingBrands[vertical].signupPath : "/signup";
+  const loginPath = vertical ? marketingBrands[vertical].loginPath : "/login";
 
   return (
     <header id="negosu-main-header" className="border-b border-brand-border/70 bg-white/95">
@@ -28,29 +29,31 @@ export function MarketingHeader({ vertical }: { vertical?: MarketingVerticalKey 
           <BrandWordmark className="w-32" />
         </Link>
 
-        <nav id="negosu-desktop-navigation" className="hidden items-center gap-1 lg:flex" aria-label="Main navigation">
+        <nav id="negosu-desktop-navigation" className="hidden items-center gap-1 xl:flex" aria-label="Main navigation">
           <Link id="negosu-desktop-solutions-link" href="/#solutions" className="rounded-xl px-3 py-2 text-sm font-semibold text-zinc-600 hover:bg-brand-tint hover:text-brand-ink">Solutions</Link>
-          <Link id="negosu-desktop-automotive-link" href={verticalBrands.automotive.path} className="rounded-xl px-3 py-2 text-sm font-semibold text-zinc-600 hover:bg-brand-tint hover:text-brand-ink">Automotive</Link>
-          <Link id="negosu-desktop-salon-link" href={verticalBrands.salon.path} className="rounded-xl px-3 py-2 text-sm font-semibold text-zinc-600 hover:bg-brand-tint hover:text-brand-ink">Salon &amp; Beauty</Link>
+          <Link id="negosu-desktop-automotive-link" href={marketingBrands.automotive.path} className="rounded-xl px-3 py-2 text-sm font-semibold text-zinc-600 hover:bg-brand-tint hover:text-brand-ink">Automotive</Link>
+          <Link id="negosu-desktop-salon-link" href={marketingBrands.salon.path} className="rounded-xl px-3 py-2 text-sm font-semibold text-zinc-600 hover:bg-brand-tint hover:text-brand-ink">Salon &amp; Beauty</Link>
           <Link id="negosu-desktop-pet-care-link" href={petCareBrand.path} className="rounded-xl px-3 py-2 text-sm font-semibold text-zinc-600 hover:bg-brand-tint hover:text-brand-ink">Pet Care</Link>
+          <Link id="negosu-desktop-hospitality-link" href={hospitalityBrand.path} className="rounded-xl px-3 py-2 text-sm font-semibold text-zinc-600 hover:bg-brand-tint hover:text-brand-ink">Apartelle &amp; Inn</Link>
           <Link id="negosu-desktop-features-link" href="/#features" className="rounded-xl px-3 py-2 text-sm font-semibold text-zinc-600 hover:bg-brand-tint hover:text-brand-ink">Features</Link>
           <Link id="negosu-desktop-plans-link" href="/plans" className="rounded-xl px-3 py-2 text-sm font-semibold text-zinc-600 hover:bg-brand-tint hover:text-brand-ink">Plans</Link>
         </nav>
 
-        <div className="hidden items-center gap-2 lg:flex">
+        <div className="hidden items-center gap-2 xl:flex">
           <Link id="negosu-header-sign-in-link" href={loginPath} className="inline-flex min-h-11 items-center rounded-xl px-3 py-2 text-sm font-bold text-zinc-700 hover:bg-zinc-100">Sign In</Link>
           <Link id="negosu-header-start-free-button" href={signupPath} className="inline-flex min-h-11 items-center rounded-xl bg-brand-primary px-4 py-2 text-sm font-bold text-white shadow-sm hover:bg-brand-primary-strong"><PlayIcon aria-hidden="true" size={16} className="shrink-0"/>Start Free</Link>
         </div>
 
-        <details id="negosu-mobile-menu" className="group relative lg:hidden">
+        <details id="negosu-mobile-menu" className="group relative xl:hidden">
           <summary id="negosu-mobile-menu-button" className="flex min-h-11 min-w-11 cursor-pointer list-none items-center justify-center rounded-xl border border-brand-border text-brand-ink marker:content-none" aria-label="Open navigation menu">
             <Menu aria-hidden="true" size={20} />
           </summary>
           <nav id="negosu-mobile-navigation" className="absolute right-0 z-30 mt-2 w-[min(18rem,calc(100vw-2rem))] rounded-2xl border border-zinc-200 bg-white p-2 shadow-lg" aria-label="Mobile navigation">
             <Link id="negosu-mobile-solutions-link" href="/#solutions" className="block min-h-11 rounded-xl px-3 py-3 text-sm font-bold hover:bg-zinc-50">Solutions</Link>
-            <Link id="negosu-mobile-automotive-link" href={verticalBrands.automotive.path} className="block min-h-11 rounded-xl px-3 py-3 text-sm font-semibold text-zinc-600 hover:bg-zinc-50">Automotive</Link>
-            <Link id="negosu-mobile-salon-link" href={verticalBrands.salon.path} className="block min-h-11 rounded-xl px-3 py-3 text-sm font-semibold text-zinc-600 hover:bg-zinc-50">Salon &amp; Beauty</Link>
+            <Link id="negosu-mobile-automotive-link" href={marketingBrands.automotive.path} className="block min-h-11 rounded-xl px-3 py-3 text-sm font-semibold text-zinc-600 hover:bg-zinc-50">Automotive</Link>
+            <Link id="negosu-mobile-salon-link" href={marketingBrands.salon.path} className="block min-h-11 rounded-xl px-3 py-3 text-sm font-semibold text-zinc-600 hover:bg-zinc-50">Salon &amp; Beauty</Link>
             <Link id="negosu-mobile-pet-care-link" href={petCareBrand.path} className="block min-h-11 rounded-xl px-3 py-3 text-sm font-semibold text-zinc-600 hover:bg-zinc-50">Pet Care</Link>
+            <Link id="negosu-mobile-hospitality-link" href={hospitalityBrand.path} className="block min-h-11 rounded-xl px-3 py-3 text-sm font-semibold text-zinc-600 hover:bg-zinc-50">Apartelle &amp; Inn</Link>
           <Link id="negosu-mobile-features-link" href="/#features" className="block min-h-11 rounded-xl px-3 py-3 text-sm font-semibold text-zinc-600 hover:bg-zinc-50">Features</Link>
             <Link id="negosu-mobile-plans-link" href="/plans" className="block min-h-11 rounded-xl px-3 py-3 text-sm font-semibold text-zinc-600 hover:bg-zinc-50">Plans</Link>
             <div className="mt-2 grid gap-2 border-t border-zinc-100 pt-2">
@@ -78,7 +81,7 @@ export function MarketingHero({ vertical, eyebrow, title, description, visual }:
         <h1 className="mt-5 max-w-3xl text-4xl font-black tracking-[-0.045em] sm:text-5xl lg:text-6xl">{title}</h1>
         <p className="mt-5 max-w-2xl text-base leading-7 text-zinc-600 sm:text-lg sm:leading-8">{description}</p>
         <div className="mt-7 flex flex-col gap-3 min-[380px]:flex-row">
-          <Link id={`negosu-${toId(vertical)}-start-free-button`} href={verticalBrands[vertical].signupPath} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-brand-primary px-5 py-3 font-bold text-white shadow-sm hover:bg-brand-primary-strong">
+          <Link id={`negosu-${toId(vertical)}-start-free-button`} href={marketingBrands[vertical].signupPath} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-brand-primary px-5 py-3 font-bold text-white shadow-sm hover:bg-brand-primary-strong">
             Start Free <ArrowRight aria-hidden="true" size={18} />
           </Link>
           <a id={`negosu-${toId(vertical)}-explore-features-button`} href={`#negosu-${toId(vertical)}-features`} className="inline-flex min-h-11 items-center justify-center rounded-xl border border-brand-border bg-white px-5 py-3 font-bold text-brand-ink hover:bg-brand-tint"><ArrowRightIcon aria-hidden="true" size={16} className="shrink-0"/>Explore Features</a>
@@ -135,7 +138,7 @@ export function HowItWorks({ vertical, steps }: { vertical: MarketingVerticalKey
 }
 
 export function MarketingCta({ vertical, title, description }: { vertical?: MarketingVerticalKey; title: string; description: string }) {
-  const signupPath = vertical ? verticalBrands[vertical].signupPath : "/signup";
+  const signupPath = vertical ? marketingBrands[vertical].signupPath : "/signup";
   return (
     <section id={vertical ? `negosu-${toId(vertical)}-final-cta` : "negosu-final-cta"} className="px-4 py-14 sm:px-6 sm:py-18">
       <div className="mx-auto flex max-w-7xl flex-col items-start justify-between gap-6 rounded-2xl bg-brand-ink px-6 py-8 text-white shadow-sm sm:px-8 sm:py-10 lg:flex-row lg:items-center">
@@ -160,12 +163,13 @@ export function MarketingFooter({ vertical }: { vertical?: MarketingVerticalKey 
           <p className="mt-1">{productBrand.tagline}</p>
         </div>
         <nav className="flex flex-wrap gap-x-5 gap-y-2" aria-label="Footer navigation">
-          <Link id="negosu-footer-automotive-link" href={verticalBrands.automotive.path}>Automotive</Link>
-          <Link id="negosu-footer-salon-link" href={verticalBrands.salon.path}>Salon &amp; Beauty</Link>
+          <Link id="negosu-footer-automotive-link" href={marketingBrands.automotive.path}>Automotive</Link>
+          <Link id="negosu-footer-salon-link" href={marketingBrands.salon.path}>Salon &amp; Beauty</Link>
           <Link id="negosu-footer-pet-care-link" href={petCareBrand.path}>Pet Care</Link>
+          <Link id="negosu-footer-hospitality-link" href={hospitalityBrand.path}>Apartelle &amp; Inn</Link>
           <Link id="negosu-footer-plans-link" href="/plans">Plans</Link>
-          <Link id="negosu-footer-sign-in-link" href="/login">Sign In</Link>
-          <Link id="negosu-footer-start-free-link" href={vertical ? verticalBrands[vertical].signupPath : "/signup"}>Start Free</Link>
+          <Link id="negosu-footer-sign-in-link" href={vertical ? marketingBrands[vertical].loginPath : "/login"}>Sign In</Link>
+          <Link id="negosu-footer-start-free-link" href={vertical ? marketingBrands[vertical].signupPath : "/signup"}>Start Free</Link>
         </nav>
       </div>
     </footer>

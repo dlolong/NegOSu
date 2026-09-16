@@ -16,6 +16,7 @@ type CustomerRecord={id:string;full_name:string;phone:string|null;email:string|n
 
 export default async function Page({params,searchParams}:{params:Promise<{customerId:string}>;searchParams:Promise<{message?:string;error?:string}>}){
   const[{customerId},query,{activeMembership},supabase]=await Promise.all([params,searchParams,getDashboardContext(),createClient()]);
+  if(activeMembership.industry === "hospitality") { const { HospitalityGuestDetail } = await import("@/components/hospitality/guests"); return <HospitalityGuestDetail guestId={customerId} query={query}/>; }
   const salon=activeMembership.industry!=="automotive";
   const projection=salon?"id,full_name,phone,email,address_line,city,province,notes,is_archived,created_at":"id,full_name,phone,email,address_line,city,province,notes,is_archived,created_at,vehicles(id,make,model,model_year,plate_number,is_archived)";
   const customerResult=await supabase.from("customers").select(projection).eq("id",customerId).eq("organization_id",activeMembership.organizationId).maybeSingle();

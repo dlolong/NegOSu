@@ -26,6 +26,13 @@ const salonStaffRoleOptions: readonly StaffRoleOption[] = [
 ];
 
 export function staffRoleOptionsForIndustry(industry: string): readonly StaffRoleOption[] {
+  if (industry === "hospitality") return [
+    { value: "manager", label: "Manager", description: "Manages rooms, stays, collections, supplies and staff." },
+    { value: "advisor", label: "Front Desk", description: "Manages guest profiles, views stays and handles checkout. Cashiers collect payment and check in arrivals." },
+    { value: "technician", label: "Operations Staff", description: "Views rooms and guest stays and marks cleaned rooms ready. Use Housekeeper as the job function for housekeeping staff." },
+    { value: "cashier", label: "Cashier", description: "Checks rooms in and out, collects payments and calculates cash change. Room rates are set by administrators." },
+    { value: "viewer", label: "Viewer", description: "Reads rooms, stays and operational reports without financial details." },
+  ];
   if (industry === "automotive") return automotiveStaffRoleOptions;
   if (industry === "salon") return salonStaffRoleOptions;
   if (industry === "pet_care") return [

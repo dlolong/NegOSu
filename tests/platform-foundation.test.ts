@@ -112,5 +112,5 @@ test("staff access roles use the active business terminology", () => {
   assert.equal(salonRoles.some(({ label }) => /Advisor|Technician/.test(label)), false);
   assert.deepEqual(automotiveRoles.map(({ value }) => value), salonRoles.map(({ value }) => value));
   assert.equal(isStaffRoleAvailableForIndustry("manager", "salon"), true);
-  assert.equal(isStaffRoleAvailableForIndustry("manager", "hospitality"), false);
+  assert.equal(isStaffRoleAvailableForIndustry("manager", "hospitality"), true);
 });

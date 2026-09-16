@@ -44,7 +44,7 @@ export const salonOnboarding: VerticalOnboardingConfig = {
   ],
 };
 
-export const onboardingByIndustry: Record<PublicProductKey, VerticalOnboardingConfig> = {
+export const onboardingByIndustry: Record<Exclude<PublicProductKey, "hospitality">, VerticalOnboardingConfig> = {
   automotive: automotiveOnboarding,
   salon: salonOnboarding,
   pet_care: {
@@ -61,7 +61,7 @@ export const onboardingByIndustry: Record<PublicProductKey, VerticalOnboardingCo
   },
 };
 
-export function onboardingForIndustry(industry: PublicProductKey) {
+export function onboardingForIndustry(industry: Exclude<PublicProductKey, "hospitality">) {
   return onboardingByIndustry[industry];
 }
 

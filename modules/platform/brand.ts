@@ -3,13 +3,17 @@ export const productBrand = {
   shortName: "NegOSu",
   tagline: "The Operating System for Your Negosyo.",
   description:
-    "Manage customers, appointments, staff, services, inventory, payments, and daily operations from one business operating system.",
+    "Manage customers and guests, appointments and stays, staff, inventory, payments, and daily operations from one business operating system.",
 } as const;
 
-export const supportedVerticalKeys = ["automotive", "salon", "pet_care"] as const;
+export const supportedVerticalKeys = ["automotive", "salon", "pet_care", "hospitality"] as const;
 export type SupportedVerticalKey = (typeof supportedVerticalKeys)[number];
 
 export const verticalBrands = {
+  hospitality: {
+    displayName: "NegOSu Apartelle & Inn", shortName: "Apartelle & Inn", path: "/apartelle-inn",
+    signupPath: "/signup?industry=hospitality", loginPath: "/login?industry=hospitality",
+  },
   automotive: {
     displayName: "NegOSu Automotive",
     shortName: "Automotive",
@@ -40,4 +44,6 @@ export const verticalBrands = {
 >;
 
 export const petCareBrand = verticalBrands.pet_care;
+export const hospitalityBrand = verticalBrands.hospitality;
+export const marketingBrands = verticalBrands;
 export type MarketingVerticalKey = SupportedVerticalKey;

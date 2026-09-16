@@ -80,7 +80,7 @@ test("Billing isolates catalog drift and keeps Automotive-only limits out of Sal
   const enabledFeatures = { public_page: true, reminders: true, advanced_reports: true, ai: true };
   assert.deepEqual(visiblePlanFeatureLabels("salon", enabledFeatures), ["Public business page", "Appointment reminders", "Detailed reports and CSV exports"]);
   assert.deepEqual(visiblePlanFeatureLabels("automotive", enabledFeatures), ["Public business page", "Maintenance reminders", "Detailed reports and CSV exports"]);
-  assert.deepEqual(visiblePlanFeatureLabels("hospitality", enabledFeatures), []);
+  assert.deepEqual(visiblePlanFeatureLabels("hospitality", enabledFeatures), ["Detailed reports and CSV exports"]);
 });
 
 test("onboarding recommends one next step and always allows dashboard entry", () => {

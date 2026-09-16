@@ -82,8 +82,20 @@ const petCareNavigation: readonly NavigationItem[] = [
   { key: "settings", label: "Settings", href: "/dashboard/settings", group: "more", permission: "settings.manage" },
 ];
 
+export const hospitalityNavigation: readonly NavigationItem[] = [
+  { key: "dashboard", label: "Overview", href: "/dashboard", group: "dashboard" },
+  { key: "rooms", label: "Rooms", href: "/dashboard/hospitality/rooms", group: "operations", permission: "customers.read" },
+  { key: "customers", label: "Guests", href: "/dashboard/customers", group: "operations", permission: "customers.read" },
+  { key: "payments", label: "Payments", href: "/dashboard/payments", group: "operations", permission: "payments.record" },
+  { key: "inventory", label: "Inventory", href: "/dashboard/inventory", group: "business", permission: "inventory.manage" },
+  { key: "reports", label: "Reports", href: "/dashboard/reports", group: "business", permission: "reports.view" },
+  { key: "staff", label: "Staff", href: "/dashboard/settings/staff", group: "business", permission: "settings.manage" },
+  { key: "branches", label: "Branches", href: "/dashboard/settings/branches", group: "more", permission: "branches.manage" },
+  { key: "settings", label: "Settings", href: "/dashboard/settings", group: "more", permission: "settings.manage" },
+];
+
 export function navigationForIndustry(config: IndustryConfig, role?: OrganizationMembership["role"]): readonly NavigationItem[] {
-  const navigation: readonly NavigationItem[] = config.key === "pet_care" ? petCareNavigation : config.key === "salon" ? salonNavigation : karkrNavigation;
+  const navigation: readonly NavigationItem[] = config.key === "hospitality" ? hospitalityNavigation : config.key === "pet_care" ? petCareNavigation : config.key === "salon" ? salonNavigation : karkrNavigation;
   return navigation.filter((item) =>
     (!item.industryFeature || industrySupportsFeature(config, item.industryFeature))
     && (!role || !item.permission || roleHasPermission(role, item.permission)),

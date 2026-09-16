@@ -51,7 +51,7 @@ industry capability + subscription entitlement + permission
                     server authorization and RLS
 ```
 
-Hospitality and Field Service are reserved keys with no active implementation. Automotive, Salon/Beauty, and Pet Care are the supported industries. Avoid scattered industry string comparisons: behavior belongs in a module or typed configuration.
+Hospitality is implemented as **NegOSu Apartelle & Inn**; see [Hospitality setup and boundaries](HOSPITALITY.md). It uses standard signup and shared organization/branch creation. Field Service remains reserved with no active implementation. Automotive, Salon/Beauty, Pet Care and Apartelle & Inn are enabled signup industries. Avoid scattered industry string comparisons: behavior belongs in a module or typed configuration.
 
 Database tables do not need cosmetic automotive prefixes. Logical ownership, typed contracts, authorization, and documentation provide the boundary without destructive renames.
 

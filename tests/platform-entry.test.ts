@@ -4,13 +4,13 @@ import test from "node:test";
 
 import { calculateOnboardingProgress, onboardingForIndustry } from "../modules/platform/onboarding";
 import { createFirstOrganizationWithCompatibility } from "../lib/auth/organization-onboarding";
-import { isPublicProductKey, resolveBusinessIndustry, resolveOptionalProductEntry, resolveProductEntry } from "../modules/platform/product-entry";
+import { isPublicProductKey, resolveAuthProductEntry, resolveBusinessIndustry, resolveOptionalProductEntry, resolveProductEntry } from "../modules/platform/product-entry";
 
 test("public product entry uses NegOSu vertical names while compatibility resolution remains Automotive", () => {
   assert.equal(resolveProductEntry("automotive").productName, "NegOSu Automotive");
   assert.equal(resolveProductEntry("salon").productName, "NegOSu Salon & Beauty");
-  assert.equal(resolveProductEntry("hospitality").industry, "automotive");
-  assert.equal(resolveOptionalProductEntry("hospitality"), null);
+  assert.equal(resolveProductEntry("hospitality").industry, "hospitality");
+  assert.equal(resolveOptionalProductEntry("hospitality")?.industry, "hospitality");
   assert.equal(resolveOptionalProductEntry(undefined), null);
   assert.equal(isPublicProductKey("field_service"), false);
 });
@@ -115,4 +115,16 @@ test("Salon onboarding never falls back to an Automotive-only legacy RPC", async
 
   assert.deepEqual(result, { organizationId: null, errorCode: "ONBOARDING_SCHEMA_OUTDATED" });
   assert.equal(callCount, 1);
+});
+
+
+test("Hospitality supports standard signup and matching business types", async () => {
+  const { signUpSchema } = await import("../lib/auth/schemas");
+  assert.equal(resolveAuthProductEntry("hospitality")?.productName, "NegOSu Apartelle & Inn");
+  assert.equal(resolveAuthProductEntry("field_service"), null);
+  assert.equal(resolveAuthProductEntry("automotive")?.industry, "automotive");
+  assert.equal(isPublicProductKey("hospitality"), true);
+  const account = { firstName: "Test", lastName: "Owner", email: "test@example.com", password: "Safe-Test-123!", confirmPassword: "Safe-Test-123!" };
+  assert.equal(signUpSchema.safeParse({ ...account, industry: "hospitality" }).success, true);
+  for (const industry of ["automotive", "salon", "pet_care", "hospitality"]) assert.equal(signUpSchema.safeParse({ ...account, industry }).success, true);
 });

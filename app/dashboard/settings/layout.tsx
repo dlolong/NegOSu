@@ -11,7 +11,7 @@ export default async function Layout({children}:{children:React.ReactNode}){
     {id:`${prefix}-tab-staff`,label:"Staff",href:"/dashboard/settings/staff"},
     {id:`${prefix}-tab-resources`,label:activeMembership.industry === "automotive" ? "Service bays" : "Resources",href:"/dashboard/settings/resources"},
     {id:`${prefix}-tab-public-page`,label:"Public page",href:"/dashboard/settings/public-page"},
-    {id:`${prefix}-tab-billing`,label:"Billing",href:"/dashboard/settings/billing"},
+    {id:`${prefix}-tab-billing`,label:"Billing & Plan",href:"/dashboard/settings/billing"},
   ];
-  return <><Tabs id={salon?"salon-settings-navigation":"settings-sections-navigation"} ariaLabel="Settings sections" className="mx-auto mb-4 max-w-6xl" items={items}/>{children}</>;
+  return <><Tabs id={salon?"salon-settings-navigation":"settings-sections-navigation"} ariaLabel="Settings sections" className="mx-auto mb-4 max-w-6xl" items={items.filter(item => activeMembership.industry !== "hospitality" || !["/dashboard/settings/resources", "/dashboard/settings/public-page"].includes(item.href))}/>{children}</>;
 }

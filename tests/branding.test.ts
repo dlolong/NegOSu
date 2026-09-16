@@ -17,7 +17,7 @@ function sourceFiles(root: string): string[] {
 test("NegOSu brand contract preserves approved casing and supported verticals", () => {
   assert.equal(productBrand.name, "NegOSu");
   assert.match(productBrand.tagline, /Operating System/);
-  assert.deepEqual(supportedVerticalKeys, ["automotive", "salon", "pet_care"]);
+  assert.deepEqual(supportedVerticalKeys, ["automotive", "salon", "pet_care", "hospitality"]);
   assert.equal(verticalBrands.automotive.displayName, "NegOSu Automotive");
   assert.equal(verticalBrands.salon.displayName, "NegOSu Salon & Beauty");
 });

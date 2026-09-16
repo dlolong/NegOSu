@@ -16,7 +16,7 @@ select ok(not has_function_privilege('anon', 'public.create_first_organization(t
 set local role authenticated;
 set local "request.jwt.claims" = '{"sub":"50500000-0000-4000-8000-000000000002","role":"authenticated"}';
 select throws_ok(
-  $$select public.create_first_organization(p_name => 'Forged Org', p_industry => 'hospitality', p_business_type => 'salon', p_slug_base => 'forged-org')$$,
+  $$select public.create_first_organization(p_name => 'Forged Org', p_industry => 'field_service', p_business_type => 'salon', p_slug_base => 'forged-org')$$,
   '22023', 'Invalid organization industry',
   'unsupported industries are rejected in the database'
 );

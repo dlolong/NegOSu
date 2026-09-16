@@ -11,17 +11,17 @@ import { Input } from "@/components/ui/input";
 import { getAuthenticatedUser } from "@/lib/auth/context";
 import { resolveOnboardingDestination } from "@/lib/auth/onboarding";
 import { safeRedirectPath } from "@/lib/auth/redirect";
-import { resolveOptionalProductEntry } from "@/modules/platform/product-entry";
+import { resolveAuthProductEntry } from "@/modules/platform/product-entry";
 
 export default async function LoginPage({ searchParams }: { searchParams: Promise<{ error?: string; message?: string; next?: string; industry?: string }> }) {
   const [params, auth] = await Promise.all([searchParams, getAuthenticatedUser()]);
-  if (auth) redirect((await resolveOnboardingDestination(auth.supabase, auth.user.id)).path);
   const next = safeRedirectPath(params.next ?? null, "/dashboard");
-  const entry = resolveOptionalProductEntry(params.industry);
+  if (auth) redirect((await resolveOnboardingDestination(auth.supabase, auth.user.id)).path);
+  const entry = resolveAuthProductEntry(params.industry ?? (next === "/onboarding/hospitality" ? "hospitality" : undefined));
   const contextQuery = entry ? `?industry=${entry.industry}` : "";
 
   return (
-    <AuthShell id="negosu-login-page" industry={entry?.industry} title="Welcome back" description="Sign in to manage your business." footer={<>New here? <Link id="negosu-login-create-account-link" className="font-bold text-brand-primary-strong" href={`/signup${contextQuery}`}>Create an account</Link></>}>
+    <AuthShell id="negosu-login-page" industry={entry?.industry} title={entry?.loginTitle ?? "Welcome back"} description={entry?.loginDescription ?? "Sign in to manage your business, from appointments and services to rooms and guest stays."} footer={<>New here? <Link id="negosu-login-create-account-link" className="font-bold text-brand-primary-strong" href={`/signup${contextQuery}`}>Create an account</Link></>}>
       <FormMessage error={params.error} message={params.message} />
       <form id="negosu-login-form" action={signIn} className="mt-6 space-y-4">
         <input type="hidden" name="next" value={next} />

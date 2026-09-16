@@ -245,5 +245,5 @@ function sortableTime(value: string | null | undefined) {
 }
 
 function staffRank(status: CommandCenterStaffItem["status"]) {
-  return { working: 0, busy: 1, available: 2, off: 3 }[status];
+  return { working: 0, busy: 1, available: 2, active: 2, off: 3 }[status];
 }

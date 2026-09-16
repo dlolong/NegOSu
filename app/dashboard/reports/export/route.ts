@@ -17,6 +17,16 @@ export async function GET(request: NextRequest) {
   const entitlement = reportAccessSchema.safeParse(access);
   if (accessError || !entitlement.success) return new NextResponse("Unable to check report access. Try again shortly.", { status: 503 });
   if (!entitlement.data.features.advanced_reports) return new NextResponse("CSV exports are available on paid plans", { status: 403 });
+  if (activeMembership.industry === "hospitality") {
+    const section = request.nextUrl.searchParams.get("section") ?? "stays";
+    const financial = ["owner", "manager", "advisor", "cashier"].includes(activeMembership.role);
+    if ((["collections", "outstanding"].includes(section) && !financial) || (["inventory", "movements"].includes(section) && !roleHasPermission(activeMembership.role, "inventory.manage"))) return new NextResponse("Forbidden", { status: 403 });
+    if (!["stays", "rooms", "collections", "outstanding", "inventory", "movements"].includes(section)) return new NextResponse("Invalid report section", { status: 400 });
+    try {
+      const { exportHospitalityReport } = await import("@/modules/hospitality/report-export");
+      return await exportHospitalityReport({ branch: parsed.data.branch === "all" ? null : parsed.data.branch, ...range, section });
+    } catch (error) { reportActionError("hospitality.report.export", error, "Unable to export report."); return new NextResponse("Unable to export report", { status: 500 }); }
+  }
   const appointmentBased = activeMembership.industry !== "automotive";
   try {
     const report = await loadBusinessReport(db, { organizationId: activeMembership.organizationId, branchId: parsed.data.branch === "all" ? null : parsed.data.branch, start: range.start, end: range.end, basis: appointmentBased ? "appointment" : "invoice", advanced: true });

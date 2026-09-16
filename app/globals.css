@@ -228,3 +228,10 @@ body:has(dialog[open]) #negosu-sidebar {
   overscroll-behavior: none;
 }
 dialog { overscroll-behavior: contain; }
+
+/* A guest statement prints its ledger, without dashboard navigation or scroll clipping. */
+@media print {
+  body:has(#hospitality-stay-statement) :is(#negosu-sidebar, #dashboard-header, #dashboard-mobile-navigation, #dashboard-page-back-navigation) { display: none !important; }
+  body:has(#hospitality-stay-statement) :is(#dashboard-app-shell, #dashboard-content-frame, #dashboard-main-content) { display: block; height: auto; overflow: visible; padding: 0; background: white; }
+  #hospitality-stay-statement { max-width: none; border: 0; box-shadow: none; }
+}

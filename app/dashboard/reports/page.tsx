@@ -26,6 +26,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<Rec
     createClient(),
   ]);
 
+  if (activeMembership.industry === "hospitality") { const { HospitalityReport } = await import("@/components/hospitality/report"); return <HospitalityReport query={Object.fromEntries(Object.entries(raw).flatMap(([key, value]) => typeof value === "string" ? [[key, value]] : []))}/>; }
   if (!roleHasPermission(activeMembership.role, "reports.view")) {
     return <ReportState title="Reports are not available" description="You do not have reporting access." />;
   }

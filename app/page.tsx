@@ -1,11 +1,11 @@
-import { ArrowRight as ArrowRightIcon, ArrowRight, Boxes, CalendarDays, CarFront, CheckCircle2, CreditCard, PawPrint, Scissors, ShieldCheck, Store, Users } from "lucide-react";
+import { ArrowRight as ArrowRightIcon, ArrowRight, Boxes, Building2, CalendarDays, CarFront, CheckCircle2, CreditCard, PawPrint, Scissors, ShieldCheck, Store, Users } from "lucide-react";
 import type { Metadata } from "next";
 
 import Link from "next/link";
 
 import { MarketingCta, MarketingFooter, MarketingHeader } from "@/components/marketing/product-landing";
 import { PublicPlanCatalog } from "@/components/marketing/plan-catalog";
-import { productBrand, verticalBrands, petCareBrand } from "@/modules/platform/brand";
+import { productBrand, verticalBrands, petCareBrand, hospitalityBrand } from "@/modules/platform/brand";
 
 export const metadata: Metadata = {
   title: { absolute: "NegOSu | Business Operating System" },
@@ -24,9 +24,9 @@ const sharedCapabilities = [
 ] as const;
 
 const faqs = [
-  ["Which businesses can use NegOSu today?", "Automotive, Salon & Beauty, and Pet Care are available through signup. Pet Care supports appointment-based grooming."],
-  ["Is this one generic workspace?", "No. NegOSu shares secure platform capabilities underneath, while Automotive, Salon & Beauty, and Pet Care present different workflows for the business using them."],
-  ["Can I choose my business type during signup?", "Choose Automotive, Salon & Beauty, or Pet Care during signup."],
+  ["Which businesses can use NegOSu today?", "Automotive, Salon & Beauty, and Pet Care are open for signup. Apartelle & Inn is also open for signup, with rooms, guests, staff, payments, inventory and reports."],
+  ["Is this one generic workspace?", "No. NegOSu shares secure platform capabilities underneath, while Automotive, Salon & Beauty, Pet Care, and Apartelle & Inn present different workflows for the business using them."],
+  ["Can I choose my business type during signup?", "Choose Automotive, Salon & Beauty, Pet Care, or Apartelle & Inn during signup. Apartelle & Inn uses the same account, business and branch setup."],
   ["Do I need separate accounts for different businesses?", "No. One NegOSu account can access authorized businesses, and switching changes the actual organization context."],
 ] as const;
 
@@ -39,7 +39,7 @@ export default function NegOSuLandingPage() {
         <div>
           <p className="inline-flex rounded-full border border-brand-border bg-brand-tint px-3 py-1 text-sm font-bold text-brand-primary-strong">One platform. Industry-specific experience.</p>
           <h1 className="mt-5 max-w-4xl text-4xl font-black tracking-[-0.05em] sm:text-5xl lg:text-6xl xl:text-7xl">{productBrand.tagline}</h1>
-          <p className="mt-5 max-w-2xl text-base leading-7 text-zinc-600 sm:text-lg sm:leading-8">Manage customers, appointments, staff, services, inventory, payments, and day-to-day operations from one system—built for the way your business works.</p>
+          <p className="mt-5 max-w-2xl text-base leading-7 text-zinc-600 sm:text-lg sm:leading-8">From service appointments to guest stays, bring your customers, team, inventory and payments together. Built for automotive, beauty, pet care, and now apartelles and inns.</p>
           <div className="mt-7 flex flex-col gap-3 min-[380px]:flex-row">
             <Link id="negosu-start-free-button" href="/signup" className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-brand-primary px-5 py-3 font-bold text-white shadow-sm hover:bg-brand-primary-strong">Start Free <ArrowRight aria-hidden="true" size={18} /></Link>
             <a id="negosu-explore-solutions-button" href="#solutions" className="inline-flex min-h-11 items-center justify-center rounded-xl border border-brand-border bg-white px-5 py-3 font-bold hover:bg-brand-tint"><ArrowRightIcon aria-hidden="true" size={16} className="shrink-0"/>Explore Solutions</a>
@@ -50,15 +50,16 @@ export default function NegOSuLandingPage() {
           <div className="overflow-hidden rounded-xl border border-slate-200 bg-slate-50">
             <div className="flex items-center justify-between gap-3 border-b border-slate-200 bg-white px-4 py-3 sm:px-5">
               <div><p className="text-xs font-bold tracking-wider text-brand-primary-strong">NegOSu</p><p className="mt-0.5 font-black text-brand-ink">Today at a glance</p></div>
-              <span className="text-xs font-semibold text-slate-500">3 business solutions</span>
+              <span className="max-w-36 text-right text-xs text-slate-500">4 business solutions</span>
             </div>
             <div className="p-4 sm:p-5">
             <div className="mt-5 grid gap-3 sm:grid-cols-2">
               <article className="rounded-xl border border-slate-200 bg-white p-4 text-brand-ink"><CarFront aria-hidden="true" className="text-brand-primary" size={22} /><h2 className="mt-5 font-black">Automotive</h2><p className="mt-1 text-sm text-slate-600">Appointments, vehicles, Job Orders, parts, and maintenance.</p></article>
               <article className="rounded-xl border border-slate-200 bg-white p-4 text-brand-ink"><Scissors aria-hidden="true" className="text-brand-primary" size={22} /><h2 className="mt-5 font-black">Salon &amp; Beauty</h2><p className="mt-1 text-sm text-slate-600">Clients, Treatments, Staff, stations, and reminders.</p></article>
-              <article id="negosu-pet-care-preview" className="rounded-xl border border-slate-200 bg-white p-4 text-brand-ink sm:col-span-2"><PawPrint aria-hidden="true" className="text-brand-primary" size={22}/><h2 className="mt-3">Pet Care · Pet Grooming</h2><p className="mt-1 text-sm text-slate-600">Pets, owners, grooming appointments, payments, and pickup. Pet grooming.</p></article>
+              <article id="negosu-pet-care-preview" className="rounded-xl border border-slate-200 bg-white p-4 text-brand-ink"><PawPrint aria-hidden="true" className="text-brand-primary" size={22}/><h2 className="mt-3">Pet Care · Pet Grooming</h2><p className="mt-1 text-sm text-slate-600">Pets, owners, grooming appointments, payments, and pickup.</p></article>
+              <article id="negosu-hospitality-preview" className="rounded-xl border border-slate-200 bg-white p-4 text-brand-ink"><Building2 aria-hidden="true" className="text-brand-primary" size={22}/><h2 className="mt-3">Apartelle &amp; Inn</h2><p className="mt-1 text-sm text-slate-600">Rooms, guests, stays, payments, inventory and reports.</p><Link id="negosu-hero-hospitality-link" href={hospitalityBrand.path} className="mt-3 inline-flex min-h-11 items-center gap-2 text-sm text-brand-primary-strong">Explore Apartelle & Inn <ArrowRight size={16} aria-hidden="true"/></Link></article>
             </div>
-            <div className="mt-3 flex items-center gap-2 rounded-xl border border-brand-border bg-brand-tint px-4 py-3 text-sm text-brand-ink"><CheckCircle2 aria-hidden="true" className="shrink-0 text-brand-primary" size={18} />Shared scheduling, inventory, payments, permissions, and audit.</div>
+            <div className="mt-3 flex items-center gap-2 rounded-xl border border-brand-border bg-brand-tint px-4 py-3 text-sm text-brand-ink"><CheckCircle2 aria-hidden="true" className="shrink-0 text-brand-primary" size={18} />Shared staff, inventory, payments, permissions and reports.</div>
             </div>
           </div>
         </div>
@@ -68,8 +69,8 @@ export default function NegOSuLandingPage() {
         <div className="mx-auto max-w-7xl px-4 py-14 sm:px-6 sm:py-18">
           <p className="text-sm font-bold uppercase tracking-wider text-brand-primary-strong">Supported industries</p>
           <h2 className="mt-2 text-3xl font-black tracking-tight sm:text-4xl">What kind of business do you run?</h2>
-          <p className="mt-3 max-w-2xl leading-7 text-zinc-600">Choose the solution that matches your work. Each uses the same NegOSu platform with workflows for its industry. Pet Care connects pets and owners with the complete grooming workflow.</p>
-          <div id="negosu-industry-selector" className="mt-8 grid gap-4 lg:grid-cols-3">
+          <p className="mt-3 max-w-2xl leading-7 text-zinc-600">Choose the solution that matches your work. Each uses the same NegOSu platform with workflows for its industry, including simple front-desk operations for Apartelle & Inn businesses.</p>
+          <div id="negosu-industry-selector" className="mt-8 grid gap-4 sm:grid-cols-2">
             <article id="negosu-automotive-card" className="rounded-ui-lg border border-zinc-200 bg-white p-6 shadow-ui-sm sm:p-7">
               <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-brand-tint text-brand-primary-strong"><CarFront aria-hidden="true" /></div>
               <h3 className="mt-5 text-2xl font-black">Automotive</h3>
@@ -83,8 +84,9 @@ export default function NegOSuLandingPage() {
               <Link id="negosu-explore-salon-link" href={verticalBrands.salon.path} className="mt-6 inline-flex min-h-11 items-center gap-2 font-bold">Explore Salon &amp; Beauty <ArrowRight aria-hidden="true" size={18} /></Link>
             </article>
             <article id="negosu-pet-care-card" className="rounded-ui-lg border border-zinc-200 bg-white p-6 shadow-ui-sm sm:p-7"><div className="flex h-11 w-11 items-center justify-center rounded-xl bg-brand-tint text-brand-primary-strong"><PawPrint aria-hidden="true"/></div><h3 className="mt-5 text-2xl">Pet Care</h3><p className="mt-2 text-sm text-brand-primary-strong">Grooming, bath, and pet spa services</p><p className="mt-2 leading-7 text-zinc-600">For appointment-based pet grooming, from owner and pet records to payments and collection.</p><Link id="negosu-explore-pet-care-link" href={petCareBrand.path} className="mt-6 inline-flex min-h-11 items-center gap-2">Explore Pet Care <ArrowRight aria-hidden="true" size={18}/></Link></article>
+            <article id="negosu-hospitality-card" className="rounded-ui-lg border border-zinc-200 bg-white p-6 shadow-ui-sm sm:p-7"><div className="flex items-center justify-between gap-3"><Building2 aria-hidden="true" className="text-brand-primary-strong"/><span className="rounded-full border border-brand-border bg-brand-tint px-3 py-1 text-xs text-brand-primary-strong">Rooms & guests</span></div><h3 className="mt-5 text-2xl">Apartelle &amp; Inn</h3><p className="mt-2 leading-7 text-zinc-600">Manage available rooms, fixed stay rates, cashier check-in, payments, checkout, supplies and reports.</p><Link id="negosu-explore-hospitality-link" href={hospitalityBrand.path} className="mt-6 inline-flex min-h-11 items-center gap-2">Explore Apartelle &amp; Inn <ArrowRight aria-hidden="true" size={18}/></Link></article>
           </div>
-          <p className="mt-5 text-sm text-zinc-500">Automotive, Salon & Beauty, and Pet Care are open for signup.</p>
+          <p className="mt-5 text-sm text-zinc-500">Automotive, Salon & Beauty, and Pet Care are open for signup. Apartelle &amp; Inn is open for signup.</p>
         </div>
       </section>
 
@@ -100,7 +102,8 @@ export default function NegOSuLandingPage() {
         <div className="mx-auto grid max-w-7xl gap-5 px-4 py-14 sm:px-6 sm:py-18 lg:grid-cols-2">
           <article id="negosu-automotive-overview" className="rounded-2xl border border-white/15 bg-white/5 p-6 sm:p-8"><p className="text-sm font-bold tracking-wider text-blue-300">NegOSu Automotive</p><h2 className="mt-3 text-3xl font-black">From arrival to the next service.</h2><p className="mt-3 leading-7 text-zinc-300">Coordinate appointments, vehicles, inspections, approved work, parts, payments, service history, and maintenance.</p><Link href={verticalBrands.automotive.path} className="mt-6 inline-flex min-h-11 items-center gap-2 rounded-xl bg-brand-primary px-4 py-2 font-bold text-white">See Automotive <ArrowRight aria-hidden="true" size={18} /></Link></article>
           <article id="negosu-salon-overview" className="rounded-2xl border border-white/15 bg-white/5 p-6 sm:p-8"><p className="text-sm font-bold tracking-wider text-blue-300">NegOSu Salon &amp; Beauty</p><h2 className="mt-3 text-3xl font-black">From booking to the next visit.</h2><p className="mt-3 leading-7 text-zinc-300">Coordinate Clients, Appointments, Staff, Treatments, chairs or rooms, products, payments, and reminders.</p><Link href={verticalBrands.salon.path} className="mt-6 inline-flex min-h-11 items-center gap-2 rounded-xl bg-brand-primary px-4 py-2 font-bold text-white">See Salon &amp; Beauty <ArrowRight aria-hidden="true" size={18} /></Link></article>
-          <article id="negosu-pet-care-overview" className="rounded-2xl border border-white/15 bg-white/5 p-6 sm:p-8 lg:col-span-2"><p className="text-sm tracking-wider text-blue-300">NegOSu Pet Care · Pet Grooming</p><h2 className="mt-3 text-3xl">From grooming booking to pickup.</h2><p className="mt-3 max-w-3xl leading-7 text-zinc-300">Keep pets and owners together, reserve groomers and resources, record payments, and track when each pet is ready and collected.</p><Link id="negosu-pet-care-overview-link" href={petCareBrand.path} className="mt-6 inline-flex min-h-11 items-center gap-2 rounded-xl bg-brand-primary px-4 py-2 text-white">See Pet Care <ArrowRight aria-hidden="true" size={18}/></Link></article>
+          <article id="negosu-pet-care-overview" className="rounded-2xl border border-white/15 bg-white/5 p-6 sm:p-8"><p className="text-sm tracking-wider text-blue-300">NegOSu Pet Care · Pet Grooming</p><h2 className="mt-3 text-3xl">From grooming booking to pickup.</h2><p className="mt-3 max-w-3xl leading-7 text-zinc-300">Keep pets and owners together, reserve groomers and resources, record payments, and track when each pet is ready and collected.</p><Link id="negosu-pet-care-overview-link" href={petCareBrand.path} className="mt-6 inline-flex min-h-11 items-center gap-2 rounded-xl bg-brand-primary px-4 py-2 text-white">See Pet Care <ArrowRight aria-hidden="true" size={18}/></Link></article>
+          <article id="negosu-hospitality-overview" className="rounded-2xl border border-white/15 bg-white/5 p-6 sm:p-8"><p className="text-sm tracking-wider text-blue-300">NegOSu Apartelle &amp; Inn · Rooms & guests</p><h2 className="mt-3 text-3xl">From check-in to checkout.</h2><p className="mt-3 leading-7 text-zinc-300">See which rooms are occupied, keep guest history, agree charges, record payments and track supplies. Your team and reports stay connected.</p><Link id="negosu-hospitality-overview-link" href={hospitalityBrand.path} className="mt-6 inline-flex min-h-11 items-center gap-2 rounded-xl bg-brand-primary px-4 py-2 text-white">See Apartelle &amp; Inn <ArrowRight aria-hidden="true" size={18}/></Link></article>
         </div>
       </section>
 
@@ -120,7 +123,7 @@ export default function NegOSuLandingPage() {
 
       <PublicPlanCatalog compact />
 
-      <MarketingCta title="Ready to run your business with less friction?" description="Create your NegOSu account, choose Automotive or Salon & Beauty, and set up the workspace that matches your operation." />
+      <MarketingCta title="Ready to run your business with less friction?" description="Start with Automotive, Salon & Beauty, Pet Care, or Apartelle & Inn. Create your account and set up your business and first branch." />
       <MarketingFooter />
     </main>
   );

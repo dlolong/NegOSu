@@ -7,7 +7,7 @@ for (const [width,height] of [[320,740],[375,812],[390,844],[430,932],[768,1024]
    const response=await page.goto(route);expect(response?.status()).toBe(200);await expect(page.locator(`#${root}`)).toBeVisible();
    const layout=await page.evaluate(()=>({overflow:document.documentElement.scrollWidth>innerWidth+1,duplicates:Array.from(document.querySelectorAll("[id]")).map(e=>e.id).filter((id,i,ids)=>ids.indexOf(id)!==i)}));expect(layout,route).toEqual({overflow:false,duplicates:[]});
    await expect(page.locator("#negosu-footer-pet-care-link")).toHaveAttribute("href","/pet-care");
-   if(width<1024){await page.locator("#negosu-mobile-menu-button").click();await expect(page.locator("#negosu-mobile-pet-care-link")).toBeVisible();await page.locator("#negosu-mobile-menu-button").click();}else await expect(page.locator("#negosu-desktop-pet-care-link")).toBeVisible();
+   if(width<1280){await page.locator("#negosu-mobile-menu-button").click();await expect(page.locator("#negosu-mobile-pet-care-link")).toBeVisible();await page.locator("#negosu-mobile-menu-button").click();}else await expect(page.locator("#negosu-desktop-pet-care-link")).toBeVisible();
   }
   await page.goto("/");await page.locator("#negosu-explore-pet-care-link").click();await expect(page).toHaveURL(/\/pet-care$/);
   await expect(page.locator("#negosu-pet-care-hero")).toContainText("Start with a free account");

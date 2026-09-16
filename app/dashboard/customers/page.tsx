@@ -21,6 +21,7 @@ type VisitRow={customer_id:string;starts_at:string|null;branches:{name:string;ti
 type Params={q?:string;status?:string;page?:string;create?:string;edit?:string;message?:string;error?:string;warning?:string;duplicateId?:string};
 export default async function CustomersPage({searchParams}:{searchParams:Promise<Params>}) {
   const [p,{activeMembership},supabase]=await Promise.all([searchParams,getDashboardContext(),createClient()]);
+  if(activeMembership.industry === "hospitality") { const { HospitalityGuests } = await import("@/components/hospitality/guests"); return <HospitalityGuests query={p}/>; }
   const config=resolveIndustryConfig(activeMembership.industry),salon=config.key!=="automotive";
   const page=Math.max(1,Number(p.page)||1),archived=p.status==="archived",q=p.q?.trim().replace(/[,%()]/g," ").slice(0,100);
   const projection=salon?"id,full_name,phone,email,is_archived,updated_at":"id,full_name,phone,email,is_archived,updated_at,vehicles(count)";

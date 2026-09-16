@@ -12,6 +12,7 @@ import { calculateOnboardingProgress, onboardingForIndustry } from "@/modules/pl
 
 export default async function OnboardingSetupPage() {
   const [{ activeMembership, user }, supabase] = await Promise.all([getDashboardContext(), createClient()]);
+  if (activeMembership.industry === "hospitality") { const { redirect } = await import("next/navigation"); redirect("/dashboard"); }
   const industry = activeMembership.industry === "pet_care" ? "pet_care" : activeMembership.industry === "salon" ? "salon" : "automotive";
   const [signals, config] = await Promise.all([
     getOnboardingSignals(supabase, activeMembership, user.id),

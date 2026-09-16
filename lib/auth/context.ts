@@ -112,6 +112,10 @@ export const getDashboardContext = cache(async function getDashboardContext() {
     redirect(destination.path);
   }
 
+  if (activeMembership.industry === "hospitality") {
+    const { data: enabled, error } = await supabase.rpc("hospitality_enabled", { p_org: activeMembership.organizationId });
+    if (error || !enabled) redirect("/apartelle-inn?access=unavailable");
+  }
   const { data: profile } = await supabase.from("profiles").select("full_name, phone").eq("id", user.id).maybeSingle();
 
   return {

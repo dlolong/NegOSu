@@ -48,7 +48,7 @@ test("Pet Care marketing has a public landing page and standard signup",()=>{
  assert.equal(petCareBrand.path,"/pet-care");
  assert.equal(petCareBrand.displayName,"NegOSu Pet Care");
  assert.equal(petCareBrand.signupPath,"/signup?industry=pet_care");
- assert.deepEqual([...supportedVerticalKeys],["automotive","salon","pet_care"]);
+ assert.deepEqual([...supportedVerticalKeys],["automotive","salon","pet_care","hospitality"]);
  assert.equal(isEnabledSignupIndustry("pet_care"),true);
 });
 

@@ -73,6 +73,7 @@ export const staffProfileAccessSchema = z.object({
 export type StaffProfileInput = z.infer<typeof staffProfileSchema>;
 
 export const staffJobFunctionSuggestions = {
+  hospitality: ["Receptionist", "Caretaker", "Housekeeper", "Manager"],
   pet_care: ["Groomer", "Grooming Assistant", "Front Desk Coordinator"],
   automotive: ["Service Advisor", "Technician", "Master Technician", "Detailer", "Inspector", "Parts Coordinator"],
   salon: ["Stylist", "Senior Stylist", "Barber", "Nail Technician", "Facialist", "Massage Therapist", "Front Desk Coordinator"],
