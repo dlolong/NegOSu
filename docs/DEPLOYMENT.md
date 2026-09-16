@@ -27,6 +27,8 @@ NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY
 SUPABASE_SERVICE_ROLE_KEY
 ```
 
+For prepaid account upgrades through PayMongo, follow [PayMongo setup and recovery](PAYMONGO.md), apply migrations 0083 through 0085 after their dependencies, configure the checkout webhook, and validate test/live mode before launch.
+
 Optional provider variables are validated as complete sets. Stripe requires its secret key, webhook secret, and reconciliation secret together. Notification delivery currently has only `disabled` and development `console` adapters; console delivery is rejected in production and production Email/SMS delivery must not be claimed until a real adapter is implemented and verified. A configured notification link encryption key must decode to exactly 32 bytes.
 
 Run the same environment configuration used by the target service through:

@@ -18,6 +18,15 @@ const productionEnvironment = {
   SUPABASE_SERVICE_ROLE_KEY: "server-secret",
 };
 
+test("PayMongo configuration validates paired secrets, payment methods and production mode", () => {
+  const testBilling = { NODE_ENV: "development", PAYMONGO_SECRET_KEY: "sk_test_fake", PAYMONGO_WEBHOOK_SECRET: "test-webhook", PAYMONGO_PAYMENT_METHOD_TYPES: "gcash,qrph,card" };
+  assert.equal(validateRuntimeEnvironment(testBilling).valid, true);
+  assert.equal(validateRuntimeEnvironment({ ...testBilling, PAYMONGO_WEBHOOK_SECRET: "" }).valid, false);
+  assert.equal(validateRuntimeEnvironment({ ...testBilling, PAYMONGO_PAYMENT_METHOD_TYPES: "gcash,invalid/path" }).valid, false);
+  assert.equal(validateRuntimeEnvironment({ ...testBilling, ...productionEnvironment }).valid, false);
+  assert.equal(validateRuntimeEnvironment({ ...testBilling, ...productionEnvironment, PAYMONGO_SECRET_KEY: "sk_live_fake" }).valid, true);
+});
+
 test("production environment validation fails closed on critical configuration", () => {
   const report = validateRuntimeEnvironment({ NODE_ENV: "production" });
   assert.equal(report.valid, false);
@@ -118,7 +127,7 @@ test("high-value routes retain server industry and billing gates", () => {
   const billingPage = readFileSync("app/dashboard/settings/billing/page.tsx", "utf8");
   const billingActions = readFileSync("app/dashboard/settings/billing/actions.ts", "utf8");
   assert.match(billingPage, /activeMembership\.role !== "owner"/);
-  assert.equal((billingActions.match(/activeMembership\.role!=="owner"/g) ?? []).length, 2);
+  assert.equal((billingActions.match(/activeMembership\.role\s*!==\s*"owner"/g) ?? []).length, 2);
 });
 
 test("high-value action responses do not return raw exception or database messages", () => {

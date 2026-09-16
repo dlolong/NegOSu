@@ -8,7 +8,7 @@ export type BillingPlan = {
   matchesCatalog: boolean;
 };
 export type BillingSubscription = {
-  plan_id: string; status: string; current_period_end: string | null;
+  provider?: string | null; plan_id: string; status: string; current_period_end: string | null;
   cancel_at_period_end: boolean; provider_customer_id: string | null;
 };
 export type BillingEntitlements = {
@@ -22,7 +22,7 @@ type Configuration = Pick<BillingPlan, "id" | "is_custom" | "provider_monthly_pr
 export async function loadBillingOverview(db: Pick<SupabaseClient, "from" | "rpc">, organizationId: string) {
   const [catalog, subscription, configuration, entitlements] = await Promise.all([
     db.from("plans").select("id,name,monthly_price_centavos,yearly_price_centavos,limits,features").eq("is_active", true).order("sort_order"),
-    db.from("organization_subscriptions").select("plan_id,status,current_period_end,cancel_at_period_end,provider_customer_id").eq("organization_id", organizationId).maybeSingle(),
+    db.from("organization_subscriptions").select("provider,plan_id,status,current_period_end,cancel_at_period_end,provider_customer_id").eq("organization_id", organizationId).maybeSingle(),
     db.from("plans").select("id,is_custom,provider_monthly_price_id,provider_yearly_price_id").eq("is_active", true),
     db.rpc("get_org_entitlements", { p_organization_id: organizationId }),
   ]);

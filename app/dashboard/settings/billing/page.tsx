@@ -1,3 +1,4 @@
+import { paymongoConfiguration } from "@/lib/billing/paymongo-server";
 import { BillingOverviewContent } from "@/components/billing-overview";
 import { PageHeader } from "@/components/page-patterns";
 import { Card } from "@/components/ui/card";
@@ -13,5 +14,8 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ m
   }
 
   const overview = await loadBillingOverview(supabase, activeMembership.organizationId);
-  return <BillingOverviewContent overview={overview} organizationName={activeMembership.organizationName} industry={activeMembership.industry} params={params}/>;
+  const orders = await supabase.from("billing_orders").select("id").eq("organization_id", activeMembership.organizationId).limit(0);
+  const config = paymongoConfiguration();
+  const paymongo = { ready: config.ready && !orders.error && !!overview.effective && !overview.subscriptionUnavailable, livemode: config.livemode };
+  return <BillingOverviewContent overview={overview} paymongo={paymongo} organizationName={activeMembership.organizationName} industry={activeMembership.industry} params={params}/>;
 }

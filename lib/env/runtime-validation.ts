@@ -23,6 +23,9 @@ export const environmentVariableCatalog = {
   NEXT_PUBLIC_SUPABASE_URL: { classification: "REQUIRED_IN_PRODUCTION", purpose: "Connects browser and server Supabase clients.", secret: false },
   NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: { classification: "REQUIRED_IN_PRODUCTION", purpose: "Authenticates public Supabase client requests; this key is intentionally public.", secret: false },
   SUPABASE_SERVICE_ROLE_KEY: { classification: "REQUIRED_IN_PRODUCTION", purpose: "Runs narrowly scoped billing, notification, and administrative server operations.", secret: true },
+  PAYMONGO_SECRET_KEY: { classification: "OPTIONAL_PROVIDER", purpose: "Creates and verifies PayMongo plan checkout sessions.", secret: true },
+  PAYMONGO_WEBHOOK_SECRET: { classification: "OPTIONAL_PROVIDER", purpose: "Verifies PayMongo webhook signatures.", secret: true },
+  PAYMONGO_PAYMENT_METHOD_TYPES: { classification: "OPTIONAL_PROVIDER", purpose: "Selects enabled PayMongo checkout payment methods.", secret: false },
   STRIPE_SECRET_KEY: { classification: "OPTIONAL_PROVIDER", purpose: "Creates Stripe Checkout and customer portal sessions.", secret: true },
   STRIPE_WEBHOOK_SECRET: { classification: "OPTIONAL_PROVIDER", purpose: "Verifies Stripe webhook signatures.", secret: true },
   BILLING_RECONCILIATION_SECRET: { classification: "OPTIONAL_PROVIDER", purpose: "Protects the billing reconciliation endpoint.", secret: true },
@@ -106,6 +109,15 @@ export function validateRuntimeEnvironment(source: EnvironmentSource): Environme
   const issues: EnvironmentValidationIssue[] = [];
 
   if (!configured(source.NODE_ENV)) issues.push(issue("NODE_ENV", "is missing"));
+
+  if (configured(source.PAYMONGO_SECRET_KEY) || configured(source.PAYMONGO_WEBHOOK_SECRET)) {
+    for (const variable of ["PAYMONGO_SECRET_KEY", "PAYMONGO_WEBHOOK_SECRET"] as const) {
+      if (!configured(source[variable])) issues.push(issue(variable, "is required when PayMongo billing is enabled"));
+    }
+    if (configured(source.PAYMONGO_SECRET_KEY) && !/^sk_(test|live)_[A-Za-z0-9]+$/.test(source.PAYMONGO_SECRET_KEY!)) issues.push(issue("PAYMONGO_SECRET_KEY", "must be a PayMongo secret API key"));
+    if (environment === "production" && source.PAYMONGO_SECRET_KEY?.startsWith("sk_test_")) issues.push(issue("PAYMONGO_SECRET_KEY", "must use live mode for production billing"));
+  }
+  if (configured(source.PAYMONGO_PAYMENT_METHOD_TYPES) && source.PAYMONGO_PAYMENT_METHOD_TYPES!.split(",").some(method => !/^[a-z_]+$/.test(method.trim()))) issues.push(issue("PAYMONGO_PAYMENT_METHOD_TYPES", "must contain comma-separated payment method names"));
 
   if (environment === "production") {
     for (const variable of [
