@@ -211,3 +211,20 @@ button, input, select, textarea { font: inherit; }
     transition-duration: 0.01ms !important;
   }
 }
+
+/* Native dialogs enter the top layer but do not lock their scrolling ancestors.
+   Keep both public documents and the workspace's independent scrollers still. */
+html { scrollbar-gutter: stable; }
+html:has(#dashboard-app-shell) { scrollbar-gutter: auto; }
+#dashboard-main-content, #negosu-sidebar { scrollbar-gutter: stable; }
+html:has(dialog[open]),
+body:has(dialog[open]) {
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+body:has(dialog[open]) #dashboard-main-content,
+body:has(dialog[open]) #negosu-sidebar {
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+dialog { overscroll-behavior: contain; }

@@ -1,4 +1,6 @@
 "use client";
+import { AdminNotificationBell } from "@/components/admin-notification-bell";
+import { MessageCircle } from "lucide-react";
 
 import { ArrowRightLeft as ArrowRightLeftIcon, LogOut as LogOutIcon, Armchair, BarChart3, Bell, Building2, CalendarCheck, CalendarDays, CarFront, ChevronDown, ClipboardList, CreditCard, Gauge, ListOrdered, MoreHorizontal, PawPrint, Package, Settings, Timer, Users, Wrench, type LucideIcon } from "lucide-react";
 
@@ -28,6 +30,7 @@ const navigationIcons: Record<string, LucideIcon> = {
   jobs: ClipboardList,
   my_work: Timer,
   payments: CreditCard,
+  inbox: MessageCircle,
   bookings: CalendarCheck,
   services: Wrench,
   inventory: Package,
@@ -203,8 +206,9 @@ export function AppShell({ children, activeMembership, memberships, profileName,
         <header id="dashboard-header" className="z-20 flex shrink-0 items-center justify-between gap-2 border-b border-admin-border bg-admin-surface px-3 py-2.5 shadow-ui-sm sm:px-4 lg:px-6">
           <div className="min-w-0 flex-1"><Link id="negosu-dashboard-mobile-home-link" href="/dashboard" className="block lg:hidden" aria-label={`${activeMembership.organizationName} dashboard`}><BusinessIdentity key={activeMembership.organizationId} name={activeMembership.organizationName} logoUrl={activeMembership.organizationLogoUrl}/></Link><PoweredBy id="dashboard-mobile-powered-by" className="mt-1 lg:hidden"/><div className="hidden truncate text-sm font-medium text-admin-text-secondary lg:block">{activeMembership.organizationName}</div></div>
           <div className="flex shrink-0 items-center gap-2 sm:gap-3">
-            {activeMembership.branches.length > 1 ? <form id="dashboard-branch-switcher" action={switchBranch} className="flex items-center gap-2 max-sm:hidden"><label className="sr-only" htmlFor="branchId">Current branch</label><select id="branchId" name="branchId" defaultValue={activeMembership.branchId} className="min-h-11 max-w-28 rounded-ui-md border border-admin-border-strong bg-white px-2 text-sm font-medium text-admin-text shadow-ui-sm sm:max-w-40 sm:px-3">{activeMembership.branches.map((branch) => <option key={branch.id} value={branch.id}>{branch.name}</option>)}</select><SubmitButton pendingText="Switching…" variant="secondary" className="hidden sm:inline-flex"><ArrowRightLeftIcon aria-hidden="true" size={16} className="shrink-0"/>Switch</SubmitButton></form> : <span className="hidden text-sm font-medium text-admin-text-secondary sm:inline">{activeMembership.branchName}</span>}
+            {activeMembership.branches.length > 1 ? <form id="dashboard-branch-switcher" action={switchBranch} className="flex items-center gap-2 max-sm:hidden"><label className="sr-only" htmlFor="branchId">Current branch</label><select id="branchId" name="branchId" defaultValue={activeMembership.branchId} className="min-h-11 max-w-28 rounded-ui-md border border-admin-border-strong bg-white px-2 text-sm font-medium text-admin-text shadow-ui-sm sm:max-w-40 sm:px-3">{activeMembership.branches.map((branch) => <option key={branch.id} value={branch.id}>{branch.name}</option>)}</select><SubmitButton pendingText="Switching…" variant="secondary" className="hidden sm:inline-flex"><ArrowRightLeftIcon aria-hidden="true" size={16} className="shrink-0"/>Switch</SubmitButton></form> : <span title={activeMembership.branchName} className="hidden max-w-36 truncate text-sm font-medium text-admin-text-secondary sm:block">{activeMembership.branchName}</span>}
             {memberships.length > 1 ? <form id="negosu-business-switcher" action={switchOrganization} className="hidden items-center gap-2 xl:flex"><label className="sr-only" htmlFor="negosu-business-switcher-select">Active business</label><select id="negosu-business-switcher-select" name="organizationId" defaultValue={activeMembership.organizationId} className="min-h-11 max-w-56 rounded-ui-md border border-admin-border-strong bg-admin-surface px-3 text-sm font-medium text-admin-text shadow-ui-sm">{memberships.map((membership) => <option key={membership.organizationId} value={membership.organizationId}>{membership.organizationName}</option>)}</select><SubmitButton id="negosu-business-switcher-submit-button" pendingText="Switching…" variant="secondary"><ArrowRightLeftIcon aria-hidden="true" size={16} className="shrink-0"/>Switch</SubmitButton></form> : null}
+            <AdminNotificationBell key={`${activeMembership.organizationId}-${activeMembership.branchId}-${activeMembership.role}`} organizationId={activeMembership.organizationId} branchId={activeMembership.branchId} branchName={activeMembership.branchName}/>
             <DismissibleDetails className="group relative">
               <summary id="dashboard-user-menu-button" className="grid size-11 cursor-pointer list-none place-items-center rounded-full bg-brand-primary px-2 text-xs font-medium text-white shadow-ui-sm [&::-webkit-details-marker]:hidden" aria-label="Open user menu" aria-haspopup="menu">{initials || "NS"}</summary>
               <div id="dashboard-user-menu" className="absolute right-0 mt-2 w-64 rounded-ui-lg border border-admin-border bg-white p-3 shadow-ui-md">

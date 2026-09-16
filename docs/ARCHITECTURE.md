@@ -329,3 +329,11 @@ NegOSu dashboard
 ```
 
 The database aggregate reauthorizes every branch and role. Actions are derived from live state and have no persistent task table. Core never imports a vertical module; the page is the composition root. See `docs/COMMAND_CENTER.md`.
+
+## Customer conversations
+
+Core chat contracts live in `modules/core/chat`; the public widget and staff inbox are shared by Automotive, Salon and Pet Care. `customer_conversations` stores branch scope, a hashed bearer token, visitor creation-limit hash, expiry and reply status. `customer_chat_messages` stores customer/staff messages with per-conversation idempotency keys. Customer access goes through a validated server action and service-role-only RPCs. Authenticated staff reads use RLS plus `appointments.manage` and branch restrictions; staff writes use a security-definer RPC that repeats those checks and derives the author from `auth.uid()`.
+
+Creation locks the token and visitor quota; message writes lock the conversation, serializing message limits and status changes. No direct client table mutations are granted. Token hashes and visitor hashes are excluded from staff column grants. Existing booking RPCs remain authoritative; chat only supplies editable intake context and selected public service/branch. No AI completion, email/SMS delivery or third-party chat infrastructure is introduced.
+
+Admin attention counts use `/api/dashboard/notifications`, an authenticated, private/no-store read endpoint. The platform adapter in `modules/platform/admin-attention.ts` resolves eligible categories from server membership permissions and industry, and queries existing records with organization/branch predicates under the user's RLS session. No browser-supplied tenant/branch ID is accepted, no service-role bypass is used, and one failed category does not suppress healthy categories. The browser discards results whose returned scope differs from the current shell, clears old state on membership/branch changes, and aborts pending requests on cleanup. These are task counts, not a separate notification history or external delivery system.

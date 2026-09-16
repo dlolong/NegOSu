@@ -1,3 +1,4 @@
+import { PublicChat } from "@/components/public-chat";
 import { PublicContact } from "@/components/public-contact";
 import { LocationMap } from "@/components/location-map";
 import { ArrowRight as ArrowRightIcon, Plus as PlusIcon, ArrowRight, CalendarDays, Clock3, MapPin, Phone, Mail, Images, List } from "lucide-react";
@@ -114,6 +115,7 @@ export default async function Page({ params }: { params: Promise<{ slug: string 
       <a id="public-mobile-contact-button" href="#public-shop-contact" className="flex min-h-14 min-w-0 flex-1 flex-col items-center justify-center gap-1 rounded-ui-md px-1 text-[10px] font-semibold text-admin-text-secondary focus-visible:ring-2 focus-visible:ring-brand-primary"><Phone size={20} aria-hidden="true"/>Contact</a>
       {bookingAvailable?<Link id="public-mobile-book-button" href={bookingHref} className="flex min-h-14 min-w-0 flex-1 flex-col items-center justify-center gap-1 rounded-ui-md bg-brand-tint px-1 text-[10px] font-semibold text-brand-primary-strong focus-visible:ring-2 focus-visible:ring-brand-primary"><CalendarDays size={20} aria-hidden="true"/>Book now</Link>:null}
     </nav>
+    <PublicChat key={publicShop.slug} shop={publicShop}/>
   </main>;
 }
 

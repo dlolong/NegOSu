@@ -4,8 +4,10 @@ import { FormActions } from "@/components/form-actions";
 
 import { Send as SendIcon } from "lucide-react";
 
-import { startTransition, useActionState, useState, type ChangeEvent } from "react";
+import { startTransition, useActionState, useState, useEffect, type ChangeEvent } from "react";
 
+import { customerChat } from "@/app/shop/[slug]/chat-actions";
+import { chatStorageKey, chatTokenSchema, chatBookingNote } from "@/modules/core/chat/contracts";
 import { submitBooking } from "@/app/shop/[slug]/actions";
 import { FormMessage } from "@/components/form-message";
 import { Button } from "@/components/ui/button";
@@ -15,6 +17,20 @@ import type { PublicBranch, PublicService, PublicShop } from "@/lib/public-booki
 export function BookingForm({ slug, industry, branch, services, selectedDate, slots }: { slug: string; industry: PublicShop["industry"]; branch: PublicBranch; services: PublicService[]; selectedDate: string; slots: Array<{ slot_at: string }> }) {
   const [state, action, pending] = useActionState(submitBooking, {});
   const [draft, setDraft] = useState<Record<string, string>>({});
+  useEffect(() => {
+    let cancelled = false;
+    try {
+      const token = sessionStorage.getItem(chatStorageKey(slug));
+      if (chatTokenSchema.safeParse(token).success) {
+        void customerChat({ operation: "read", slug, token }).then(result => {
+          if (cancelled || !result.data || result.data.branchId !== branch.id) return;
+          const context = result.data;
+          setDraft(previous => ({ customerName: context.customerName, customerNote: chatBookingNote(context), ...previous }));
+        }).catch(() => { /* Booking remains available without chat context. */ });
+      }
+    } catch { /* Browser storage is optional. */ }
+    return () => { cancelled = true; };
+  }, [slug, branch.id]);
   const selectedTime = draft.preferredAt ?? state.values?.preferredAt ?? slots[0]?.slot_at ?? "";
   const fieldValue = (name: string) => draft[name] ?? state.values?.[name] ?? "";
   const updateDraft = (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {

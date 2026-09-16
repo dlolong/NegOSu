@@ -36,11 +36,13 @@ for(const industry of ["automotive","salon","pet_care"] as const) {
     await page.setViewportSize({width,height:900});await page.goto(root);
     for(const tab of ["services","gallery","locations"]) {await page.locator(`#website-settings-tabs-${tab}`).click();expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);}
     await page.locator(`#website-location-edit-${id}`).click();
+    await expect.poll(()=>page.locator("#dashboard-main-content").evaluate(element=>getComputedStyle(element).overflowY)).toBe("hidden");
     await page.locator(`#public-branch-map-url-input-${id}`).fill(`<iframe src="${embed}" onload="window.injected=true"></iframe>`);
     await expect(page.locator(`#public-branch-map-preview-${id}-frame`)).toHaveAttribute("src",mapEmbedUrl(embed)!);
     expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);
     await page.locator(`#public-branch-actions-${id}-cancel-button`).click();
     await expect(page.locator(`#website-location-dialog-${id}`)).toHaveCount(0);
+    expect(await page.locator("#dashboard-main-content").evaluate(element=>getComputedStyle(element).overflowY)).toBe("auto");
     expect((await admin.from("branches").select("map_url").eq("id",id).single()).data?.map_url).toBe(branch.data!.map_url);
    }
    await page.locator(`#website-location-edit-${id}`).click();
