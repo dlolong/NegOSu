@@ -90,6 +90,7 @@ export const hospitalityNavigation: readonly NavigationItem[] = [
   { key: "inventory", label: "Inventory", href: "/dashboard/inventory", group: "business", permission: "inventory.manage" },
   { key: "reports", label: "Reports", href: "/dashboard/reports", group: "business", permission: "reports.view" },
   { key: "staff", label: "Staff", href: "/dashboard/settings/staff", group: "business", permission: "settings.manage" },
+  { key: "billing", label: "Billing & Plan", href: "/dashboard/settings/billing", group: "more", permission: "organization.manage" },
   { key: "branches", label: "Branches", href: "/dashboard/settings/branches", group: "more", permission: "branches.manage" },
   { key: "settings", label: "Settings", href: "/dashboard/settings", group: "more", permission: "settings.manage" },
 ];

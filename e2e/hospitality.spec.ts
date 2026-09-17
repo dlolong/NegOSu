@@ -1,5 +1,6 @@
 import { test, expect, type Page } from "@playwright/test";
 import { createClient } from "@supabase/supabase-js";
+import { selectRecord } from "./helpers/searchable-select";
 import { readFileSync } from "node:fs";
 test.use({ browserName: "chromium" });
 const local = ["localhost", "127.0.0.1"].includes(new URL(process.env.E2E_BASE_URL ?? "http://localhost").hostname);
@@ -15,6 +16,10 @@ async function login(page: Page, role = "owner") {
     await page.locator(`#negosu-business-option-${fixture.org}-select-button`).click();
   }
   await expect(page.locator("#dashboard-app-shell")).toBeVisible({ timeout: 20000 });
+}
+async function selectShift(page: Page, phase: "in" | "out") {
+  await selectRecord(page, `hospitality-check-${phase}-cashier`, { name: phase === "in" ? "QA Receptionist" : "QA Caretaker" });
+  await selectRecord(page, `hospitality-check-${phase}-housekeeper`, { name: phase === "in" ? "QA Caretaker" : "QA Receptionist" });
 }
 async function fetchInBrowser(page: Page, url: string) {
   return page.evaluate(async path => { const response = await fetch(path); return { status: response.status, text: await response.text() }; }, url);
@@ -59,9 +64,18 @@ test("Apartelle front desk, optional contacts, collections, reports and responsi
   await expect(page.locator("#hospitality-check-in-submit")).toBeDisabled();
   await page.locator("#hospitality-check-in-tendered").fill("1000");
   await expect(page.locator("#hospitality-check-in-change")).toContainText("200.00");
+  await selectShift(page, "in");
+  await page.locator("#hospitality-check-in-form").evaluate(form => (form as HTMLFormElement).reset());
+  await expect(page.locator("#hospitality-check-in-cashier")).toHaveValue("QA Receptionist");
+  await page.reload();
+  await expect(page.locator("#hospitality-check-in-cashier")).toHaveValue("QA Receptionist");
+  await expect(page.locator("#hospitality-check-in-housekeeper")).toHaveValue("QA Caretaker");
+  await page.locator("#hospitality-check-in-tendered").fill("1000");
+  await page.screenshot({ path: `/private/tmp/negosu-hospitality-validation/check-in-simplified-${info.project.name}.png`, fullPage: true });
   await page.locator("#hospitality-check-in-submit").click();
   await expect(page.locator("#hospitality-stay-details")).toBeVisible();
   const stayUrl = page.url().split("?")[0];
+  await expect(page.locator("#hospitality-stay-shift-history")).toContainText("Cashier: QA Receptionist");
   await expect(page.locator("#hospitality-stay-payment-summary")).toContainText("Paid");
   await page.goto(`${stayUrl}?tab=charges&dialog=charge`);
   await dialogChecks(page, "hospitality-charge-dialog");
@@ -77,10 +91,19 @@ test("Apartelle front desk, optional contacts, collections, reports and responsi
   await expect(page.locator("#hospitality-stay-payment-summary")).toContainText("Partially paid");
   await page.locator("#hospitality-check-out-button").click();
   await dialogChecks(page, "hospitality-check-out-dialog");
+  await expect(page.locator("#hospitality-check-out-cashier")).toHaveValue("QA Receptionist");
+  await expect(page.locator("#hospitality-check-out-housekeeper")).toHaveValue("QA Caretaker");
+  await page.screenshot({ path: `/private/tmp/negosu-hospitality-validation/check-out-simplified-${info.project.name}.png`, fullPage: true });
   await page.locator("#hospitality-check-out-debt").check();
+  await selectShift(page, "out");
   await page.locator("#hospitality-check-out-submit").click();
   await expect(page.locator("#hospitality-check-out-button")).toHaveCount(0);
   await expect(page.locator("#hospitality-stay-payment-summary")).toContainText("1,000.00");
+  await page.goto("/dashboard/hospitality/rooms");
+  await page.getByRole("link", { name: "Check in", exact: true }).first().click();
+  await expect(page.locator("#hospitality-check-in-cashier")).toHaveValue("QA Caretaker");
+  await expect(page.locator("#hospitality-check-in-housekeeper")).toHaveValue("QA Receptionist");
+  await page.locator("#hospitality-check-in-actions-cancel-button").click();
   await page.goto("/dashboard/payments");
   await expect(page.locator("#hospitality-payments-page")).toBeVisible();
   await noOverflow(page);
@@ -162,6 +185,7 @@ test("cashier checkout requires housekeeping before room becomes available", asy
   await expect(page.locator("#hospitality-check-in-change")).toContainText("200.00");
   await noOverflow(page);
   await page.screenshot({ path: `/private/tmp/negosu-hospitality-validation/cashier-${info.project.name}.png`, fullPage: true });
+  await selectShift(page, "in");
   await page.locator("#hospitality-check-in-submit").click();
   await expect(page.locator("#hospitality-stay-details")).toBeVisible();
   const stayUrl = page.url();
@@ -176,6 +200,7 @@ test("cashier checkout requires housekeeping before room becomes available", asy
   await page.goto(stayUrl);
   await page.locator("#hospitality-check-out-button").click();
   await dialogChecks(page, "hospitality-check-out-dialog");
+  await selectShift(page, "out");
   await page.locator("#hospitality-check-out-submit").click();
   await expect(page.locator("#hospitality-check-out-button")).toHaveCount(0);
   await page.goto(`/dashboard/hospitality/rooms?q=${encodeURIComponent(roomName)}`);
@@ -251,4 +276,135 @@ test("rooms show available, occupied and cleaning together with their actions", 
   // Existing status bookmarks also lead to the unified table.
   await page.goto(`/dashboard/hospitality/rooms?tab=cleaning&q=${encodeURIComponent(prefix)}`);
   await expect(page.locator("#hospitality-room-grid tbody tr")).toHaveCount(3);
+});
+
+test("monthly discounts, receipt, hourly extension and refundable deposit lifecycle", async ({ page }, info) => {
+  test.setTimeout(180000);
+  if (info.project.name === "desktop-chromium") await page.setViewportSize({ width: 1366, height: 768 });
+  const name = `Deposit ${info.project.name}-${Date.now()}`;
+  await login(page);
+  await page.goto("/dashboard/hospitality/rooms?dialog=room");
+  await page.locator("#hospitality-room-name").fill(name);
+  await page.locator("#hospitality-rate-180-price").fill("800");
+  await page.locator("#hospitality-rate-43200-enabled").check();
+  await page.locator("#hospitality-rate-43200-price").fill("12000");
+  await page.locator("#hospitality-rate-43200-extension").fill("150");
+  await noOverflow(page);
+  await page.locator("#hospitality-room-submit").click();
+  await expect(page.locator("#hospitality-room-form-dialog")).toHaveCount(0);
+  await page.goto(`/dashboard/hospitality/rooms?q=${encodeURIComponent(name)}`);
+  await page.locator("#hospitality-room-grid tr").filter({ hasText: name }).getByRole("link", { name: "Check in", exact: true }).click();
+  await page.locator("#hospitality-check-in-rate").selectOption({ label: "Monthly · ₱12,000.00" });
+  await page.locator("#hospitality-check-in-final-price").fill("10000");
+  await page.locator("#hospitality-check-in-discount-type").selectOption("senior");
+  await page.locator("#hospitality-check-in-discount-card").fill("LOCAL-4321");
+  await page.locator("#hospitality-check-in-deposit").fill("1000");
+  await page.locator("#hospitality-check-in-receipt-details > summary").click();
+  await page.locator("#hospitality-check-in-receipt-number").fill("PAPER-123");
+  await page.locator("#hospitality-check-in-tendered").fill("12000");
+  await expect(page.locator("#hospitality-check-in-change")).toContainText("1,000.00");
+  await dialogChecks(page, "hospitality-check-in-dialog");
+  await page.screenshot({ path: `/private/tmp/negosu-hospitality-validation/pricing-${info.project.name}.png`, fullPage: true });
+  await selectShift(page, "in");
+  await page.locator("#hospitality-check-in-submit").click();
+  await expect(page.locator("#hospitality-stay-details")).toBeVisible();
+  const stayUrl = page.url().split("?")[0];
+  await expect(page.locator("#hospitality-stay-shift-history")).toContainText("Cashier: QA Receptionist");
+  await expect(page.locator("#hospitality-stay-payment-summary")).toContainText("10,000.00");
+  await expect(page.locator("#hospitality-deposit-summary")).toContainText("1,000.00");
+  await expect(page.locator("#hospitality-agreed-price")).toContainText("4321");
+  await page.locator("#hospitality-extend-button").click();
+  await dialogChecks(page, "hospitality-extension-dialog");
+  await page.locator("#hospitality-extension-actions-cancel-button").click();
+  await expect(page.locator("#hospitality-extension-dialog")).toHaveCount(0);
+  await page.locator("#hospitality-extend-button").click();
+  await page.locator("#hospitality-extension-hours").fill("2");
+  await expect(page.locator("#hospitality-extension-final-price")).toHaveValue("300.00");
+  await page.locator("#hospitality-extension-final-price").fill("250");
+  await page.locator("#hospitality-extension-tendered").fill("500");
+  await page.locator("#hospitality-extension-receipt-details > summary").click();
+  await page.locator("#hospitality-extension-receipt-number").fill("EXT-123");
+  await expect(page.locator("#hospitality-extension-change")).toContainText("250.00");
+  await noOverflow(page);
+  await page.locator("#hospitality-extension-submit").click();
+  await expect(page.locator("#hospitality-extension-dialog")).toHaveCount(0);
+  await expect(page.locator("#hospitality-extension-table")).toContainText("EXT-123");
+  await expect(page.locator("#hospitality-stay-payment-summary")).toContainText("10,250.00");
+  await page.locator("#hospitality-edit-receipt-button").click();
+  await page.locator("#hospitality-receipt-actions-cancel-button").click();
+  await expect(page.locator("#hospitality-receipt-dialog")).toHaveCount(0);
+  await page.locator("#hospitality-edit-receipt-button").click();
+  await page.locator("#hospitality-stay-receipt-number").fill("PAPER-124");
+  await page.locator("#hospitality-receipt-submit").click();
+  await expect(page.locator("#hospitality-receipt-dialog")).toHaveCount(0);
+  await page.goto(`${stayUrl}/receipt`);
+  await expect(page.locator("#hospitality-stay-statement")).toContainText("PAPER-124");
+  await expect(page.locator("#hospitality-statement-deposit")).toContainText("Held");
+  await noOverflow(page);
+  await page.goto(`${stayUrl}?dialog=checkout`);
+  await dialogChecks(page, "hospitality-check-out-dialog");
+  await selectShift(page, "out");
+  await page.locator("#hospitality-check-out-submit").click();
+  await expect(page.locator("#hospitality-check-out-dialog")).toBeVisible();
+  await page.locator("#hospitality-deposit-refund-confirm").check();
+  await page.locator("#hospitality-deposit-refund-reference").fill("RETURN-123");
+  await selectShift(page, "out");
+  await page.locator("#hospitality-check-out-submit").click();
+  await expect(page.locator("#hospitality-check-out-dialog")).toHaveCount(0);
+  await expect(page.locator("#hospitality-deposit-summary")).toContainText("Deposit returned");
+  await expect(page.locator("#hospitality-stay-shift-history")).toContainText("Cashier: QA Caretaker");
+  await expect(page.locator("#hospitality-stay-shift-history")).toContainText("Cashier: QA Receptionist");
+  await expect(page.locator("#hospitality-check-out-button")).toHaveCount(0);
+  await page.goto("/dashboard/payments?section=deposits");
+  await expect(page.locator("#hospitality-report-summary")).toContainText("Deposits held now");
+  await expect(page.locator("#hospitality-report-table")).toContainText(name);
+  await noOverflow(page);
+  const csv = await fetchInBrowser(page, "/dashboard/reports/export?section=deposits&preset=today");
+  expect(csv.status).toBe(200); expect(csv.text).toContain("Deposits held now"); expect(csv.text).not.toContain("LOCAL-4321");
+});
+
+
+test("Apartelle owner can review monthly and yearly plan upgrades", async ({ page }, info) => {
+  await login(page, "other");
+  await expect(page.locator("#dashboard-plan-upgrade")).toHaveCount(0);
+  await page.goto("/dashboard/reports");
+  await page.locator("#hospitality-reports-plan-upgrade-button").click();
+  await expect(page.locator("#billing-page")).toBeVisible();
+  await page.locator("#billing-choose-plan-starter").click();
+  await expect(page.locator("#billing-upgrade-page")).toBeVisible();
+  await expect(page.locator("#billing-upgrade-total")).toBeVisible();
+  await expect(page.locator("#billing-upgrade-error")).toHaveCount(0);
+  await page.locator("#billing-upgrade-interval").selectOption("year");
+  await page.locator("#billing-upgrade-update").click();
+  await expect(page.locator("#billing-upgrade-interval")).toHaveValue("year");
+  await expect(page.locator("#billing-upgrade-total")).toBeVisible();
+  await noOverflow(page);
+  await page.locator("#billing-upgrade-close").click();
+  await expect(page.locator("#billing-page")).toBeVisible();
+  await page.screenshot({ path: `/private/tmp/negosu-hospitality-validation/upgrade-${info.project.name}.png`, fullPage: true });
+  // Review only: never open a provider session or collect a real payment.
+});
+
+test("shift defaults discard stale staff and survive unavailable browser storage", async ({ page }) => {
+  await login(page);
+  await page.goto("/dashboard/hospitality/rooms");
+  await page.getByRole("link", { name: "Check in", exact: true }).first().click();
+  await selectShift(page, "in");
+  await page.evaluate(() => {
+    const key = Object.keys(localStorage).find(key => key.startsWith("negosu:shift-staff:v1:"))!;
+    const stored = JSON.parse(localStorage.getItem(key)!);
+    localStorage.setItem(key, JSON.stringify({ ...stored, cashierStaffId: "ffffffff-ffff-4fff-8fff-ffffffffffff" }));
+  });
+  await page.reload();
+  await expect(page.locator("#hospitality-check-in-cashier")).toHaveValue("");
+  await expect(page.locator("#hospitality-check-in-housekeeper")).toHaveValue("QA Caretaker");
+  await page.evaluate(() => { Storage.prototype.setItem = () => { throw new DOMException("Storage disabled", "SecurityError"); }; });
+  await selectShift(page, "in");
+  await expect(page.locator("#hospitality-check-in-cashier")).toHaveValue("QA Receptionist");
+  await page.locator("#hospitality-check-in-actions-cancel-button").click();
+  await expect(page.locator("#hospitality-check-in-dialog")).toHaveCount(0);
+  await page.getByRole("link", { name: "Check in", exact: true }).first().click();
+  await expect(page.locator("#hospitality-check-in-cashier")).toHaveValue("QA Receptionist");
+  await expect(page.locator("#hospitality-check-in-housekeeper")).toHaveValue("QA Caretaker");
+  await noOverflow(page);
 });

@@ -1,3 +1,5 @@
+import { planErrorMessage } from "@/lib/billing/plan-errors";
+
 type ErrorLike = {
   name?: string;
   code?: string;
@@ -62,7 +64,7 @@ export function isControlledUserFacingError(error: unknown): error is Error {
 }
 
 export function normalizeActionError(error: unknown, fallback: string) {
-  return isControlledUserFacingError(error) ? error.message : fallback;
+  return planErrorMessage(error) ?? (isControlledUserFacingError(error) ? error.message : fallback);
 }
 
 /** Logs searchable, non-sensitive context and returns a customer-safe message. */
@@ -84,4 +86,3 @@ export function reportActionError(operation: string, error: unknown, fallback: s
   }));
   return normalizeActionError(error, fallback);
 }
-

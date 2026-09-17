@@ -20,8 +20,8 @@ export async function GET(request: NextRequest) {
   if (activeMembership.industry === "hospitality") {
     const section = request.nextUrl.searchParams.get("section") ?? "stays";
     const financial = ["owner", "manager", "advisor", "cashier"].includes(activeMembership.role);
-    if ((["collections", "outstanding"].includes(section) && !financial) || (["inventory", "movements"].includes(section) && !roleHasPermission(activeMembership.role, "inventory.manage"))) return new NextResponse("Forbidden", { status: 403 });
-    if (!["stays", "rooms", "collections", "outstanding", "inventory", "movements"].includes(section)) return new NextResponse("Invalid report section", { status: 400 });
+    if ((["collections", "outstanding", "deposits"].includes(section) && !financial) || (["inventory", "movements"].includes(section) && !roleHasPermission(activeMembership.role, "inventory.manage"))) return new NextResponse("Forbidden", { status: 403 });
+    if (!["stays", "rooms", "collections", "outstanding", "deposits", "inventory", "movements"].includes(section)) return new NextResponse("Invalid report section", { status: 400 });
     try {
       const { exportHospitalityReport } = await import("@/modules/hospitality/report-export");
       return await exportHospitalityReport({ branch: parsed.data.branch === "all" ? null : parsed.data.branch, ...range, section });

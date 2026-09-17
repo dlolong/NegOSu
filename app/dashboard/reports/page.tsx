@@ -1,5 +1,6 @@
+import { PlanUpgradeNotice } from "@/components/plan-upgrade";
 
-import { ArrowRight as ArrowRightIcon, Download as DownloadIcon, RefreshCw as RefreshCwIcon, Search as SearchIcon } from "lucide-react";
+import { Download as DownloadIcon, RefreshCw as RefreshCwIcon, Search as SearchIcon } from "lucide-react";
 import Link from "next/link";
 import type { ReactNode } from "react";
 
@@ -99,9 +100,8 @@ export default async function Page({ searchParams }: { searchParams: Promise<Rec
         <div className="min-w-0 flex-1 basis-64">
           <h2 className="text-sm font-semibold">Free reports · Last 30 days</h2>
           <p className="mt-1 text-sm text-admin-text-secondary">Summary totals, daily activity, and customer insights for {activeMembership.branchName}.</p>
-          <p className="mt-1 text-xs text-admin-text-muted">Paid plans add custom dates, revenue and team breakdowns, branch comparisons, and CSV exports.</p>
         </div>
-        {activeMembership.role === "owner" ? <Button id="reports-view-plans-button" asChild variant="secondary"><Link href="/dashboard/settings/billing"><ArrowRightIcon aria-hidden="true" size={16} className="shrink-0"/>View plans</Link></Button> : null}
+        <PlanUpgradeNotice id="reports-plan-upgrade" capability="advanced_reports" compact/>
       </Card> : null}
 
       {advanced ? <form id="reports-filter-form" className="mt-5 grid gap-3 rounded-2xl border border-zinc-200 bg-white p-4 sm:grid-cols-2 lg:grid-cols-[repeat(4,minmax(0,1fr))_auto] lg:items-end">

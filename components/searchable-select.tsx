@@ -6,8 +6,8 @@ import { lookupRecords } from "@/app/dashboard/appointments/entity-actions";
 import type { RecordKind } from "@/lib/record-lookup";
 
 export type SelectOption = { id: string; name: string; keywords?: string; description?: string };
-export function SearchableSelect({ id, name, options, value, defaultValue = "", onValueChange, placeholder = "Search and select…", required = false, disabled = false, lookup, scopeId, onCreate, createLabel = "record" }: {
-  id: string; name?: string; options: SelectOption[]; value?: string; defaultValue?: string;
+export function SearchableSelect({ id, name, options, value, defaultValue = "", onValueChange, placeholder = "Search and select…", required = false, disabled = false, lookup, scopeId, onCreate, createLabel = "record", preserveValueOnReset = false }: {
+  preserveValueOnReset?: boolean; id: string; name?: string; options: SelectOption[]; value?: string; defaultValue?: string;
   onValueChange?: (value: string, option?: SelectOption) => void; placeholder?: string; required?: boolean; disabled?: boolean;
   lookup?: RecordKind; scopeId?: string; onCreate?: (name: string) => void; createLabel?: string;
 }) {
@@ -39,10 +39,10 @@ export function SearchableSelect({ id, name, options, value, defaultValue = "", 
   }, [open, lookup, query, scopeId, key]);
   useEffect(() => {
     const form = input.current?.form;
-    const reset = () => { setSelected(initial.current); setChosen(undefined); setQuery(""); setOpen(false); onValueChange?.(initial.current, options.find(option => option.id === initial.current)); };
+    const reset = () => { if (preserveValueOnReset) { setQuery(""); setOpen(false); return; } setSelected(initial.current); setChosen(undefined); setQuery(""); setOpen(false); onValueChange?.(initial.current, options.find(option => option.id === initial.current)); };
     form?.addEventListener("reset", reset);
     return () => form?.removeEventListener("reset", reset);
-  }, [onValueChange, options]);
+  }, [onValueChange, options, preserveValueOnReset]);
   useEffect(() => {
     if (open && active >= 0) document.getElementById(`${id}-option-${visible[active]?.id}`)?.scrollIntoView({ block: "nearest" });
   }, [open, active, id, visible]);

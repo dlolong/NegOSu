@@ -1,4 +1,5 @@
 import "server-only";
+import { planErrorMessage } from "@/lib/billing/plan-errors";
 
 import { requireAutomotiveContext as getDashboardContext } from "@/lib/auth/industry-access";
 import { createClient } from "@/lib/supabase/server";
@@ -12,7 +13,7 @@ import {
 
 function persistenceError(error: { message: string } | null, fallback: string): never {
   const controlledMessages = ["vehicle", "already has a job", "cannot start", "not assigned", "transition", "technician", "branch"];
-  const message = error && controlledMessages.some((part) => error.message.toLowerCase().includes(part)) ? error.message : fallback;
+  const message = planErrorMessage(error) ?? (error && controlledMessages.some((part) => error.message.toLowerCase().includes(part)) ? error.message : fallback);
   throw new AutomotiveWorkExecutionError(message);
 }
 

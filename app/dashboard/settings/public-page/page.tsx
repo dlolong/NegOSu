@@ -1,3 +1,4 @@
+import { PlanUpgradeNotice } from "@/components/plan-upgrade";
 import { LocationMapField, PublicBranchForm } from "@/components/location-map-field";
 import { LocationMap } from "@/components/location-map";
 import { FormDialog } from "@/components/management-ui";
@@ -115,6 +116,7 @@ export default async function Page({
       <div id="public-page-settings-grid" className="mt-6 grid min-w-0 gap-5">
         {tab==="profile"?<Card id="public-page-profile-card" className="p-5">
           <h2 className="font-semibold text-admin-text">Business website</h2>
+          <PlanUpgradeNotice id="public-page-publish-upgrade" capability="public_page"/>
           <form id="public-page-profile-form" action={savePublicPage} className="mt-4 grid gap-4 sm:grid-cols-2">
             <label className="col-span-full flex min-h-11 items-center gap-2 text-sm font-medium text-admin-text">
               <input

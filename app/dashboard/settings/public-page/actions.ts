@@ -1,5 +1,6 @@
 "use server";
 
+import { planErrorMessage } from "@/lib/billing/plan-errors";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireIndustryFeature } from "@/lib/auth/industry-access";
@@ -25,7 +26,7 @@ export async function savePublicPage(data: FormData) {
   if (!parsed.success) go("error", firstError(parsed.error));
   const supabase = await createClient();
   const { data: updated, error } = await supabase.from("organizations").update({ public_page_enabled: parsed.data.enabled, public_description: parsed.data.description || null, logo_url: parsed.data.logoUrl || null, cover_url: parsed.data.coverUrl || null, instagram_url: parsed.data.instagramUrl || null, facebook_page: parsed.data.facebookPage || null, website: parsed.data.website || null }).eq("id", membership.organizationId).select("id").maybeSingle();
-  if (error || !updated) go("error", "Unable to update public page.");
+  if (error || !updated) go("error", planErrorMessage(error) ?? "Unable to update public page.");
   saved(membership.organizationSlug, "Public page settings saved.");
 }
 export async function saveBranchPublic(data: FormData): Promise<{error:string}> {

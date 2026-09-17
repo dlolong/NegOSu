@@ -1,5 +1,6 @@
 "use server";
 
+import { planErrorMessage } from "@/lib/billing/plan-errors";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
@@ -44,7 +45,7 @@ export async function saveBranch(data: FormData) {
   const payload = { organization_id: activeMembership.organizationId, name: values.name, address_line: values.addressLine, barangay: values.barangay, city: values.city, province: values.province, postal_code: values.postalCode, country: values.country, phone: values.phone, email: values.email, opening_notes: values.openingNotes };
   const query = id ? supabase.from("branches").update(payload).eq("id", id).eq("organization_id", activeMembership.organizationId) : supabase.from("branches").insert(payload);
   const { error } = await query;
-  if (error) message(back, "error", error.code === "23505" ? "A branch with this name already exists." : "Unable to save this branch.");
+  if (error) message(back, "error", error.code === "23505" ? "A branch with this name already exists." : planErrorMessage(error) ?? "Unable to save this branch.");
   revalidatePath("/dashboard"); message("/dashboard/settings/branches", "message", `Branch ${id ? "updated" : "created"}.`);
 }
 
@@ -60,7 +61,7 @@ export async function toggleBranch(data: FormData) {
   const id = formValue(data, "id"); const active = formValue(data, "active") === "true"; const { activeMembership } = await getDashboardContext(); const supabase = await createClient();
   if (!canManageBranches(activeMembership.role)) message("/dashboard/settings/branches", "error", "Owner or manager access is required.");
   const { error } = await supabase.rpc("set_branch_active", { p_branch_id: id, p_is_active: active });
-  if (error) message("/dashboard/settings/branches", "error", error.message.includes("keep one") ? "Add or activate another branch before deactivating this one." : "Unable to update the branch.");
+  if (error) message("/dashboard/settings/branches", "error", error.message.includes("keep one") ? "Add or activate another branch before deactivating this one." : planErrorMessage(error) ?? "Unable to update the branch.");
   revalidatePath("/dashboard"); message("/dashboard/settings/branches", "message", `Branch ${active ? "activated" : "deactivated"}.`);
 }
 

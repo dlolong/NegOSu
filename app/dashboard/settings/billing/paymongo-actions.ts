@@ -42,7 +42,7 @@ export async function refreshPaymentStatus(id: string) {
   try {
     const order = await ownedOrder(id);
     await reconcilePaymongoOrder(order);
-    revalidatePath(billing); revalidatePath(`${billing}/orders/${id}`);
+    revalidatePath("/dashboard", "layout"); revalidatePath(billing); revalidatePath(`${billing}/orders/${id}`);
     return { ok: true };
   } catch (error) { reportActionError("billing.paymongo.refresh", error, "Could not check payment"); return { ok: false }; }
 }
@@ -58,6 +58,7 @@ export async function resumePayment(data: FormData) {
       if (order.status === "pending" && order.checkout_url) url = safePaymongoUrl(order.checkout_url);
     }
   } catch (error) { reportActionError("billing.paymongo.resume", error, "Could not resume payment"); redirect(`${billing}/history?error=Could+not+resume+payment.+Try+again+shortly.`); }
+  revalidatePath("/dashboard", "layout");
   redirect(url ?? `${billing}/orders/${id}`);
 }
 export async function cancelPayment(data: FormData) {
@@ -83,5 +84,5 @@ export async function cancelPayment(data: FormData) {
       }
     }
   } catch (error) { reportActionError("billing.paymongo.cancel", error, "Could not cancel payment"); redirect(`${billing}/history?error=Could+not+confirm+cancellation.+Check+the+payment+status+before+trying+again.`); }
-  revalidatePath(billing); redirect(`${billing}/orders/${id}`);
+  revalidatePath("/dashboard", "layout"); revalidatePath(billing); redirect(`${billing}/orders/${id}`);
 }

@@ -1,4 +1,6 @@
 "use client";
+import { PlanUpgradeProvider } from "@/components/plan-upgrade";
+import type { UpgradeState } from "@/modules/platform/plan-upgrades";
 import { AdminNotificationBell } from "@/components/admin-notification-bell";
 import { MessageCircle } from "lucide-react";
 
@@ -38,6 +40,7 @@ const navigationIcons: Record<string, LucideIcon> = {
   reminders: Bell,
   reports: BarChart3,
   settings: Settings,
+  billing: CreditCard,
   staff: Users,
   resources: Armchair,
   branches: Building2,
@@ -163,7 +166,7 @@ function MobileMoreMenu({ groups, activeHref }: { groups: NavigationGroup[]; act
   </DismissibleDetails>;
 }
 
-export function AppShell({ children, activeMembership, memberships, profileName, dashboardTheme }: { children: React.ReactNode; activeMembership: OrganizationMembership; memberships: OrganizationMembership[]; profileName: string; dashboardTheme: DashboardThemeId }) {
+export function AppShell({ children, activeMembership, memberships, profileName, dashboardTheme, upgrades = null }: { upgrades?: UpgradeState | null; children: React.ReactNode; activeMembership: OrganizationMembership; memberships: OrganizationMembership[]; profileName: string; dashboardTheme: DashboardThemeId }) {
   const pathname = usePathname();
   const industryConfig = resolveIndustryConfig(activeMembership.industry);
   const nav = navigationForIndustry(industryConfig, activeMembership.role);
@@ -180,6 +183,7 @@ export function AppShell({ children, activeMembership, memberships, profileName,
   const mobileColumnClasses = ["grid-cols-1", "grid-cols-2", "grid-cols-3", "grid-cols-4"] as const;
   const mobileColumnClass = mobileColumnClasses[Math.min(mobileNav.length, 3)];
   return (
+    <PlanUpgradeProvider state={upgrades} industry={activeMembership.industry} isOwner={activeMembership.role === "owner"}>
     <div id="dashboard-app-shell" data-dashboard-theme={dashboardTheme} className="flex h-dvh min-h-0 overflow-hidden bg-admin-canvas lg:grid lg:grid-cols-[224px_minmax(0,1fr)]">
       <aside id="negosu-sidebar" className="hidden overflow-y-auto overscroll-y-contain border-r border-white/10 bg-brand-ink text-white lg:block">
         <div className="px-3 py-4">
@@ -239,5 +243,6 @@ export function AppShell({ children, activeMembership, memberships, profileName,
         })}<MobileMoreMenu groups={overflowNavigationGroups} activeHref={activeHref}/>
       </nav>
     </div>
+    </PlanUpgradeProvider>
   );
 }

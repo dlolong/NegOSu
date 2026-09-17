@@ -14,3 +14,9 @@ export async function loadHospitalityWorkspace(input: { branch: string | null; s
   if (error) throw new Error("Unable to load hospitality workspace", { cause: error });
   return data as HospitalityWorkspace;
 }
+
+export async function hospitalityShiftStaff(organizationId: string, branchId: string) {
+  const { listOperationalStaffDirectory } = await import("@/modules/core/staff/staff.runtime");
+  const staff = await listOperationalStaffDirectory(organizationId);
+  return staff.filter(person => person.isActive && (!person.branchIds.length || person.branchIds.includes(branchId))).map(person => ({ id: person.staffId, name: person.fullName, description: person.jobFunction ?? "Staff", keywords: person.jobFunction ?? "" }));
+}

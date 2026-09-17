@@ -56,7 +56,7 @@ test("stay and statement deep links have stable parent navigation", () => {
 
 
 test("cashier uses configured stay periods and records net payment separately from change", () => {
-  assert.deepEqual(stayPackages.map(p => p.durationMinutes), [180, 360, 720, 1440, 10080]);
+  assert.deepEqual(stayPackages.map(p => p.durationMinutes), [180, 360, 720, 1440, 10080, 43200]);
   assert.equal(cashChange(80000, 100000), 20000);
   assert.equal(cashChange(80000, 80000), 0);
   assert.equal(canHospitality("cashier", "checkIn"), true);
@@ -76,4 +76,17 @@ test("housekeeping can release cleaned rooms without finance or rate editing acc
   assert.equal(canHospitality("technician", "checkIn"), false);
   assert.equal(canHospitality("technician", "financeRead"), false);
   assert.equal(canHospitality("viewer", "housekeeping"), false);
+});
+
+test("room packages support monthly pricing and optional validated hourly extensions", () => {
+  const rate = { id: "b9600000-0000-4000-8000-000000000201", label: "Monthly", durationMinutes: 43200, priceCentavos: 1200000, extensionHourlyCentavos: 15000 };
+  assert.equal(roomRatesInput.safeParse([rate]).success, true);
+  assert.equal(roomRatesInput.safeParse([{ ...rate, extensionHourlyCentavos: 0 }]).success, true);
+  for (const amount of [-1, 0.1, 10000000001]) assert.equal(roomRatesInput.safeParse([{ ...rate, extensionHourlyCentavos: amount }]).success, false);
+});
+
+test("Apartelle plan management navigation is available only to owners", () => {
+  const config = resolveIndustryConfig("hospitality");
+  assert.equal(navigationForIndustry(config, "owner").find(item => item.key === "billing")?.href, "/dashboard/settings/billing");
+  for (const role of ["manager", "advisor", "cashier", "technician", "viewer"] as const) assert.equal(navigationForIndustry(config, role).some(item => item.key === "billing"), false);
 });

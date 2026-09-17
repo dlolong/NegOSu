@@ -1,5 +1,6 @@
 "use server";
 
+import { planErrorMessage } from "@/lib/billing/plan-errors";
 import { redirect } from "next/navigation";
 
 import {
@@ -73,8 +74,8 @@ export async function createStaffProfileInvitation(data: FormData) {
   let token: string;
   try {
     token = await inviteStaffProfileService(parsed.data);
-  } catch {
-    go("error", "Unable to create the system access invitation.");
+  } catch (error) {
+    go("error", planErrorMessage(error) ?? "Unable to create the system access invitation.");
   }
   redirect(`${path}?message=${encodeURIComponent("Invitation created. Copy the secure link below.")}&invite=${encodeURIComponent(`/accept-invite?token=${token}`)}`);
 }
@@ -95,8 +96,8 @@ export async function updateStaffProfileAccess(data: FormData) {
   }
   try {
     await updateStaffProfileAccessService(parsed.data);
-  } catch {
-    go("error", "Unable to update system access.");
+  } catch (error) {
+    go("error", planErrorMessage(error) ?? "Unable to update system access.");
   }
   go("message", parsed.data.isActive ? "System access updated." : "System access disabled.");
 }

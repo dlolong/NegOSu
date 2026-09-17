@@ -1,3 +1,5 @@
+import { loadPlanUpgrades } from "@/lib/billing/upgrades";
+import { createClient } from "@/lib/supabase/server";
 import { AppShell } from "@/components/app-shell";
 import { getDashboardContext } from "@/lib/auth/context";
 import { businessMetadata } from "@/modules/platform/business-branding";
@@ -9,5 +11,6 @@ export async function generateMetadata() {
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const context = await getDashboardContext();
-  return <AppShell activeMembership={context.activeMembership} memberships={context.memberships} profileName={context.profile.fullName} dashboardTheme={context.profile.dashboardTheme}>{children}</AppShell>;
+  const upgrades = await loadPlanUpgrades(await createClient(), context.activeMembership.organizationId);
+  return <AppShell upgrades={upgrades} activeMembership={context.activeMembership} memberships={context.memberships} profileName={context.profile.fullName} dashboardTheme={context.profile.dashboardTheme}>{children}</AppShell>;
 }

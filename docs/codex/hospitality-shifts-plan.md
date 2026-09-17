@@ -1,0 +1,9 @@
+# Apartelle upgrade access and shift attribution
+
+Reuse existing Core PayMongo plan review/checkout/history/entitlements and independent Staff profiles. Expose an owner-only upgrade entry on Apartelle Overview, and keep plan review reachable even when checkout configuration is unavailable; actual payment stays guarded by provider readiness and verified payment.
+
+Add an append-only Hospitality staff-event table with check-in/check-out phases, selected cashier and housekeeper profile IDs, preserved names, and actual authenticated recorder/time. New forms require both selections from active staff in the business/current branch; no login or rigid job-title matching required. Checkout chooses a fresh shift, without overwriting arrival staff. Existing records/legacy RPCs remain supported with attribution explicitly absent. Selecting staff never grants permissions. New atomic RPC wrappers reuse the existing pricing/deposit/cleaning transactions; exact retries preserve history, changed staff retries fail, and failed staff validation rolls back the transaction.
+
+Use existing searchable selects, role checks, branch conventions, responsive dialogs and Staff management. Extend details/history and statement to show attribution; checkout housekeeper identifies the assigned person, while Mark ready still records the actual authorized completing user. No workforce scheduling/timeclock system is introduced.
+
+Verify billing review/quote/order access for Hospitality, owner-only access, staff identity without login, tenant/branch/inactive rejection, missing selections, independent shifts, retries/concurrency, atomic rollback, historical snapshots, no finance access grants, desktop/mobile/cancel behavior, lint/typecheck/tests/build. Apply SQL only in local/test databases; no hosted writes, charges or deployment.

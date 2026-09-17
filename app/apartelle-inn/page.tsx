@@ -14,7 +14,7 @@ export default function ApartelleInnPage() {
     <main id="negosu-hospitality-page" className="min-h-screen bg-white text-brand-ink">
       <MarketingHeader vertical="hospitality"/>
       <MarketingHero vertical="hospitality" eyebrow="NegOSu Apartelle & Inn" title="Your rooms, guests and daily operations. Together."
-        description="Keep the front desk organized, from check-in to checkout. Manage rooms, guest history, fixed room rates, payments, supplies and your team in one workspace. Start with a free account."
+        description="Keep the front desk organized, from check-in to checkout. Manage rooms, guest history, room rates, payments, supplies and your team in one workspace. Start with a free account."
         visual={<section id="negosu-hospitality-preview-board" className="rounded-2xl border border-slate-200 bg-slate-50 p-5 shadow-sm sm:p-7">
           <div className="flex items-center gap-3"><Building2 className="text-brand-primary" aria-hidden="true"/><h2 className="text-xl">Front desk at a glance</h2></div>
           <p className="mt-2 text-sm text-slate-500">An example of your daily workspace</p>
@@ -23,14 +23,14 @@ export default function ApartelleInnPage() {
         </section>}/>
       <FeatureSection vertical="hospitality" heading="Everything your front desk needs for the day." description="A simple stay workflow with the shared NegOSu business tools."
         features={[
-          { icon: BedDouble, title: "Rooms & stays", description: "Configure 3, 6 and 12-hour, daily and weekly rates. Check guests in and out, and keep stay history." },
+          { icon: BedDouble, title: "Rooms & stays", description: "Configure 3, 6 and 12-hour, daily, weekly and monthly rates, with hourly extensions and stay history." },
           { icon: Users, title: "Guest records", description: "Check in without a guest name. Add optional guest details when useful and keep stay history." },
-          { icon: CreditCard, title: "Charges & payments", description: "Record fixed room rates, partial or full payments, and balances that remain after checkout." },
+          { icon: CreditCard, title: "Charges & payments", description: "Record final prices, discounts, payments, paper receipts and refundable deposits, with clear checkout balances." },
           { icon: Boxes, title: "Products & inventory", description: "Track branch supplies, record stock movements and see what needs restocking." },
           { icon: ChartNoAxesCombined, title: "Reports", description: "Review stays, room status, collections, outstanding balances and stock. Export options follow your plan." },
           { icon: Building2, title: "Staff & branches", description: "Manage your team, operating locations and system access with existing role and branch permissions." },
         ]}/>
-      <HowItWorks vertical="hospitality" steps={["Create your account, business and first branch.", "Add rooms, fixed rates and your staff.", "Select a room and stay period, take payment, then check in."]}/>
+      <HowItWorks vertical="hospitality" steps={["Create your account, business and first branch.", "Add rooms, package and extension rates, and your staff.", "Select a room and stay period, take payment, then check in."]}/>
       <section className="mx-auto max-w-7xl px-4 py-8 sm:px-6"><p className="max-w-3xl text-sm leading-6 text-slate-600">Administrators set room rates. Cashiers collect payment and return change; supply movements are recorded separately. Guest payments record money received by your business. Your NegOSu subscription stays separate in Billing & Plan.</p><Link id="negosu-hospitality-sign-in-link" href={hospitalityBrand.loginPath} className="mt-4 inline-flex min-h-11 items-center gap-2 text-brand-primary-strong">Already have an account? Sign in <ArrowRight size={16} aria-hidden="true"/></Link></section>
       <MarketingCta vertical="hospitality" title="Make room for a simpler workday." description="Start free with Rooms, Guests, Payments, Inventory, Reports and Staff. Set up your apartelle or inn today."/>
       <MarketingFooter vertical="hospitality"/>

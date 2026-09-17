@@ -1,0 +1,11 @@
+# Apartelle pricing, extensions and refundable deposits
+
+Goal: six room packages (3/6/12 hours, 1 day, weekly, monthly=30 days), per-package hourly extension price, cashier-entered final discounted price and card number, optional paper receipt number, and refundable checkout deposit.
+
+Reuse Core manual invoices/items/collections, rooms/stays, cleaning transition, role/branch guards, reports, statements and action dialogs. Add neutral invoice deposit and external receipt capability in Core; Hospitality owns discount metadata, original rate snapshots and extension periods. Existing invoices/stays/packages remain usable. New rates retain defaults for missing hourly price (extensions unavailable until configured).
+
+Append-only migrations; no hosted mutation. Deposits are liabilities kept outside invoice revenue/balance. Cash change uses final charge + deposit. Full deposit return is recorded with explicit checkout confirmation, before Cleaning. New zero-price stays remain supported without fabricating a positive payment. Cashiers may discount down to zero; final amount cannot exceed the quoted package/hourly total. Card/PWD/senior choices require only a card number; no automatic statutory calculation. Generic discount needs no identity information. Optional receipt numbers never replace internal bill identifiers.
+
+Extension uses the rate snapshot agreed at check-in, whole hours, and expected planned-end timestamp to prevent concurrent duplicate extensions. Charges, payment and end-time change commit together, request keys enforce exact retries. New room prices apply to new stays. Legacy stays without hourly rate use explicit current configured rate/version selection. Checkout/deposit/extension lock room, stay, invoice in the same order. Refunds and collections keep existing finance permissions; housekeeping never receives card/deposit data.
+
+Modules: Core deposit/receipt SQL and contracts; Hospitality schemas/actions/check-in/rooms/stay/extension/statement/report UI; migrations and regression fixtures/tests; domain/deployment docs. Validate six durations, exact cents, discounts/card validation, receipt optional/editing, refundable liability totals, noncash/cash change, old data, all tenant/branch/role boundaries, retries and actual races, mobile/desktop forms, lint/types/unit/integration/browser/build.
