@@ -27,7 +27,10 @@ export function businessMetadata(name: string, logoUrl?: string | null, page?: s
     applicationName: name,
     referrer: "no-referrer",
     description: `Welcome to ${name}.`,
-    icons: { icon: resolveBusinessLogoUrl(logoUrl) ?? "/images/business-favicon.svg" },
+    icons: {
+      icon: resolveBusinessLogoUrl(logoUrl) ?? "/images/NegOSu_favicon.png",
+      apple: resolveBusinessLogoUrl(logoUrl) ?? "/images/NegOSu_logo_512x512.png",
+    },
     openGraph: { title, siteName: name, description: `Welcome to ${name}.`, images: [] },
     twitter: { card: "summary", title, description: `Welcome to ${name}.`, images: [] },
     keywords: [],

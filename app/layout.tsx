@@ -10,8 +10,11 @@ export const metadata: Metadata = {
   title: { default: `${productBrand.name} | Business Operating System`, template: `%s | ${productBrand.name}` },
   description: productBrand.description,
   applicationName: productBrand.name,
+  manifest: "/manifest.webmanifest",
+  appleWebApp: { capable: true, statusBarStyle: "default", title: productBrand.name },
   icons: {
     icon: { url: "/images/NegOSu_favicon.png", type: "image/png" },
+    apple: { url: "/images/NegOSu_logo_512x512.png", sizes: "512x512", type: "image/png" },
   },
   keywords: ["business operating system", "automotive business software", "salon management software", "pet grooming software", "appointment scheduling", "inventory management"],
   openGraph: {

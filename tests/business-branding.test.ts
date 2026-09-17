@@ -44,10 +44,10 @@ test("business identity uses its own image while platform attribution stays seco
 test("owned page metadata overrides platform title and icon without exposing invalid image URLs", () => {
   const metadata = businessMetadata("Acme Auto", "https://example.test/acme.png", "Booking status");
   assert.deepEqual(metadata.title, { absolute: "Booking status | Acme Auto", template: "%s | Acme Auto" });
-  assert.deepEqual(metadata.icons, { icon: "https://example.test/acme.png" });
+  assert.deepEqual(metadata.icons, { icon: "https://example.test/acme.png", apple: "https://example.test/acme.png" });
   assert.doesNotMatch(JSON.stringify(metadata), /NegOSu/);
   assert.equal(metadata.referrer, "no-referrer");
-  assert.deepEqual(businessMetadata("Acme", "javascript:alert(1)").icons, { icon: "/images/business-favicon.svg" });
+  assert.deepEqual(businessMetadata("Acme", "javascript:alert(1)").icons, { icon: "/images/NegOSu_favicon.png", apple: "/images/NegOSu_logo_512x512.png" });
 });
 
 test("private appointment branding remains compatible with earlier RPC responses and unavailable links", () => {
