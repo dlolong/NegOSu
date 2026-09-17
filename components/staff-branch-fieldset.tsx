@@ -13,7 +13,7 @@ export function StaffBranchFieldset({ id, branches, selected, label }: {
   const unavailableIds = branchIds.filter((branchId) => !branches.some((branch) => branch.id === branchId));
 
   return <fieldset id={id} className="col-span-full min-w-0 rounded-xl border border-slate-300 p-3">
-    <legend className="max-w-full px-1 text-sm font-semibold [overflow-wrap:anywhere]">{label}</legend>
+    <legend className="max-w-full px-1 text-sm font-medium [overflow-wrap:anywhere]">{label}</legend>
     <label className="flex min-h-9 min-w-0 items-center gap-2 text-sm [overflow-wrap:anywhere]">
       <input id={`${id}-all-checkbox`} type="checkbox" className="shrink-0" name="allBranches" checked={allBranches} onChange={(event) => {
         setAllBranches(event.target.checked);

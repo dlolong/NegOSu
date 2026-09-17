@@ -95,5 +95,5 @@ test("simultaneous walk-ins receive distinct consecutive queue numbers", async (
     const numbers = entries.data!.map(entry => entry.queue_number);
     expect(numbers).toEqual([numbers[0], numbers[0] + 1, numbers[0] + 2]);
     expect(entries.data!.every(entry => entry.source === "walk_in")).toBe(true);
-  } finally { await db.auth.signOut(); }
+  } finally { await db.auth.signOut({scope:"local"}); }
 });

@@ -1,6 +1,7 @@
 import {test,expect,type Page} from "@playwright/test";
 import {createClient} from "@supabase/supabase-js";
 import {loginAsOwner,authenticatedSmokeEnabled} from "./helpers/auth";
+import {qaAppointmentStart} from "./helpers/scheduling";
 import {selectRecord} from "./helpers/searchable-select";
 test.use({trace:"off"});
 const local=["localhost","127.0.0.1"].includes(new URL(process.env.E2E_BASE_URL??"http://localhost").hostname);
@@ -12,7 +13,7 @@ async function offer(page:Page,id:string,name:string){await page.locator(`#${id}
 test("appointment search creates confirmed records, preserves cancelled drafts, and saves an editable visit",async({page})=>{
  test.setTimeout(150000);await page.setViewportSize({width:390,height:844});await loginAsOwner(page,"salon");
  await page.goto("/dashboard/appointments/new");const prefix="salon-appointment",unique=Date.now(),customer=`Search Client ${unique}`,service=`Search Treatment ${unique}`,category=`Search Category ${unique}`;
- const day=new Date();day.setUTCDate(day.getUTCDate()+24);const starts=`${day.toISOString().slice(0,10)}T10:00`;
+ const starts=await qaAppointmentStart("salon",24);
  await page.locator(`#${prefix}-starts-at-input`).fill(starts);await page.locator(`#${prefix}-internal-notes-input`).fill("Keep this appointment draft");
  await offer(page,`${prefix}-client-select`,customer);await expect(page.locator(`#${prefix}-quick-client-details`)).toContainText("Add this record to your database?");
  await page.locator(`#${prefix}-quick-client-cancel-button`).click();await expect(page.locator(`#${prefix}-starts-at-input`)).toHaveValue(starts);
@@ -49,7 +50,7 @@ test("authenticated catalog writes retain tenant isolation and concurrent retry 
  test.skip(!process.env.QA_PET_OWNER_EMAIL||!process.env.QA_PET_OTHER_EMAIL,"Requires two local Pet tenants");
  const url=process.env.NEXT_PUBLIC_SUPABASE_URL!;expect(["127.0.0.1","localhost"]).toContain(new URL(url).hostname);
  const {createQuickCategory,createQuickService}=await import("../lib/quick-catalog");const {searchRecords}=await import("../lib/record-lookup");
- const connect=async(email:string)=>{const db=createClient(url,(process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY??process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY)!,{auth:{persistSession:false}});const auth=await db.auth.signInWithPassword({email,password:process.env.QA_OWNER_PASSWORD!});expect(auth.error).toBeNull();const member=await db.from("organization_memberships").select("organization_id,role").eq("user_id",auth.data.user!.id).single();expect(member.error).toBeNull();return {db,actor:{organizationId:member.data!.organization_id,role:member.data!.role,industry:"pet_care"}};};
+ const connect=async(email:string)=>{const db=createClient(url,(process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY??process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY)!,{auth:{persistSession:false}});const auth=await db.auth.signInWithPassword({email,password:process.env.QA_OWNER_PASSWORD!});expect(auth.error).toBeNull();const member=await db.from("organization_memberships").select("organization_id,role,organizations(currency)").eq("user_id",auth.data.user!.id).single();expect(member.error).toBeNull();return {db,actor:{organizationId:member.data!.organization_id,role:member.data!.role,currency:(member.data!.organizations as unknown as {currency:string}).currency,industry:"pet_care"}};};
  const [a,b]=await Promise.all([connect(process.env.QA_PET_OWNER_EMAIL!),connect(process.env.QA_PET_OTHER_EMAIL!)]);const prefix=`Scoped Category ${Date.now()}`,ownInput={requestId:crypto.randomUUID(),name:`${prefix} own`};
  const own=await Promise.all([createQuickCategory(ownInput,a.actor,a.db),createQuickCategory(ownInput,a.actor,a.db)]);expect(own.map(result=>result.data?.id)).toEqual([ownInput.requestId,ownInput.requestId]);
  const foreign=await createQuickCategory({requestId:crypto.randomUUID(),name:`${prefix} foreign`},b.actor,b.db);expect(foreign.error).toBeUndefined();
@@ -58,5 +59,5 @@ test("authenticated catalog writes retain tenant isolation and concurrent retry 
  expect((await a.db.from("services").select("id").eq("id",service.requestId)).data).toEqual([]);
  const allowed={...service,categoryId:ownInput.requestId};const retried=await Promise.all([createQuickService(allowed,a.actor,a.db),createQuickService(allowed,a.actor,a.db)]);expect(retried.map(result=>result.data?.id)).toEqual([service.requestId,service.requestId]);
  expect((await createQuickCategory({requestId:crypto.randomUUID(),name:`Forbidden ${Date.now()}`},b.actor,a.db)).error).toBeTruthy();
- await Promise.all([a.db.auth.signOut(),b.db.auth.signOut()]);
+ await Promise.all([a.db.auth.signOut({scope:"local"}),b.db.auth.signOut({scope:"local"})]);
 });

@@ -54,15 +54,15 @@ for(const industry of ["automotive","salon","pet_care"]){
   const row=page.locator(`#${prefix}-table tbody tr`).first();
   if(await row.count()){
    await row.locator("td").first().click({position:{x:10,y:10}});await expect(page.locator(`#${prefix}-details-dialog`)).toBeVisible();
-   await page.locator(`#${prefix}-details-dialog-close-button`).click();await expect(page.locator("dialog")).toHaveCount(0);
+   await page.locator(`#${prefix}-details-dialog-close-button`).click();await expect(page.locator("dialog[open]")).toHaveCount(0);
    await row.getByRole("link",{name:"Record movement",exact:true}).click();await expect(page.locator(`#${prefix}-movement-dialog`)).toBeVisible();
-   await page.getByRole("link",{name:"Cancel",exact:true}).click();await expect(page.locator("dialog")).toHaveCount(0);
+   await page.getByRole("link",{name:"Cancel",exact:true}).click();await expect(page.locator("dialog[open]")).toHaveCount(0);
   }
   await page.goto("/dashboard/services");const service=page.locator('table a[data-record-link]').first();
   if(await service.count()){const href=await service.getAttribute("href");await service.click();await expect(page).toHaveURL(new RegExp(`${href}$`));await page.goBack();}
   await page.goto("/dashboard/settings/staff");const staffPrefix=salon?"salon-staff":"staff";
   const edit=page.locator(`[id^="${staffPrefix}-edit-"]`).first();if(await edit.count()){
-   await edit.click();await expect(page.locator(`#${staffPrefix}-edit-dialog`)).toBeVisible();await page.getByRole("link",{name:"Cancel",exact:true}).click();await expect(page.locator("dialog")).toHaveCount(0);
+   await edit.click();await expect(page.locator(`#${staffPrefix}-edit-dialog`)).toBeVisible();await page.getByRole("link",{name:"Cancel",exact:true}).click();await expect(page.locator("dialog[open]")).toHaveCount(0);
   }
  });
 }

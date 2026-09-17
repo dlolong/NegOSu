@@ -3,6 +3,7 @@ import { createClient, type SupabaseClient, type User } from "@supabase/supabase
 
 import {
   assertQaSeedSafety,
+  assertQaFixtureUser,
   formatQaSeedOperatorError,
   parseQaSeedMode,
   resolveQaMembershipStrategy,
@@ -78,6 +79,7 @@ async function findUserByEmail(client: SupabaseClient, email: string) {
 async function ensureUser(client: SupabaseClient, persona: QaPersona): Promise<{ user: User; created: boolean }> {
   const existing = await findUserByEmail(client, persona.email);
   if (existing) {
+    assertQaFixtureUser(existing, persona.key);
     const { data, error } = await client.auth.admin.updateUserById(existing.id, {
       password: persona.password,
       email_confirm: true,
@@ -92,6 +94,7 @@ async function ensureUser(client: SupabaseClient, persona: QaPersona): Promise<{
     password: persona.password,
     email_confirm: true,
     user_metadata: { full_name: persona.fullName, qa_persona: persona.key },
+    app_metadata: { negosu_qa_fixture: persona.key },
   });
   if (error) throw error;
   return { user: data.user, created: true };
@@ -338,6 +341,7 @@ async function main() {
     qaSeedTarget: process.env.QA_SEED_TARGET,
     allowRemoteDevelopment: process.env.QA_SEED_ALLOW_REMOTE_DEVELOPMENT,
     confirmation: process.env.QA_SEED_CONFIRM,
+    approvedTargetUrl: process.env.QA_SEED_APPROVED_TARGET_URL,
   });
   const includePetCare = process.argv.includes("--pet-care");
   if (includePetCare && safety.target !== "local") throw new Error("Pet Care demo fixtures are local-only.");

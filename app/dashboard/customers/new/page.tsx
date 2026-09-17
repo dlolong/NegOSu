@@ -9,7 +9,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ e
   if ((await getDashboardContext()).activeMembership.industry === "hospitality") redirect("/dashboard/customers?create=1");
   const parameters = await searchParams;
   return <main id="customer-create-page" className="mx-auto min-w-0 max-w-3xl">
-    <PageHeader id="customer-create-page-header" eyebrow="Customers" title="Add customer" description="Keep the common path fast; contact and address details are optional." action={<Link id="customer-import-link" className="text-sm font-bold text-brand-primary-strong underline underline-offset-4" href="/dashboard/customers/import">Preview a CSV import</Link>}/>
+    <PageHeader id="customer-create-page-header" eyebrow="Customers" title="Add customer" description="Keep the common path fast; contact and address details are optional." action={<Link id="customer-import-link" className="text-sm font-medium text-brand-primary-strong underline underline-offset-4" href="/dashboard/customers/import">Preview a CSV import</Link>}/>
     <section id="customer-create-section" className="mt-5"><CustomerForm {...parameters}/></section>
   </main>;
 }

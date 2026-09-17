@@ -22,15 +22,15 @@ export default async function SignupPage({ searchParams }: { searchParams: Promi
   const contextQuery = entry ? `?industry=${entry.industry}` : "";
 
   return (
-    <AuthShell id="negosu-signup-page" industry={entry?.industry} title="Create your account" description={entry?.signupDescription ?? `Create your ${productBrand.name} account and choose the business you want to manage.`} footer={<>Already registered? <Link id="negosu-signup-login-link" className="font-bold text-brand-primary-strong" href={`/login${contextQuery}`}>Sign in</Link></>}>
+    <AuthShell id="negosu-signup-page" industry={entry?.industry} title="Create your account" description={entry?.signupDescription ?? `Create your ${productBrand.name} account and choose the business you want to manage.`} footer={<>Already registered? <Link id="negosu-signup-login-link" className="font-medium text-brand-primary-strong" href={`/login${contextQuery}`}>Sign in</Link></>}>
       <FormMessage error={params.error} />
       <form id="negosu-signup-form" action={signUp} className="mt-6 space-y-4">
         <BusinessTypeSelector idPrefix="negosu" initialIndustry={entry?.industry} />
         <div className="grid gap-4 sm:grid-cols-2">
-          <label className="block text-sm font-semibold" htmlFor="negosu-signup-first-name-input">First name<Input id="negosu-signup-first-name-input" required maxLength={60} autoComplete="given-name" name="firstName" className="mt-2" /></label>
-          <label className="block text-sm font-semibold" htmlFor="negosu-signup-last-name-input">Last name<Input id="negosu-signup-last-name-input" required maxLength={60} autoComplete="family-name" name="lastName" className="mt-2" /></label>
+          <label className="block text-sm font-medium" htmlFor="negosu-signup-first-name-input">First name<Input id="negosu-signup-first-name-input" required maxLength={60} autoComplete="given-name" name="firstName" className="mt-2" /></label>
+          <label className="block text-sm font-medium" htmlFor="negosu-signup-last-name-input">Last name<Input id="negosu-signup-last-name-input" required maxLength={60} autoComplete="family-name" name="lastName" className="mt-2" /></label>
         </div>
-        <label className="block text-sm font-semibold" htmlFor="negosu-signup-email-input">Email address<Input id="negosu-signup-email-input" required autoComplete="email" name="email" type="email" inputMode="email" className="mt-2" /></label>
+        <label className="block text-sm font-medium" htmlFor="negosu-signup-email-input">Email address<Input id="negosu-signup-email-input" required autoComplete="email" name="email" type="email" inputMode="email" className="mt-2" /></label>
         <PasswordFields idPrefix="negosu-signup" />
         <SubmitButton id="negosu-signup-submit-button" className="w-full" pendingText="Creating account…"><PlusIcon aria-hidden="true" size={16} className="shrink-0"/>Create account</SubmitButton>
       </form>

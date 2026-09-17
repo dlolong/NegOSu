@@ -84,7 +84,7 @@ for (const industry of ["salon", "pet_care"] as const) {
         if(concurrentId) await db.rpc(pet?"transition_pet_appointment":"transition_salon_appointment",{p_appointment_id:concurrentId,p_action:"cancel"});
         if(id) await db.rpc(pet?"transition_pet_appointment":"transition_salon_appointment",{p_appointment_id:id,p_action:"cancel"});
         await admin.from("branches").update({timezone:branch.data!.timezone,opening_hours:branch.data!.opening_hours}).eq("id",branch.data!.id);
-        await db.auth.signOut();
+        await db.auth.signOut({scope:"local"});
       }
     });
   }

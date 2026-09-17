@@ -11,7 +11,7 @@ export function Table({ className, ...props }: TableHTMLAttributes<HTMLTableElem
 }
 
 export function TableHeader({ className, ...props }: HTMLAttributes<HTMLTableSectionElement>) {
-  return <thead className={cn("border-b border-admin-border bg-admin-surface-muted text-xs font-semibold uppercase tracking-wide text-admin-text-muted", className)} {...props} />;
+  return <thead className={cn("border-b border-admin-border bg-admin-surface-muted text-xs font-medium tracking-wide text-admin-text-muted", className)} {...props} />;
 }
 
 export function TableBody({ className, ...props }: HTMLAttributes<HTMLTableSectionElement>) {
@@ -23,7 +23,7 @@ export function TableRow({ className, ...props }: HTMLAttributes<HTMLTableRowEle
 }
 
 export function TableHead({ className, ...props }: ThHTMLAttributes<HTMLTableCellElement>) {
-  return <th className={cn("h-11 px-4 py-2 font-semibold", className)} {...props} />;
+  return <th className={cn("h-11 px-4 py-2 font-medium", className)} {...props} />;
 }
 
 export function TableCell({ className, ...props }: TdHTMLAttributes<HTMLTableCellElement>) {

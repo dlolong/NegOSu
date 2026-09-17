@@ -10,7 +10,11 @@ const submissions: Array<{ name: string; entries: Array<[string, string]> }> = [
 test.beforeEach(async ({ page }) => {
   mutations.length = 0;
   submissions.length = 0;
-  await page.exposeFunction("recordFormAction", (name: string, entries: Array<[string, string]>) => { mutations.push(name); submissions.push({ name, entries }); });
+  await page.exposeFunction("recordFormAction", (name: string, entries: Array<[string, string]>) => {
+    // Search is a read, and opening a searchable selector may issue it before Cancel.
+    if (name === "lookupRecords") return { data: [] };
+    mutations.push(name); submissions.push({ name, entries });
+  });
   await page.route("https://forms.test/**", route => route.fulfill({ contentType: "text/html", body: new URL(route.request().url()).pathname === "/fixture" ? html : '<h1 id="destination">Returned without saving</h1>' }));
 });
 
@@ -99,8 +103,10 @@ test("quick-create Cancel restores customer and vehicle selection without submit
   for (const kind of ["customer", "vehicle"]) {
     await page.locator(`#appointment-quick-${kind}-open-button`).click();
     await page.locator(`#appointment-quick-${kind}-cancel-button`).click();
-    await expect(page.locator("#appointment-customer-select")).toHaveValue("customer-one");
-    await expect(page.locator("#appointment-vehicle-select")).toHaveValue("vehicle-one");
+    await expect(page.locator("#appointment-customer-select")).toHaveValue("Ana Santos");
+    await expect(page.locator("#appointment-vehicle-select")).toHaveValue("Toyota Vios");
+    await expect(page.locator('input[type="hidden"][name="customerId"]')).toHaveValue("customer-one");
+    await expect(page.locator('input[type="hidden"][name="vehicleId"]')).toHaveValue("vehicle-one");
   }
   expect(mutations).toEqual([]);
 });

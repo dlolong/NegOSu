@@ -39,7 +39,7 @@ export function Tabs({ id, items, ariaLabel = "Sections", className }: { id: str
         href={item.href}
         aria-current={active ? "page" : undefined}
         className={cn(
-          "inline-flex min-h-11 items-center gap-2 border-b-2 px-3 py-2 text-sm font-semibold outline-none transition-colors focus-visible:ring-2 focus-visible:ring-brand-primary focus-visible:ring-inset",
+          "inline-flex min-h-11 items-center gap-2 border-b-2 px-3 py-2 text-sm font-medium outline-none transition-colors focus-visible:ring-2 focus-visible:ring-brand-primary focus-visible:ring-inset",
           active ? "border-brand-primary text-brand-primary-strong" : "border-transparent text-admin-text-secondary hover:border-admin-border-strong hover:text-admin-text",
         )}
       >{item.label}{typeof item.count === "number" ? <span className="rounded-full bg-slate-100 px-1.5 py-0.5 text-[11px] text-slate-600">{item.count}</span> : null}</Link>;

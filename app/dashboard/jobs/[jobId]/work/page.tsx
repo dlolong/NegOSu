@@ -58,12 +58,12 @@ export default async function JobWorkPage({ params, searchParams }: { params: Pr
     <FormMessage {...query} />
     {loaded.error || !loaded.job ? <ErrorState id="job-order-work-load-error" title="Unable to load work" description="Refresh the page and try again. If the problem continues, finish the pending development migrations." /> : <>
       <Card id="job-order-current-work" className="mt-5 p-4 sm:p-5">
-        <h2 className="font-semibold">Current work</h2>
+        <h2 className="font-medium">Current work</h2>
         {loaded.job.job_order_items.length ? <div id="job-order-current-work-list" className="mt-3 space-y-3">
           {loaded.job.job_order_items.map((item) => <article id={`job-order-work-item-${item.id}`} className="rounded-xl border border-admin-border p-3" key={item.id}>
             <div className="flex flex-wrap justify-between gap-3">
               <span><strong className="font-medium">{item.service_name_snapshot} × {item.quantity}</strong><small className="block capitalize text-admin-text-muted">{item.approval_status}</small></span>
-              <span className="font-medium">{formatMoney(item.line_total_centavos)}</span>
+              <span className="font-medium">{formatMoney(item.line_total_centavos, activeMembership.currency)}</span>
             </div>
             {item.notes ? <p className="mt-2 text-sm">{item.notes}</p> : null}
             {canManage ? <form id={`job-order-work-assignment-form-${item.id}`} action={assignJobItem} className="mt-3 flex flex-wrap gap-2">
@@ -82,7 +82,7 @@ export default async function JobWorkPage({ params, searchParams }: { params: Pr
       </Card>
 
       {canManage && !["completed", "cancelled"].includes(loaded.job.status) ? <Card id="job-order-additional-work" className="mt-4 p-4 sm:p-5">
-        <h2 className="font-semibold">Add additional work</h2>
+        <h2 className="font-medium">Add additional work</h2>
         {loaded.servicesError ? <ErrorState id="job-order-services-load-error" title="Services unavailable" description="The service catalog could not be loaded. Refresh before adding work." /> : <form id="job-order-additional-work-form" action={addJobService} className="mt-4 grid gap-4">
           <input type="hidden" name="jobId" value={loaded.job.id} />
           <label className="text-sm font-medium" htmlFor="job-order-additional-service-select">Service

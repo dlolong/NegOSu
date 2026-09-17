@@ -12,11 +12,11 @@ export function PublicContact({ shop }: { shop: PublicShop }) {
     ...shop.branches.filter(branch=>branch.phone||branch.email).map(branch=>({...branch})),
   ];
   return <section id="public-shop-contact" className="scroll-mt-[calc(6rem+env(safe-area-inset-top))] sm:scroll-mt-5" aria-labelledby="public-shop-contact-title">
-    <p className="text-sm font-semibold text-brand-primary-strong">Get in touch</p>
-    <h2 id="public-shop-contact-title" className="mt-1 text-3xl font-semibold tracking-tight text-brand-ink">Contact us</h2>
+    <p className="text-sm font-medium text-brand-primary-strong">Get in touch</p>
+    <h2 id="public-shop-contact-title" className="mt-1 text-3xl font-medium tracking-tight text-brand-ink">Contact us</h2>
     <p className="mt-3 text-sm leading-6 text-admin-text-secondary">Have a question about a service or your visit? Contact {shop.name} or your preferred location.</p>
     <div className="mt-5 grid min-w-0 gap-4 lg:grid-cols-2">{contacts.map(contact=><Card id={`public-contact-card-${contact.id}`} key={contact.id} elevation="none" className="min-w-0 p-5">
-      <h3 className="font-semibold">{contact.name}</h3>
+      <h3 className="font-medium">{contact.name}</h3>
       <dl className="mt-3 space-y-3 text-sm">
         {contact.phone?<div><dt className="text-xs text-admin-text-muted">Phone</dt><dd><a id={`public-contact-phone-${contact.id}`} className="inline-flex min-h-11 max-w-full items-center gap-2 font-medium text-brand-primary-strong" href={`tel:${contact.phone.replace(/[^\d+]/g,"")}`}><Phone size={17} className="shrink-0" aria-hidden="true"/><span className="min-w-0 [overflow-wrap:anywhere]">{contact.phone}</span></a></dd></div>:null}
         {contact.email?<div><dt className="text-xs text-admin-text-muted">Email</dt><dd><a id={`public-contact-email-${contact.id}`} className="inline-flex min-h-11 max-w-full items-center gap-2 font-medium text-brand-primary-strong" href={`mailto:${encodeURIComponent(contact.email)}`}><Mail size={17} className="shrink-0" aria-hidden="true"/><span className="min-w-0 [overflow-wrap:anywhere]">{contact.email}</span></a></dd></div>:null}

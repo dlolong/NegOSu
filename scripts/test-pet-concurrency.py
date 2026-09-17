@@ -7,16 +7,27 @@ import time
 import secrets
 import os
 
-DB = os.environ.get('PET_TEST_DATABASE','negosu_pet_replay')
-if DB not in {'negosu_pet_replay','negosu_pet_release_final'}: raise SystemExit('Use an allowlisted disposable local Pet database.')
-PREFIX="8"+secrets.token_hex(1)[0]
+DB = os.environ.get('PET_TEST_DATABASE', 'negosu_pet_replay')
+CONTAINER = os.environ.get('PET_TEST_CONTAINER', 'supabase_db_karkr')
+if (CONTAINER, DB) not in {('supabase_db_karkr', 'negosu_pet_replay'), ('supabase_db_karkr', 'negosu_pet_release_final'), ('supabase_db_negosu-full-qa', 'postgres')}:
+    raise SystemExit('Use an allowlisted disposable local Pet container/database pair.')
 if sys.argv[1:] != ['--apply-disposable-fixtures']:
     raise SystemExit('Use --apply-disposable-fixtures. Requires the local negosu_pet_replay database with the Pet migrations.')
 def sql(query):
-    return subprocess.run(['docker','exec','-i','supabase_db_karkr','psql','-U','supabase_admin','-d',DB,'-X','-At','-v','ON_ERROR_STOP=1'],input=query,text=True,capture_output=True)
+    return subprocess.run(['docker','exec','-i',CONTAINER,'psql','-U','supabase_admin','-d',DB,'-X','-At','-v','ON_ERROR_STOP=1'],input=query,text=True,capture_output=True)
+for candidate in secrets.SystemRandom().sample([f'{n:02x}' for n in range(256)],256):
+    occupied=sql(f"select exists(select 1 from auth.users where id::text like '{candidate}100000-%') or exists(select 1 from organizations where id::text like '{candidate}200000-%');")
+    if occupied.returncode:raise SystemExit('Cannot inspect disposable fixture namespace.')
+    if occupied.stdout.strip()=='f':
+        PREFIX=candidate
+        break
+else:raise SystemExit('Disposable fixture namespace exhausted; use a fresh test database.')
 source=pathlib.Path('supabase/tests/pet_care.sql').read_text()
 fixture=source[source.index('insert into auth.users'):source.index('create temporary table')].replace('7c',PREFIX).replace('pet-a-test','pet-race-a-'+PREFIX+'-test').replace('pet-b-test','pet-race-b-'+PREFIX+'-test').replace('pet-a@','pet-race-a-'+PREFIX+'@').replace('pet-b@','pet-race-b-'+PREFIX+'@')
-result=sql('begin;'+fixture+'commit;')
+# pgTAP users omit GoTrue string defaults because they normally roll back.
+# Persistent race fixtures must also remain readable through the real Auth API.
+auth_defaults=f"""update auth.users set confirmation_token='',recovery_token='',email_change_token_new='',email_change='',email_change_token_current='',phone_change='',phone_change_token='',reauthentication_token='' where id in ('{PREFIX}100000-0000-4000-8000-000000000001','{PREFIX}100000-0000-4000-8000-000000000002');"""
+result=sql('begin;'+fixture+auth_defaults+'commit;')
 if result.returncode: raise SystemExit('Fixture creation failed. Use a fresh disposable validation database; fixtures are deliberately not overwritten. '+result.stderr)
 def uid(kind,index):return f'{PREFIX}{kind}00000-0000-4000-8000-{index:012d}'
 result=sql(f"insert into branches(id,organization_id,name,opening_hours) select '{uid(3,3)}',organization_id,'Second grooming branch',opening_hours from branches where id='{uid(3,1)}'; insert into scheduling_resources(id,organization_id,branch_id,name,resource_type,capacity) values('{uid(8,2)}','{uid(2,1)}','{uid(3,3)}','Second room','room',2);")

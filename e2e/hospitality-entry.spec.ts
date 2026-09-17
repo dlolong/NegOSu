@@ -1,7 +1,8 @@
+import { confirmLocalSignup } from "./helpers/mail";
 import { test, expect, type Page } from "@playwright/test";
 import { createClient } from "@supabase/supabase-js";
 
-test.use({ browserName: "chromium" });
+test.use({ browserName: "chromium", trace: "off" });
 async function noOverflow(page: Page) {
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1)).toBe(true);
 }
@@ -49,19 +50,13 @@ test("ordinary local account signs up and creates an Apartelle & Inn workspace w
   await page.locator("#negosu-signup-confirm-password-input").fill(password);
   await page.locator("#negosu-signup-submit-button").click();
   await expect(page).toHaveURL(/\/(verify-email|onboarding\/business)/);
-  // Local Inbucket receives verification mail. Confirm only this synthetic account.
+  // Local Mailpit captures verification mail; follow only this synthetic account’s link.
   const admin = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!, { auth: { persistSession: false } });
   const users = await admin.auth.admin.listUsers({ perPage: 1000 });
   expect(users.error).toBeNull();
   const account = users.data.users.find(user => user.email === email)!;
   expect(account.user_metadata.signup_industry).toBe("hospitality");
-  if (page.url().includes("verify-email")) {
-    expect((await admin.auth.admin.updateUserById(account.id, { email_confirm: true })).error).toBeNull();
-    await page.goto("/login?industry=hospitality");
-    await page.locator("#negosu-login-email-input").fill(email);
-    await page.locator("#negosu-login-password-input").fill(password);
-    await page.locator("#negosu-login-submit-button").click();
-  }
+  if (page.url().includes("verify-email")) await confirmLocalSignup(page,email);
   await expect(page.locator("#negosu-onboarding-business-form")).toBeVisible();
   await expect(page.locator("#negosu-onboarding-business-type-hospitality")).toBeChecked();
   await page.locator("#negosu-onboarding-business-subtype").selectOption("apartelle");

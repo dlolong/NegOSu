@@ -75,9 +75,9 @@ export default async function Page({
     return <main id="public-page-settings-page" className="mx-auto min-w-0 max-w-6xl [overflow-wrap:anywhere]">
       <PageHeader id="public-page-settings-header" title="Website and booking" description="Manage your public page and online booking." />
       <Card id="public-page-settings-load-error" className="mt-6 p-6" role="alert">
-        <h2 className="font-semibold">Unable to load public page settings</h2>
+        <h2 className="font-medium">Unable to load public page settings</h2>
         <p className="mt-2 text-sm text-admin-text-muted">Please try again before making changes.</p>
-        <Link id="public-page-settings-retry" href="/dashboard/settings/public-page" className="mt-4 inline-block font-semibold text-brand-primary-strong">Try again</Link>
+        <Link id="public-page-settings-retry" href="/dashboard/settings/public-page" className="mt-4 inline-block font-medium text-brand-primary-strong">Try again</Link>
       </Card>
     </main>;
   }
@@ -104,7 +104,7 @@ export default async function Page({
       />
       <FormMessage {...query} />
       <Card id="public-page-readiness-card" elevation="none" className="mt-5 p-4 sm:p-5">
-        <div className="flex flex-wrap items-center justify-between gap-3 min-w-0 [&>a]:ml-auto [&>button]:ml-auto [&>form]:ml-auto"><div className="min-w-0 flex-1 basis-full sm:basis-64 [overflow-wrap:anywhere]"><h2 className="font-semibold text-admin-text">Online booking readiness</h2><p id="public-page-setup-help" className="mt-1 text-sm text-admin-text-muted">Complete these essentials, then review incoming requests in <Link href="/dashboard/bookings" className="font-semibold text-brand-primary-strong">Booking Requests</Link>.</p></div><StatusPill active={readyForRequests} activeLabel="Ready for requests" inactiveLabel="Setup needed"/></div>
+        <div className="flex flex-wrap items-center justify-between gap-3 min-w-0 [&>a]:ml-auto [&>button]:ml-auto [&>form]:ml-auto"><div className="min-w-0 flex-1 basis-full sm:basis-64 [overflow-wrap:anywhere]"><h2 className="font-medium text-admin-text">Online booking readiness</h2><p id="public-page-setup-help" className="mt-1 text-sm text-admin-text-muted">Complete these essentials, then review incoming requests in <Link href="/dashboard/bookings" className="font-medium text-brand-primary-strong">Booking Requests</Link>.</p></div><StatusPill active={readyForRequests} activeLabel="Ready for requests" inactiveLabel="Setup needed"/></div>
         <div className="mt-4 grid gap-2 sm:grid-cols-3">
           <ReadinessItem id="public-page-publish-readiness" complete={organization.public_page_enabled} label="Public page" detail={organization.public_page_enabled ? "Published" : "Not published"}/>
           <ReadinessItem id="public-page-services-readiness" complete={publicServiceCount > 0} label={activeMembership.industry === "salon" ? "Treatments" : "Services"} detail={`${publicServiceCount} visible`}/>
@@ -115,7 +115,7 @@ export default async function Page({
       <ListTabs id="website-settings-tabs" baseHref="/dashboard/settings/public-page" query={{}} parameter="tab" value={tab} options={[{value:"profile",label:"Website"},{value:"services",label:"Services",count:publicServiceCount},{value:"locations",label:"Locations",count:branches.length},{value:"gallery",label:"Gallery",count:gallery.length}]}/>
       <div id="public-page-settings-grid" className="mt-6 grid min-w-0 gap-5">
         {tab==="profile"?<Card id="public-page-profile-card" className="p-5">
-          <h2 className="font-semibold text-admin-text">Business website</h2>
+          <h2 className="font-medium text-admin-text">Business website</h2>
           <PlanUpgradeNotice id="public-page-publish-upgrade" capability="public_page"/>
           <form id="public-page-profile-form" action={savePublicPage} className="mt-4 grid gap-4 sm:grid-cols-2">
             <label className="col-span-full flex min-h-11 items-center gap-2 text-sm font-medium text-admin-text">
@@ -148,7 +148,7 @@ export default async function Page({
         </Card>:null}
 
         {tab==="services"?<Card id="public-services-card" className="p-5">
-          <h2 className="font-semibold text-admin-text">Public services</h2>
+          <h2 className="font-medium text-admin-text">Public services</h2>
           <p className="mt-1 text-sm text-admin-text-muted">Only services marked Visible publicly appear in the Request Booking dropdown.</p>
           <div id="public-services-list" className="mt-4 divide-y divide-admin-border">
             {services?.map((service) => (
@@ -174,7 +174,7 @@ export default async function Page({
         </Card>:null}
 
         {tab==="locations"?<section id="public-page-locations-section" className="min-w-0" aria-labelledby="public-page-locations-title">
-          <div className="flex min-w-0 flex-wrap items-center justify-between gap-3"><div><h2 id="public-page-locations-title" className="text-lg font-semibold text-admin-text">Booking locations</h2><p className="mt-1 text-sm text-admin-text-muted">Set where customers can request appointments and when each location is open.</p></div><span className="text-sm font-medium text-admin-text-secondary">{bookingBranchCount} of {branches.length} enabled</span></div>
+          <div className="flex min-w-0 flex-wrap items-center justify-between gap-3"><div><h2 id="public-page-locations-title" className="text-lg font-medium text-admin-text">Booking locations</h2><p className="mt-1 text-sm text-admin-text-muted">Set where customers can request appointments and when each location is open.</p></div><span className="text-sm font-medium text-admin-text-secondary">{bookingBranchCount} of {branches.length} enabled</span></div>
           {!branches.length?<Card className="mt-4 p-5"><p className="text-sm text-admin-text-secondary">No active locations yet. Add a branch to publish its address, map, and opening hours.</p><Button asChild variant="secondary" className="mt-3"><Link href="/dashboard/settings/branches/new"><PlusIcon size={16} aria-hidden="true"/>Add location</Link></Button></Card>:null}
           <div className="mt-4 grid min-w-0 gap-5 lg:grid-cols-2">
             {branches.map((branch) => {
@@ -183,7 +183,7 @@ export default async function Page({
                 : {};
               const address=[branch.address_line,branch.barangay,branch.city,branch.province,branch.postal_code,branch.country];
               return <Card id={`public-branch-card-${branch.id}`} className="p-5" key={branch.id}>
-                <div className="flex flex-wrap items-center justify-between gap-3"><h3 className="font-semibold text-admin-text">{branch.name}</h3><StatusPill active={branch.accepts_public_bookings} activeLabel="Accepting requests" inactiveLabel="Requests off"/></div>
+                <div className="flex flex-wrap items-center justify-between gap-3"><h3 className="font-medium text-admin-text">{branch.name}</h3><StatusPill active={branch.accepts_public_bookings} activeLabel="Accepting requests" inactiveLabel="Requests off"/></div>
                 <p className="mt-3 flex gap-2 text-sm text-admin-text-secondary"><MapPin size={16} aria-hidden="true" className="mt-0.5 shrink-0"/><span>{address.filter(Boolean).join(", ")||"Address not set"}</span></p>
                 <div className="mt-4"><LocationMap id={`website-location-map-${branch.id}`} name={branch.name} address={address} mapUrl={branch.map_url} compact/></div>
                 <div className="mt-4 flex flex-wrap justify-end gap-2"><Button asChild variant="secondary" size="sm"><Link id={`website-location-address-${branch.id}`} href={`/dashboard/settings/branches/${branch.id}/edit`}><Pencil size={16} aria-hidden="true"/>Edit address</Link></Button><Button asChild size="sm"><Link id={`website-location-edit-${branch.id}`} href={`/dashboard/settings/public-page?tab=locations&branchId=${branch.id}`}><MapPin size={16} aria-hidden="true"/>Map and hours</Link></Button></div>
@@ -194,7 +194,7 @@ export default async function Page({
                   <label className="text-sm font-medium text-admin-text">Branch description<textarea id={`public-branch-description-input-${branch.id}`} name="description" defaultValue={branch.public_description ?? ""} className="mt-1.5 min-h-20 w-full rounded-ui-md border border-admin-border bg-white p-3"/></label>
                   <LocationMapField branchId={branch.id} name={branch.name} address={address} value={branch.map_url}/>
                   <fieldset id={`public-branch-hours-${branch.id}`} className="rounded-ui-lg border border-admin-border p-3">
-                    <legend className="px-1 text-sm font-semibold text-admin-text">Weekly booking hours</legend>
+                    <legend className="px-1 text-sm font-medium text-admin-text">Weekly booking hours</legend>
                     <p className="px-1 text-xs text-admin-text-muted">Turn a day off to mark the location closed.</p>
                     <div className="mt-3 divide-y divide-admin-border">{publicOpeningDayKeys.map(day => {
                       const schedule = hours?.[day] ?? { closed: true };
@@ -214,7 +214,7 @@ export default async function Page({
         </section>:null}
 
         {tab==="gallery"?<Card id="public-gallery-card" className="min-w-0 p-5">
-          <div><h2 className="font-semibold text-admin-text">Gallery</h2><p className="mt-1 text-sm text-admin-text-muted">Add clear, well-lit photos that help customers understand your business.</p></div>
+          <div><h2 className="font-medium text-admin-text">Gallery</h2><p className="mt-1 text-sm text-admin-text-muted">Add clear, well-lit photos that help customers understand your business.</p></div>
           <div className="mt-4 grid gap-5 lg:grid-cols-[minmax(0,22rem)_minmax(0,1fr)]">
             <form id="public-gallery-form" action={addGalleryImage} className="grid content-start gap-4 rounded-ui-lg bg-admin-surface-muted p-4">
               <PublicPageField id="public-gallery-url-input" label="Public image URL" name="url" type="url" required />

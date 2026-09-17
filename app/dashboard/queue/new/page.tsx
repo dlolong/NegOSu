@@ -7,6 +7,6 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ c
   const { activeMembership, customers, vehicles, services } = await getVisitChoices(parameters.customerQ);
   return <main id="walk-in-create-page" className="mx-auto min-w-0 max-w-3xl">
     <PageHeader id="walk-in-create-page-header" eyebrow="Walk-in queue" title="Add walk-in" description="Find the customer and vehicle, select services, and get an atomic queue number."/>
-    <section id="walk-in-create-section" className="mt-5"><WalkInForm canCreateCatalog={["owner","manager"].includes(activeMembership.role)} branches={activeMembership.branches.map((branch) => ({ id: branch.id, name: branch.name }))} customers={customers} vehicles={vehicles} services={services} customerQ={parameters.customerQ} error={parameters.error}/></section>
+    <section id="walk-in-create-section" className="mt-5"><WalkInForm currency={activeMembership.currency} canCreateCatalog={["owner","manager"].includes(activeMembership.role)} branches={activeMembership.branches.map((branch) => ({ id: branch.id, name: branch.name }))} customers={customers} vehicles={vehicles} services={services} customerQ={parameters.customerQ} error={parameters.error}/></section>
   </main>;
 }

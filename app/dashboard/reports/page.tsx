@@ -50,6 +50,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<Rec
     ? requestedSection as ReportSection : "overview";
   const section: ReportSection = !advanced || (candidateSection === "branches" && branch !== "all") ? "overview" : candidateSection;
 
+  const currency = activeMembership.currency;
   const appointmentBased = activeMembership.industry !== "automotive";
   let report: OwnerReport;
   try {
@@ -88,7 +89,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<Rec
       <header id="reports-page-header" className="flex flex-wrap items-center justify-between gap-4 min-w-0 [&>a]:ml-auto [&>button]:ml-auto [&>form]:ml-auto">
         <div className="min-w-0 flex-1 basis-full sm:basis-64 [overflow-wrap:anywhere]">
           <p className="text-sm font-medium text-brand-primary">Owner analytics</p>
-          <h1 className="mt-1 text-2xl font-semibold sm:text-3xl">Reports</h1>
+          <h1 className="mt-1 text-2xl font-medium sm:text-3xl">Reports</h1>
           <p className="mt-2 text-sm text-zinc-600 sm:text-base">Revenue, customers, workload, and branch trends from operational records.</p>
         </div>
         {advanced ? <Button id="reports-export-button" className="ml-auto" asChild variant="secondary">
@@ -98,7 +99,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<Rec
 
       {!advanced ? <Card id="reports-free-plan-info" className="mt-5 flex min-w-0 flex-wrap items-center justify-between gap-3 p-4">
         <div className="min-w-0 flex-1 basis-64">
-          <h2 className="text-sm font-semibold">Free reports · Last 30 days</h2>
+          <h2 className="text-sm font-medium">Free reports · Last 30 days</h2>
           <p className="mt-1 text-sm text-admin-text-secondary">Summary totals, daily activity, and customer insights for {activeMembership.branchName}.</p>
         </div>
         <PlanUpgradeNotice id="reports-plan-upgrade" capability="advanced_reports" compact/>
@@ -126,11 +127,11 @@ export default async function Page({ searchParams }: { searchParams: Promise<Rec
       <p id="reports-range-description" className="mt-2 text-xs text-zinc-500">{range.start} to {range.end} · local calendar dates per branch timezone{appointmentBased ? " · Sales: completed appointments by scheduled date. Receipts: payment date. Outstanding: current balances for appointments in this period." : ""}</p>
 
       <section id="reports-summary" aria-label="Report summary" className="mt-4 grid grid-cols-2 gap-3 lg:grid-cols-5">
-        <StatCard label="Gross sales" value={formatMoney(report.summary.grossSalesCentavos)} />
-        <StatCard label="Payments received" value={formatMoney(report.summary.paymentsReceivedCentavos)} />
-        <StatCard label="Outstanding" value={formatMoney(report.summary.outstandingCentavos)} />
+        <StatCard label="Gross sales" value={formatMoney(report.summary.grossSalesCentavos, currency)} />
+        <StatCard label="Payments received" value={formatMoney(report.summary.paymentsReceivedCentavos, currency)} />
+        <StatCard label="Outstanding" value={formatMoney(report.summary.outstandingCentavos, currency)} />
         <StatCard label={appointmentBased ? "Completed appointments" : "Completed jobs"} value={String(report.summary.jobsCompleted)} />
-        <StatCard label="Average ticket" value={formatMoney(report.summary.averageTicketCentavos)} />
+        <StatCard label="Average ticket" value={formatMoney(report.summary.averageTicketCentavos, currency)} />
       </section>
 
       {advanced ? <Tabs id="reports-section-tabs" ariaLabel="Report sections" className="mt-5" items={tabs} /> : null}
@@ -138,17 +139,17 @@ export default async function Page({ searchParams }: { searchParams: Promise<Rec
       {section === "overview" ? (
         <section id="reports-overview-section" className="mt-4 grid gap-4 lg:grid-cols-2">
           <Card id="reports-daily-totals" className="overflow-hidden p-0">
-            <div className="border-b border-zinc-100 p-4"><h2 className="font-semibold">Daily totals</h2></div>
+            <div className="border-b border-zinc-100 p-4"><h2 className="font-medium">Daily totals</h2></div>
             {report.daily.length ? <>
               <table id="reports-daily-table" className="hidden w-full text-left text-sm sm:table">
                 <thead className="bg-zinc-50 text-zinc-500"><tr><th className="px-4 py-2 font-medium">Date</th><th className="px-4 py-2 font-medium">Gross sales</th><th className="px-4 py-2 font-medium">Received</th><th className="px-4 py-2 font-medium">{appointmentBased ? "Appointments" : "Jobs"}</th></tr></thead>
-                <tbody>{report.daily.map((row) => <tr className="border-t" key={row.day}><td className="px-4 py-2.5">{row.day}</td><td className="px-4 py-2.5">{formatMoney(row.grossSalesCentavos)}</td><td className="px-4 py-2.5">{formatMoney(row.paymentsReceivedCentavos)}</td><td className="px-4 py-2.5">{row.jobsCompleted}</td></tr>)}</tbody>
+                <tbody>{report.daily.map((row) => <tr className="border-t border-admin-border" key={row.day}><td className="px-4 py-2.5">{row.day}</td><td className="px-4 py-2.5">{formatMoney(row.grossSalesCentavos, currency)}</td><td className="px-4 py-2.5">{formatMoney(row.paymentsReceivedCentavos, currency)}</td><td className="px-4 py-2.5">{row.jobsCompleted}</td></tr>)}</tbody>
               </table>
-              <div id="reports-daily-mobile-list" className="divide-y sm:hidden">{report.daily.map((row) => <article className="p-4" key={row.day}><div className="flex justify-between gap-3"><span>{row.day}</span><span>{row.jobsCompleted} {appointmentBased ? "appointments" : "jobs"}</span></div><p className="mt-1 text-sm text-zinc-600">{formatMoney(row.grossSalesCentavos)} gross · {formatMoney(row.paymentsReceivedCentavos)} received</p></article>)}</div>
+              <div id="reports-daily-mobile-list" className="divide-y divide-admin-border sm:hidden">{report.daily.map((row) => <article className="p-4" key={row.day}><div className="flex justify-between gap-3"><span>{row.day}</span><span>{row.jobsCompleted} {appointmentBased ? "appointments" : "jobs"}</span></div><p className="mt-1 text-sm text-zinc-600">{formatMoney(row.grossSalesCentavos, currency)} gross · {formatMoney(row.paymentsReceivedCentavos, currency)} received</p></article>)}</div>
             </> : <p className="p-5 text-sm text-zinc-500">No activity in this period.</p>}
           </Card>
           <Card id="reports-customer-summary" className="p-4">
-            <h2 className="font-semibold">Customers</h2>
+            <h2 className="font-medium">Customers</h2>
             <div className="mt-3 grid grid-cols-2 gap-3">
               <StatCard label="Served" value={String(report.summary.customersServed)} />
               <StatCard label="Repeat rate" value={`${repeatRate}%`} note={`${report.summary.repeatCustomers} repeat customers`} />
@@ -159,21 +160,21 @@ export default async function Page({ searchParams }: { searchParams: Promise<Rec
         </section>
       ) : null}
 
-      {section === "revenue" ? <section id="reports-revenue-section" className="mt-4 grid gap-4 lg:grid-cols-2"><ReportList id="reports-service-revenue" title="Service revenue" rows={report.services.map((row) => [row.service, `${formatMoney(row.revenueCentavos)} · ${row.quantity}`])} /><ReportList id="reports-category-revenue" title="Category revenue" rows={report.categories.map((row) => [row.category, formatMoney(row.revenueCentavos)])} /></section> : null}
+      {section === "revenue" ? <section id="reports-revenue-section" className="mt-4 grid gap-4 lg:grid-cols-2"><ReportList id="reports-service-revenue" title="Service revenue" rows={report.services.map((row) => [row.service, `${formatMoney(row.revenueCentavos, currency)} · ${row.quantity}`])} /><ReportList id="reports-category-revenue" title="Category revenue" rows={report.categories.map((row) => [row.category, formatMoney(row.revenueCentavos, currency)])} /></section> : null}
       {section === "team" ? <section id="reports-team-section" className="mt-4"><ReportList id="reports-technician-workload" title={appointmentBased ? "Staff workload" : "Technician workload"} rows={report.technicians.map((row) => [row.name, `${row.completedJobs}/${row.assignedJobs} completed`])} /></section> : null}
-      {section === "branches" && branch === "all" ? <BranchComparison rows={report.branches} appointmentBased={appointmentBased} /> : null}
+      {section === "branches" && branch === "all" ? <BranchComparison currency={currency} rows={report.branches} appointmentBased={appointmentBased} /> : null}
     </main>
   );
 }
 
 function ReportState({ title, description, retry, children }: { title: string; description: string; retry?: boolean; children?: ReactNode }) {
-  return <main id="reports-page" className="mx-auto w-full max-w-5xl"><header id="reports-page-header"><h1 className="text-2xl font-semibold sm:text-3xl">Reports</h1></header><Card id="reports-state" className="mt-5 p-6 text-center"><h2 className="font-semibold">{title}</h2><p className="mt-2 text-sm text-zinc-600">{description}</p>{retry ? <Button id="reports-retry-button" asChild className="mt-4" variant="secondary"><Link href="/dashboard/reports"><RefreshCwIcon aria-hidden="true" size={16} className="shrink-0"/>Try again</Link></Button> : null}{children}</Card></main>;
+  return <main id="reports-page" className="mx-auto w-full max-w-5xl"><header id="reports-page-header"><h1 className="text-2xl font-medium sm:text-3xl">Reports</h1></header><Card id="reports-state" className="mt-5 p-6 text-center"><h2 className="font-medium">{title}</h2><p className="mt-2 text-sm text-zinc-600">{description}</p>{retry ? <Button id="reports-retry-button" asChild className="mt-4" variant="secondary"><Link href="/dashboard/reports"><RefreshCwIcon aria-hidden="true" size={16} className="shrink-0"/>Try again</Link></Button> : null}{children}</Card></main>;
 }
 
 function ReportList({ id, title, rows }: { id: string; title: string; rows: Array<[string, string]> }) {
-  return <Card id={id} className="p-4"><h2 className="font-semibold">{title}</h2><div className="mt-3 divide-y">{rows.map(([label, value], index) => <div className="flex justify-between gap-3 py-2.5 text-sm" key={`${label}-${index}`}><span>{label}</span><span className="text-right font-medium">{value}</span></div>)}{!rows.length ? <p className="py-4 text-sm text-zinc-500">No data in this period.</p> : null}</div></Card>;
+  return <Card id={id} className="p-4"><h2 className="font-medium">{title}</h2><div className="mt-3 divide-y">{rows.map(([label, value], index) => <div className="flex justify-between gap-3 py-2.5 text-sm" key={`${label}-${index}`}><span>{label}</span><span className="text-right font-medium">{value}</span></div>)}{!rows.length ? <p className="py-4 text-sm text-zinc-500">No data in this period.</p> : null}</div></Card>;
 }
 
-function BranchComparison({ rows, appointmentBased }: { rows: OwnerReport["branches"]; appointmentBased: boolean }) {
-  return <Card id="reports-branch-comparison" className="mt-4 p-4"><h2 className="font-semibold">Branch comparison</h2><div className="mt-3 grid gap-3 sm:grid-cols-2">{rows.map((row) => <article id={`reports-branch-${row.id}`} className="flex justify-between gap-3 rounded-xl border p-3" key={row.id}><span>{row.name}</span><span className="text-right"><span className="block font-medium">{formatMoney(row.grossSalesCentavos)}</span><small className="text-zinc-500">{row.invoices} {appointmentBased ? "appointments" : "invoices"}</small></span></article>)}{!rows.length ? <p className="text-sm text-zinc-500">No branch activity in this period.</p> : null}</div></Card>;
+function BranchComparison({ rows, appointmentBased, currency }: { currency: string; rows: OwnerReport["branches"]; appointmentBased: boolean }) {
+  return <Card id="reports-branch-comparison" className="mt-4 p-4"><h2 className="font-medium">Branch comparison</h2><div className="mt-3 grid gap-3 sm:grid-cols-2">{rows.map((row) => <article id={`reports-branch-${row.id}`} className="flex justify-between gap-3 rounded-xl border p-3" key={row.id}><span>{row.name}</span><span className="text-right"><span className="block font-medium">{formatMoney(row.grossSalesCentavos, currency)}</span><small className="text-zinc-500">{row.invoices} {appointmentBased ? "appointments" : "invoices"}</small></span></article>)}{!rows.length ? <p className="text-sm text-zinc-500">No branch activity in this period.</p> : null}</div></Card>;
 }

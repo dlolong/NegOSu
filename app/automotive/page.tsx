@@ -30,9 +30,9 @@ function AutomotiveVisual() {
   return (
     <div className="rounded-ui-lg border border-slate-200 bg-white p-3 shadow-ui-md sm:p-4">
       <div className="overflow-hidden rounded-xl border border-slate-200 bg-slate-50">
-        <div className="flex items-start justify-between gap-3 border-b border-slate-200 bg-white p-4 sm:p-5"><div><p className="text-xs font-bold uppercase tracking-wider text-brand-primary-strong">Main Branch</p><p className="mt-1 text-lg font-black text-brand-ink">Today&apos;s work</p></div><span className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-bold text-emerald-800">Open</span></div>
-        <div className="grid grid-cols-2 gap-px bg-slate-200">{[["12", "Appointments"], ["4", "In queue"], ["3", "In service"], ["2", "Ready"]].map(([value, label]) => <div key={label} className="bg-white p-3 sm:p-4"><div className="text-xl font-black text-brand-ink sm:text-2xl">{value}</div><div className="mt-1 text-xs text-slate-500">{label}</div></div>)}</div>
-        <div className="m-4 rounded-xl border-l-4 border-brand-primary bg-brand-tint p-4 text-brand-ink"><div className="text-xs font-bold uppercase tracking-wider text-brand-primary-strong">Next in queue</div><div className="mt-1 text-lg font-black sm:text-xl">Toyota Fortuner · ABC 1234</div><div className="mt-1 text-sm text-slate-600">Premium wash + interior detail</div></div>
+        <div className="flex items-start justify-between gap-3 border-b border-slate-200 bg-white p-4 sm:p-5"><div><p className="text-xs font-medium normal-case tracking-wider text-brand-primary-strong">Main Branch</p><p className="mt-1 text-lg font-medium text-brand-ink">Today&apos;s work</p></div><span className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-medium text-emerald-800">Open</span></div>
+        <div className="grid grid-cols-2 gap-px bg-slate-200">{[["12", "Appointments"], ["4", "In queue"], ["3", "In service"], ["2", "Ready"]].map(([value, label]) => <div key={label} className="bg-white p-3 sm:p-4"><div className="text-xl font-medium text-brand-ink sm:text-2xl">{value}</div><div className="mt-1 text-xs text-slate-500">{label}</div></div>)}</div>
+        <div className="m-4 rounded-xl border-l-4 border-brand-primary bg-brand-tint p-4 text-brand-ink"><div className="text-xs font-medium normal-case tracking-wider text-brand-primary-strong">Next in queue</div><div className="mt-1 text-lg font-medium sm:text-xl">Toyota Fortuner · ABC 1234</div><div className="mt-1 text-sm text-slate-600">Premium wash + interior detail</div></div>
       </div>
     </div>
   );

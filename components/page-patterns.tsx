@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 
 export function PageHeader({ id, eyebrow, title, description, action }: { id: string; eyebrow?: string; title: string; description?: string; action?: ReactNode }) {
   return <header id={id} className="flex min-w-0 flex-wrap items-center justify-between gap-3">
-    <div id={`${id}-content`} className="min-w-0 flex-1 basis-full sm:basis-64 [overflow-wrap:anywhere]">{eyebrow ? <p className="text-xs font-semibold uppercase tracking-[0.12em] text-brand-primary">{eyebrow}</p> : null}<h1 className="mt-0.5 text-2xl font-semibold tracking-tight text-admin-text sm:text-3xl">{title}</h1>{description ? <p className="mt-1 max-w-3xl text-sm text-admin-text-secondary">{description}</p> : null}</div>{action ? <div id={`${id}-actions`} className="ml-auto flex min-w-0 max-w-full flex-wrap items-center justify-end gap-2 [&>div]:flex-wrap [&>div]:items-center [&>div]:justify-end">{action}</div> : null}
+    <div id={`${id}-content`} className="min-w-0 flex-1 basis-full sm:basis-64 [overflow-wrap:anywhere]">{eyebrow ? <p className="text-xs font-medium tracking-[0.12em] text-brand-primary">{eyebrow}</p> : null}<h1 className="mt-0.5 text-2xl font-medium tracking-tight text-admin-text sm:text-3xl">{title}</h1>{description ? <p className="mt-1 max-w-3xl text-sm text-admin-text-secondary">{description}</p> : null}</div>{action ? <div id={`${id}-actions`} className="ml-auto flex min-w-0 max-w-full flex-wrap items-center justify-end gap-2 [&>div]:flex-wrap [&>div]:items-center [&>div]:justify-end">{action}</div> : null}
   </header>;
 }
 
@@ -13,19 +13,19 @@ export function FilterBar({ id, children }: { id: string; children: ReactNode })
 }
 
 export function EmptyState({ id, title, description, action }: { id: string; title: string; description: string; action?: ReactNode }) {
-  return <section id={id} className="rounded-ui-lg border border-dashed border-admin-border-strong bg-admin-surface-muted px-5 py-8 text-center"><h2 className="font-semibold text-admin-text">{title}</h2><p className="mx-auto mt-1 max-w-lg text-sm text-admin-text-secondary">{description}</p>{action ? <div className="mt-4 flex justify-center">{action}</div> : null}</section>;
+  return <section id={id} className="rounded-ui-lg border border-dashed border-admin-border-strong bg-admin-surface-muted px-5 py-8 text-center"><h2 className="font-medium text-admin-text">{title}</h2><p className="mx-auto mt-1 max-w-lg text-sm text-admin-text-secondary">{description}</p>{action ? <div className="mt-4 flex justify-center">{action}</div> : null}</section>;
 }
 
 export function SectionHeader({ id, title, description, action }: { id: string; title: string; description?: string; action?: ReactNode }) {
-  return <header id={id} className="flex min-w-0 flex-wrap items-center justify-between gap-3"><div id={`${id}-content`} className="min-w-0 flex-1 basis-full sm:basis-64 [overflow-wrap:anywhere]"><h2 className="text-base font-semibold text-admin-text">{title}</h2>{description ? <p className="mt-1 text-sm text-admin-text-secondary">{description}</p> : null}</div>{action ? <div id={`${id}-actions`} className="ml-auto flex min-w-0 max-w-full flex-wrap items-center justify-end gap-2">{action}</div> : null}</header>;
+  return <header id={id} className="flex min-w-0 flex-wrap items-center justify-between gap-3"><div id={`${id}-content`} className="min-w-0 flex-1 basis-full sm:basis-64 [overflow-wrap:anywhere]"><h2 className="text-base font-medium text-admin-text">{title}</h2>{description ? <p className="mt-1 text-sm text-admin-text-secondary">{description}</p> : null}</div>{action ? <div id={`${id}-actions`} className="ml-auto flex min-w-0 max-w-full flex-wrap items-center justify-end gap-2">{action}</div> : null}</header>;
 }
 
 export function StatusPill({ active, activeLabel = "Active", inactiveLabel = "Inactive", id, className }: { active: boolean; activeLabel?: string; inactiveLabel?: string; id?: string; className?: string }) {
-  return <span id={id} className={cn("inline-flex rounded-full border px-2.5 py-1 text-xs font-semibold leading-none", active ? "border-emerald-200 bg-status-success-tint text-status-success" : "border-admin-border bg-slate-100 text-slate-700", className)}>{active ? activeLabel : inactiveLabel}</span>;
+  return <span id={id} className={cn("inline-flex rounded-full border px-2.5 py-1 text-xs font-medium leading-none", active ? "border-emerald-200 bg-status-success-tint text-status-success" : "border-admin-border bg-slate-100 text-slate-700", className)}>{active ? activeLabel : inactiveLabel}</span>;
 }
 
 export function ErrorState({ id, title = "Something went wrong", description, action }: { id: string; title?: string; description: string; action?: ReactNode }) {
-  return <section id={id} role="alert" className="rounded-ui-lg border border-red-200 bg-status-danger-tint px-4 py-4 text-status-danger"><h2 className="font-semibold">{title}</h2><p className="mt-1 text-sm">{description}</p>{action ? <div className="mt-3">{action}</div> : null}</section>;
+  return <section id={id} role="alert" className="rounded-ui-lg border border-red-200 bg-status-danger-tint px-4 py-4 text-status-danger"><h2 className="font-medium">{title}</h2><p className="mt-1 text-sm">{description}</p>{action ? <div className="mt-3">{action}</div> : null}</section>;
 }
 
 export function LoadingSkeleton({ id, lines = 3, className }: { id: string; lines?: number; className?: string }) {

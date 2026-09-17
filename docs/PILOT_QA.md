@@ -15,14 +15,14 @@ The QA persona tool creates or updates its own bounded Automotive and Salon orga
 Preview the operation first. Dry-run is the default and makes no Auth or database writes:
 
 ```bash
-npm run qa:seed
+QA_SEED_APPROVED_TARGET_URL=http://127.0.0.1:54321 npm run qa:seed
 # equivalent: npm run qa:seed -- --dry-run
 ```
 
 Apply only to the confirmed local/disposable Supabase project:
 
 ```bash
-npm run qa:seed -- --apply
+QA_SEED_APPROVED_TARGET_URL=http://127.0.0.1:54321 npm run qa:seed -- --apply
 ```
 
 The operation is idempotent: re-running updates the same two accounts and memberships instead of creating duplicates. If a remote QA email changes, the bounded QA membership is reassigned to the new user (or an existing membership is activated and the stale deterministic slot is deactivated). It never changes a membership outside the two fixed QA organizations. A newly created Auth user is removed automatically if its profile or membership setup fails, preventing a login-only partial persona.
@@ -42,6 +42,7 @@ Never reuse that password or those accounts outside local test infrastructure.
 Remote seeding is blocked by default. A dedicated non-production Supabase project requires all of:
 
 ```text
+QA_SEED_APPROVED_TARGET_URL=https://<approved-project>.supabase.co
 QA_SEED_TARGET=development
 QA_SEED_ALLOW_REMOTE_DEVELOPMENT=true
 QA_SEED_CONFIRM=NEGOSU_NON_PRODUCTION_QA_ONLY
@@ -94,3 +95,5 @@ Salon:
 Repeat critical pages at 320, 375, 390, and 430px. Confirm one primary page scroll, usable dialogs, visible action labels, keyboard focus, controlled empty/error states, and no horizontal page overflow.
 
 Record evidence and findings; do not declare a release PASS solely from the automated smoke suite.
+
+QA target URLs must match exactly, including ports. Existing logins may be updated only when administrator-owned `app_metadata.negosu_qa_fixture` matches the fixture identity. Older unmarked accounts are refused; use a fresh disposable target or have an operator verify ownership. Never mark or reset a real user merely to enable QA.

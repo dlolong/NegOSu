@@ -1,4 +1,4 @@
-const LOCAL_HOSTNAMES = new Set(["127.0.0.1", "localhost", "::1"]);
+const LOCAL_HOSTNAMES = new Set(["127.0.0.1", "localhost", "[::1]"]);
 
 export const REMOTE_DEVELOPMENT_CONFIRMATION = "NEGOSU_NON_PRODUCTION_QA_ONLY";
 
@@ -12,6 +12,7 @@ export type QaSeedSafetyInput = {
   qaSeedTarget: string | undefined;
   allowRemoteDevelopment: string | undefined;
   confirmation: string | undefined;
+  approvedTargetUrl?: string;
 };
 
 export type QaSeedSafetyResult = {
@@ -23,7 +24,9 @@ function parseSupabaseUrl(value: string | undefined) {
   if (!value) throw new Error("NEXT_PUBLIC_SUPABASE_URL is required for the QA persona seed.");
 
   try {
-    return new URL(value);
+    const url = new URL(value);
+    if (!["http:", "https:"].includes(url.protocol) || url.username || url.password || url.search || url.hash || url.pathname !== "/") throw new Error("Invalid target.");
+    return url;
   } catch {
     throw new Error("NEXT_PUBLIC_SUPABASE_URL must be a valid URL.");
   }
@@ -39,6 +42,10 @@ export function assertQaSeedSafety(input: QaSeedSafetyInput): QaSeedSafetyResult
 
   if (productionRuntime || input.qaSeedTarget === "production") {
     throw new Error("QA persona seeding is disabled in production.");
+  }
+
+  if (!input.approvedTargetUrl || parseSupabaseUrl(input.approvedTargetUrl).origin !== url.origin) {
+    throw new Error("QA_SEED_APPROVED_TARGET_URL must exactly match the approved disposable Supabase target (including port).");
   }
 
   if (LOCAL_HOSTNAMES.has(url.hostname)) {
@@ -57,6 +64,13 @@ export function assertQaSeedSafety(input: QaSeedSafetyInput): QaSeedSafetyResult
   }
 
   return { target: "remote-development", mode: input.mode };
+}
+
+/** Only administrator-owned metadata can authorize changing an existing login. */
+export function assertQaFixtureUser(user: { app_metadata: Record<string, unknown> }, fixture: string) {
+  if (user.app_metadata.negosu_qa_fixture !== fixture) {
+    throw new Error("QA_IDENTITY_SCOPE_CONFLICT: existing account is not owned by this QA fixture; no password or metadata was changed.");
+  }
 }
 
 export function parseQaSeedMode(arguments_: readonly string[]): QaSeedMode {

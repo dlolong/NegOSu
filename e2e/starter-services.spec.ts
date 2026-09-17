@@ -1,6 +1,8 @@
 import { test, expect } from "@playwright/test";
 import { createClient } from "@supabase/supabase-js";
 import { authenticatedSmokeEnabled, loginAsOwner, qaPersonaCredentials } from "./helpers/auth";
+import { qaAppointmentStart } from "./helpers/scheduling";
+import { starterServices } from "../modules/core/catalog/starter-services";
 import { installStarterServices } from "../modules/core/catalog/install-starter-services";
 const local = (url?: string) => !!url && ["127.0.0.1", "localhost"].includes(new URL(url).hostname);
 test.skip(!authenticatedSmokeEnabled() || !local(process.env.E2E_BASE_URL) || !local(process.env.NEXT_PUBLIC_SUPABASE_URL), "Requires isolated local fixtures.");
@@ -14,12 +16,17 @@ for (const industry of ["automotive", "salon", "pet_care"] as const) {
       const member = await db.from("organization_memberships").select("organization_id,role").eq("user_id", auth.data.user!.id).single(); expect(member.error).toBeNull();
       const actor = { organizationId: member.data!.organization_id, role: member.data!.role };
       const read = () => db.from("services").select("id,name,base_price_centavos,duration_minutes,is_active,is_public").eq("organization_id", actor.organizationId).order("id");
-      const before = await read(); expect(before.error).toBeNull(); expect(before.data!.filter(service => service.is_active).length).toBeGreaterThanOrEqual(10);
+      const before = await read(); expect(before.error).toBeNull();
       const results = await Promise.all([installStarterServices(db, actor), installStarterServices(db, actor)]);
-      expect(results).toEqual([{ added: 0 }, { added: 0 }]);
-      expect((await read()).data).toEqual(before.data);
+      for(const result of results) expect(result.error).toBeUndefined();
+      const after=await read();expect(after.error).toBeNull();
+      for(const existing of before.data!) expect(after.data!.find(row=>row.id===existing.id)).toEqual(existing);
+      for(const template of starterServices[industry]) expect(after.data!.filter(row=>row.name.toLowerCase()===template.name.toLowerCase())).toHaveLength(1);
+      expect(results.reduce((sum,result)=>sum+result.added,0)).toBe(after.data!.length-before.data!.length);
+      expect(await installStarterServices(db,actor)).toEqual({added:0});
+      expect((await read()).data).toEqual(after.data);
       expect((await installStarterServices(db, { ...actor, organizationId: "00000000-0000-4000-8000-000000000000" })).error).toBeTruthy();
-    } finally { await db.auth.signOut(); }
+    } finally { await db.auth.signOut({scope:"local"}); }
   });
 }
 test("starter catalog preview, cancel, and add work at mobile and desktop widths", async ({ page }) => {
@@ -36,18 +43,23 @@ test("starter catalog preview, cancel, and add work at mobile and desktop widths
   await page.locator("#starter-services-open-button").click();
   await page.locator("#starter-services-add-button").click();
   await expect(page).toHaveURL(/\/dashboard\/services\?message=/);
+  await page.locator("#starter-services-open-button").click();
+  await page.locator("#starter-services-add-button").click();
   await expect(page.locator("#salon-treatments-page")).toContainText("already in the catalog");
 });
 
 test("Automotive appointment saves with a starter service and matching customer vehicle", async ({ page }) => {
   const { selectRecord } = await import("./helpers/searchable-select");
+  const db=createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!,process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,{auth:{persistSession:false}});
+  const auth=await db.auth.signInWithPassword(qaPersonaCredentials("automotive"));expect(auth.error).toBeNull();
+  const member=await db.from("organization_memberships").select("organization_id,role").eq("user_id",auth.data.user!.id).single();expect(member.error).toBeNull();
+  expect((await installStarterServices(db,{organizationId:member.data!.organization_id,role:member.data!.role})).error).toBeUndefined();await db.auth.signOut({scope:"local"});
   await loginAsOwner(page, "automotive");
   await page.goto("/dashboard/appointments/new");
   await selectRecord(page, "appointment-customer-select", { name: "Automotive QA Customer" });
   await selectRecord(page, "appointment-vehicle-select", { name: "Toyota" });
   await selectRecord(page, "appointment-service-select", { name: "Engine oil change labor" });
-  const day = new Date(); day.setUTCDate(day.getUTCDate() + 20);
-  await page.locator("#appointment-starts-at-input").fill(`${day.toISOString().slice(0,10)}T10:00`);
+  await page.locator("#appointment-starts-at-input").fill(await qaAppointmentStart("automotive",20));
   await page.locator("#appointment-allow-conflict-checkbox").check();
   await page.locator("#appointment-save-button").click();
   await expect(page).toHaveURL(/\/dashboard\/appointments\/[a-f0-9-]+(?:\?|$)/);

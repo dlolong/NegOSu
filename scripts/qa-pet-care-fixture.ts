@@ -1,4 +1,5 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import { assertQaFixtureUser } from "./qa-seed-safety";
 
 /** Invoked only by the existing guarded QA seed, with --pet-care on localhost. */
 export async function seedPetCareFixtures(admin: SupabaseClient, url: string) {
@@ -19,7 +20,9 @@ export async function seedPetCareFixtures(admin: SupabaseClient, url: string) {
     const email = emails[tenant-1]!;
     const users = check(await admin.auth.admin.listUsers({perPage:1000})).users;
     const existingUser = users.find(user=>user.email===email);
-    const authUser = check(existingUser ? await admin.auth.admin.updateUserById(existingUser.id,{password,email_confirm:true}) : await admin.auth.admin.createUser({email,password,email_confirm:true,user_metadata:{full_name:`Pet Care QA ${tenant}`}})).user;
+    const fixtureKey = `pet-care-owner-${tenant}`;
+    if (existingUser) assertQaFixtureUser(existingUser, fixtureKey);
+    const authUser = check(existingUser ? await admin.auth.admin.updateUserById(existingUser.id,{password,email_confirm:true}) : await admin.auth.admin.createUser({email,password,email_confirm:true,user_metadata:{full_name:`Pet Care QA ${tenant}`},app_metadata:{negosu_qa_fixture:fixtureKey}})).user;
     if (!authUser) throw new Error("Pet QA user could not be created.");
     check(await admin.from("organization_memberships").upsert({organization_id:org,user_id:authUser.id,role:"owner",is_active:true},{onConflict:"organization_id,user_id"}));
     check(await admin.from("customers").upsert({id:customer,organization_id:org,full_name:"Maria QA",email:null,phone:null,is_archived:false}));

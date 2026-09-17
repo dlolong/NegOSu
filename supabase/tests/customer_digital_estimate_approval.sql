@@ -7,7 +7,7 @@ insert into auth.users(id,instance_id,aud,role,email,encrypted_password,email_co
 insert into organizations(id,name,slug,phone) values
 ('2d000000-0000-4000-8000-000000000001','KarKR Digital A','karkr-digital-a','09171234567'),
 ('2d000000-0000-4000-8000-000000000002','KarKR Digital B','karkr-digital-b','09170000000');
-update organizations set logo_url='https://example.test/estimate-logo.png' where id='2d000000-0000-4000-8000-000000000001';
+update organizations set currency='USD',logo_url='https://example.test/estimate-logo.png' where id='2d000000-0000-4000-8000-000000000001';
 insert into organization_memberships(organization_id,user_id,role) values
 ('2d000000-0000-4000-8000-000000000001','1d000000-0000-4000-8000-000000000001','owner'),
 ('2d000000-0000-4000-8000-000000000001','1d000000-0000-4000-8000-000000000002','advisor'),
@@ -46,7 +46,7 @@ insert into estimate_items(id,estimate_id,organization_id,description_snapshot,q
 ('bd000000-0000-4000-8000-000000000005','ad000000-0000-4000-8000-000000000005','2d000000-0000-4000-8000-000000000001','Detailing',1,150000,150000),
 ('bd000000-0000-4000-8000-000000000006','ad000000-0000-4000-8000-000000000006','2d000000-0000-4000-8000-000000000002','Other service',1,160000,160000);
 
-select plan(47);
+select plan(48);
 select has_table('public','estimate_approval_links','approval links table exists');
 select has_column('public','estimate_approval_links','token_hash','only the token hash has a storage field');
 select ok((select relrowsecurity from pg_class where oid='public.estimate_approval_links'::regclass),'approval links enforce RLS');
@@ -60,6 +60,7 @@ set local role anon; set local "request.jwt.claims"='{"role":"anon"}';
 select is(get_public_estimate_approval(repeat('a',64))->>'state','active','anonymous customer can load a valid private link');
 select is(get_public_estimate_approval(repeat('a',64))#>>'{business,logoUrl}','https://example.test/estimate-logo.png','estimate token displays only its business logo');
 select ok(not (get_public_estimate_approval(repeat('d',64)) ? 'business'),'revoked estimate token reveals no business branding');
+select is(get_public_estimate_approval(repeat('a',64))#>>'{business,currency}','USD','valid public estimate preserves organization currency');
 select is(get_public_estimate_approval(repeat('a',64))#>>'{business,name}','KarKR Digital A','public DTO includes the business name');
 select ok(not (get_public_estimate_approval(repeat('a',64))::text like '%customer_id%'),'public DTO excludes customer identifiers');
 select ok(not ((get_public_estimate_approval(repeat('a',64))#>'{estimate,items,0}') ? 'id'),'public estimate lines exclude internal row IDs');

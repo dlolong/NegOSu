@@ -85,7 +85,7 @@ export function normalizeSharedCommandCenterRows(
   }), { revenue: 0, appointments: 0, outstanding: 0, lowStock: 0 });
 
   const metrics: CommandCenterMetric[] = [
-    { key: "revenue_today", label: "Revenue Today", value: totals.revenue, valueKind: "currency", helperText: "Paid payments received today" },
+    { key: "revenue_today", label: "Collected today", value: totals.revenue, valueKind: "currency", helperText: "Paid payments received today" },
     { key: "appointments_today", label: "Appointments Today", value: totals.appointments, valueKind: "count", helperText: "By each branch’s local date", href: "/dashboard/appointments" },
     { key: "outstanding", label: "Outstanding", value: totals.outstanding, valueKind: "currency", helperText: "Open invoice and completed Appointment balances", href: "/dashboard/payments" },
     { key: "low_stock", label: "Low Stock", value: totals.lowStock, valueKind: "count", helperText: "Using existing inventory thresholds", href: "/dashboard/inventory" },

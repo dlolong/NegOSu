@@ -29,7 +29,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<Cat
   const categoryTab = params.tab === "categories";
   const prefix = salon ? "salon-treatment-category" : "service-category";
   const canManage = ["owner", "manager"].includes(activeMembership.role);
-  let serviceQuery = supabase.from("services").select("id,name,short_description,duration_minutes,base_price_centavos,is_active,is_add_on,service_categories(name),service_branch_availability(is_available,branches(name))").eq("organization_id", activeMembership.organizationId).order("name");
+  let serviceQuery = supabase.from("services").select("id,name,currency,short_description,duration_minutes,base_price_centavos,is_active,is_add_on,service_categories(name),service_branch_availability(is_available,branches(name))").eq("organization_id", activeMembership.organizationId).order("name");
   if (search) serviceQuery = serviceQuery.ilike("name", `%${search}%`);
   // Only canonical UUID filters reach the database; malformed queries never become raw SQL errors.
   const safeFilter = new URL(servicesCatalogHref({ category: params.category }), "https://catalog.invalid").searchParams.get("category");
@@ -54,7 +54,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<Cat
         <select id={salon ? "salon-treatments-category-filter" : "services-category-filter"} aria-label="Category" className="min-h-11 min-w-0 max-w-full rounded-ui-md border border-admin-border bg-white px-3" name="category" defaultValue={safeFilter ?? ""}><option value="">All categories</option>{categories.map(category => <option key={category.id} value={category.id}>{category.name}</option>)}</select>
         <Button id={salon ? "salon-treatments-filter-button" : "services-filter-button"} type="submit" variant="secondary"><Search aria-hidden="true" size={16} className="shrink-0"/>Search</Button>
       </form></FilterBar>
-      <div className="mt-4"><ServiceCatalogList services={services} salon={salon} canManage={canManage}/></div>
+      <div className="mt-4"><ServiceCatalogList currency={activeMembership.currency} services={services} salon={salon} canManage={canManage}/></div>
     </>}
     {params.dialog === "starter-services" && canManage && hasStarterCatalog(activeMembership.industry) ? <FormDialog id="starter-services-dialog" title="Add starter services" closeHref="/dashboard/services" size="lg">
       <p className="mb-4 text-sm text-admin-text-muted">Add these 10 services with editable sample prices. Existing services and prices are preserved. New services stay hidden from public booking until you publish them.</p>

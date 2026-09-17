@@ -5,6 +5,7 @@ import test from "node:test";
 import {
   REMOTE_DEVELOPMENT_CONFIRMATION,
   assertQaSeedSafety,
+  assertQaFixtureUser,
   formatQaSeedOperatorError,
   parseQaSeedMode,
   resolveQaMembershipStrategy,
@@ -39,6 +40,7 @@ test("QA seed permits local targets and always rejects production", () => {
   assert.deepEqual(assertQaSeedSafety({
     mode: "apply",
     supabaseUrl: "http://127.0.0.1:54321",
+    approvedTargetUrl: "http://127.0.0.1:54321",
     nodeEnv: "development",
     vercelEnv: undefined,
     qaSeedTarget: undefined,
@@ -61,6 +63,7 @@ test("remote development QA seed requires all three explicit guards", () => {
   const remote = {
     mode: "apply" as const,
     supabaseUrl: "https://development-project.supabase.co",
+    approvedTargetUrl: "https://development-project.supabase.co",
     nodeEnv: "development",
     vercelEnv: "preview",
     qaSeedTarget: "development",
@@ -70,6 +73,18 @@ test("remote development QA seed requires all three explicit guards", () => {
   assert.deepEqual(assertQaSeedSafety(remote), { target: "remote-development", mode: "apply" });
   assert.throws(() => assertQaSeedSafety({ ...remote, confirmation: "wrong" }), /Remote QA seeding is blocked/);
   assert.throws(() => assertQaSeedSafety({ ...remote, qaSeedTarget: "production" }), /disabled in production/);
+  assert.throws(() => assertQaSeedSafety({ ...remote, approvedTargetUrl: undefined }), /APPROVED_TARGET_URL/);
+  assert.throws(() => assertQaSeedSafety({ ...remote, supabaseUrl: "https://another-project.supabase.co" }), /APPROVED_TARGET_URL/);
+  assert.throws(() => assertQaSeedSafety({ ...remote, supabaseUrl: "http://localhost:55321", approvedTargetUrl: "http://localhost:54321" }), /APPROVED_TARGET_URL/);
+  for (const supabaseUrl of ["ftp://localhost", "https://user:password@development-project.supabase.co", "https://development-project.supabase.co/path"]) {
+    assert.throws(() => assertQaSeedSafety({ ...remote, supabaseUrl, approvedTargetUrl: supabaseUrl }), /valid URL/);
+  }
+});
+
+test("QA seed refuses unrelated accounts even when their email matches", () => {
+  assert.throws(() => assertQaFixtureUser({ app_metadata: {} }, "automotive-owner"), /QA_IDENTITY_SCOPE_CONFLICT/);
+  assert.throws(() => assertQaFixtureUser({ app_metadata: { negosu_qa_fixture: "salon-owner" } }, "automotive-owner"), /QA_IDENTITY_SCOPE_CONFLICT/);
+  assert.doesNotThrow(() => assertQaFixtureUser({ app_metadata: { negosu_qa_fixture: "automotive-owner" } }, "automotive-owner"));
 });
 
 test("release scripts and docs keep seeding explicit and cloud-neutral", () => {

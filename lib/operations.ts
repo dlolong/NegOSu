@@ -29,7 +29,7 @@ export function canTransitionAppointment(status: string, action: string) {
 }
 
 export function zonedDateTimeToUtc(localDateTime: string, timeZone: string) {
-  if (!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(localDateTime)) return null;
+  if (!z.iso.datetime({ local: true, precision: -1 }).safeParse(localDateTime).success) return null;
   const desired = new Date(`${localDateTime}:00Z`);
   if (Number.isNaN(desired.valueOf())) return null;
   let result = desired;
@@ -39,7 +39,17 @@ export function zonedDateTimeToUtc(localDateTime: string, timeZone: string) {
     const represented = new Date(`${map.year}-${map.month}-${map.day}T${map.hour}:${map.minute}:00Z`);
     result = new Date(result.valueOf() + desired.valueOf() - represented.valueOf());
   }
-  return result;
+  return inputDateTimeInZone(result, timeZone) === localDateTime ? result : null;
+}
+
+/** Calendar boundaries in the reporting zone; a day can be 23 or 25 hours. */
+export function appointmentAgendaRange(date: string, days: number, timeZone: string) {
+  if (!z.iso.date().safeParse(date).success || ![1, 7].includes(days)) return null;
+  const next = new Date(`${date}T12:00:00Z`);
+  next.setUTCDate(next.getUTCDate() + days);
+  const start = zonedDateTimeToUtc(`${date}T00:00`, timeZone);
+  const end = zonedDateTimeToUtc(`${next.toISOString().slice(0, 10)}T00:00`, timeZone);
+  return start && end ? { start, end } : null;
 }
 
 export function inputDateTimeInZone(value: string | Date, timeZone: string) {

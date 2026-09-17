@@ -28,10 +28,10 @@ export function ServiceCategoryForm({ category, mode, prefix, q, filterCategory,
       <p>{category?.serviceCount ?? 0} linked services or treatments will remain in the catalog and become <strong>Uncategorized</strong>. Their prices, bookings, and history are kept.</p>
       <p>This category cannot be restored after deletion.</p>
     </div> : <>
-      <label htmlFor={`${prefix}-${mode}-name-input`} className="min-w-0 text-sm font-semibold">Category name
+      <label htmlFor={`${prefix}-${mode}-name-input`} className="min-w-0 text-sm font-medium">Category name
         <Input id={`${prefix}-${mode}-name-input`} name="name" required minLength={2} maxLength={100} value={name} onChange={event => setName(event.target.value)} placeholder="e.g. Hair care or Exterior detailing" className="mt-2"/>
       </label>
-      <label htmlFor={`${prefix}-${mode}-sort-input`} className="text-sm font-semibold">Sort order
+      <label htmlFor={`${prefix}-${mode}-sort-input`} className="text-sm font-medium">Sort order
         <Input id={`${prefix}-${mode}-sort-input`} name="sortOrder" type="number" required min={0} max={9999} value={sortOrder} onChange={event => setSortOrder(event.target.value)} className="mt-2"/>
         <span className="mt-1 block text-xs font-normal text-admin-text-muted">Lower numbers appear first.</span>
       </label>

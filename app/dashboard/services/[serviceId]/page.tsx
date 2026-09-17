@@ -50,7 +50,7 @@ export default async function Page({
           name,
           description,
           duration_minutes,
-          base_price_centavos,
+          base_price_centavos,currency,
           is_active,
           is_add_on,
           code,
@@ -106,11 +106,11 @@ export default async function Page({
       {/* Header */}
       <div className="flex flex-wrap justify-between gap-4 items-center min-w-0 [&>a]:ml-auto [&>button]:ml-auto [&>form]:ml-auto">
         <div className="min-w-0 flex-1 basis-full sm:basis-64 [overflow-wrap:anywhere]">
-          <p className="text-sm font-bold text-brand-primary">
+          <p className="text-sm font-medium text-brand-primary">
             {category?.name ?? (isSalon ? "Treatment" : "Service")}
           </p>
 
-          <h1 className="mt-1 text-3xl font-semibold">
+          <h1 className="mt-1 text-3xl font-medium">
             {service.name}
           </h1>
 
@@ -138,10 +138,10 @@ export default async function Page({
       <div className="mt-6 grid gap-5 sm:grid-cols-2">
         {/* Base price */}
         <Card className="p-5">
-          <h2 className="font-semibold">Base price</h2>
+          <h2 className="font-medium">Base price</h2>
 
-          <p className="mt-3 text-3xl font-semibold">
-            {formatMoney(service.base_price_centavos)}
+          <p className="mt-3 text-3xl font-medium">
+            {formatMoney(service.base_price_centavos, service.currency)}
           </p>
 
           <p className="mt-1 text-zinc-600">
@@ -164,7 +164,7 @@ export default async function Page({
         {/* Vehicle pricing — automotive only */}
         {!isSalon && (
           <Card className="p-5">
-            <h2 className="font-semibold">Vehicle pricing</h2>
+            <h2 className="font-medium">Vehicle pricing</h2>
 
             <dl className="mt-3 space-y-2 text-sm">
               {prices?.map((price, index) => {
@@ -184,8 +184,8 @@ export default async function Page({
                       {branch ? ` · ${branch.name}` : ""}
                     </dt>
 
-                    <dd className="font-bold">
-                      {formatMoney(price.price_centavos)}
+                    <dd className="font-medium">
+                      {formatMoney(price.price_centavos, service.currency)}
                     </dd>
                   </div>
                 );
@@ -206,7 +206,7 @@ export default async function Page({
             isSalon ? "sm:col-span-1" : "sm:col-span-2"
           }`}
         >
-          <h2 className="font-semibold">Availability</h2>
+          <h2 className="font-medium">Availability</h2>
 
           <p className="mt-2 text-sm text-zinc-600">
             {availableBranches}

@@ -73,7 +73,7 @@ export async function revokeEstimateApprovalLinkAction(data:FormData){
 export async function saveAdvisorEstimateItem(data:FormData) {
   const parsed=itemSchema.safeParse(Object.fromEntries(["jobId","estimateId","itemId","itemType","inventoryItemId","description","quantity","unitPrice","discount"].map(key=>[key,formValue(data,key)])));
   const jobId=formValue(data,"jobId"); if(!parsed.success)go(jobId,"error",parsed.error.issues[0]?.message??"Estimate item is invalid.");
-  const unitPrice=parseMoneyToCentavos(parsed.data.unitPrice),discount=parseMoneyToCentavos(parsed.data.discount||"0"); if(unitPrice===null||discount===null)go(jobId,"error","Enter valid PHP amounts.");
+  const unitPrice=parseMoneyToCentavos(parsed.data.unitPrice),discount=parseMoneyToCentavos(parsed.data.discount||"0"); if(unitPrice===null||discount===null)go(jobId,"error","Enter valid amounts.");
   try { await saveEstimateItem({estimateId:parsed.data.estimateId,itemId:parsed.data.itemId||null,itemType:parsed.data.itemType,inventoryItemId:parsed.data.inventoryItemId||null,description:parsed.data.description,quantity:parsed.data.quantity,unitPriceCentavos:Number(unitPrice),discountCentavos:Number(discount)}); }
   catch(error){go(jobId,"error",reportActionError("estimate.item_save",error,"Unable to save the estimate item."));}
   revalidatePath(`/dashboard/jobs/${jobId}`); go(jobId,"message","Estimate item saved. Customer authorization was reset if the approved amount changed.");

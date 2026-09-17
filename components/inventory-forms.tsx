@@ -14,11 +14,11 @@ import { matchingTransferTargets, type InventoryActionState, type InventoryStock
 
 const select = "mt-2 min-h-11 w-full min-w-0 max-w-full rounded-xl border border-admin-border bg-white px-3 text-sm";
 function InventoryField({ label, optional = false, children }: { label: string; optional?: boolean; children: ReactNode }) {
-  return <label className="block min-w-0 text-sm font-semibold text-admin-text">{label}{optional ? <span className="font-normal text-admin-text-muted"> (optional)</span> : null}{children}</label>;
+  return <label className="block min-w-0 text-sm font-medium text-admin-text">{label}{optional ? <span className="font-normal text-admin-text-muted"> (optional)</span> : null}{children}</label>;
 }
-export function InventoryForm({ mode, salon, stock, item, branches, services, returnHref, idempotencyKey }: {
+export function InventoryForm({ mode, salon, stock, item, branches, services, returnHref, idempotencyKey, currency = "PHP" }: {
   mode: "create" | "movement" | "transfer" | "recipe"; salon: boolean; stock: InventoryStock[]; item?: InventoryStock;
-  branches: { id: string; name: string }[]; services: { id: string; name: string }[]; returnHref: string; idempotencyKey: string;
+  branches: { id: string; name: string }[]; services: { id: string; name: string }[]; returnHref: string; idempotencyKey: string; currency?: string;
 }) {
   const productPrefix=salon?"salon-product":"inventory-item",inventoryPrefix=salon?"salon-inventory":"inventory";
   const actions = { create: createInventoryItem, movement: recordMovement, transfer: transferStock, recipe: saveRecipe };
@@ -36,13 +36,13 @@ export function InventoryForm({ mode, salon, stock, item, branches, services, re
       <div className="grid min-w-0 gap-4 sm:grid-cols-2">
         <InventoryField label="Product name"><Input id={`${productPrefix}-name-input`} required minLength={2} maxLength={120} {...field("name")} className="mt-2" placeholder="e.g. Cleaning solution"/></InventoryField>
         <InventoryField label="SKU" optional><Input id={`${productPrefix}-sku-input`} maxLength={60} {...field("sku")} className="mt-2" placeholder="Your product code"/></InventoryField>
-        <div><label htmlFor={`${productPrefix}-category-input`} className="text-sm font-semibold">Category (optional)</label><SuggestedValueField id={`${productPrefix}-category-input`} name="category" label="Category" maxLength={80} options={stock.map(row=>row.category).filter((value):value is string=>Boolean(value))} value={draft.category??""} onValueChange={category=>setDraft(current=>({...current,category}))}/></div>
+        <div><label htmlFor={`${productPrefix}-category-input`} className="text-sm font-medium">Category (optional)</label><SuggestedValueField id={`${productPrefix}-category-input`} name="category" label="Category" maxLength={80} options={stock.map(row=>row.category).filter((value):value is string=>Boolean(value))} value={draft.category??""} onValueChange={category=>setDraft(current=>({...current,category}))}/></div>
         <InventoryField label="Unit"><Input id={`${productPrefix}-unit-input`} required maxLength={30} {...field("unit")} className="mt-2" placeholder="e.g. bottle, piece, liter"/></InventoryField>
-        <InventoryField label="Cost (PHP)"><Input id={`${productPrefix}-cost-input`} required inputMode="decimal" pattern="[0-9]+(\.[0-9]{1,2})?" {...field("cost")} className="mt-2"/></InventoryField>
-        <InventoryField label="Sell price (PHP)"><Input id={`${productPrefix}-price-input`} required inputMode="decimal" pattern="[0-9]+(\.[0-9]{1,2})?" {...field("sellPrice")} className="mt-2"/></InventoryField>
+        <InventoryField label={`Cost (${currency})`}><Input id={`${productPrefix}-cost-input`} required inputMode="decimal" pattern="[0-9]+(\.[0-9]{1,2})?" {...field("cost")} className="mt-2"/></InventoryField>
+        <InventoryField label={`Sell price (${currency})`}><Input id={`${productPrefix}-price-input`} required inputMode="decimal" pattern="[0-9]+(\.[0-9]{1,2})?" {...field("sellPrice")} className="mt-2"/></InventoryField>
         <InventoryField label="Reorder level"><Input id={`${productPrefix}-reorder-input`} required type="number" min="0" step="0.001" {...field("reorderLevel")} className="mt-2"/><span className="mt-1 block text-xs font-normal text-admin-text-muted">Show a low-stock alert at this quantity or below.</span></InventoryField>
       </div>
-      <details className="min-w-0 rounded-xl border border-admin-border p-4"><summary className="cursor-pointer text-sm font-semibold">Additional details (optional)</summary><div className="mt-4 grid min-w-0 gap-4 sm:grid-cols-2">
+      <details className="min-w-0 rounded-xl border border-admin-border p-4"><summary className="cursor-pointer text-sm font-medium">Additional details (optional)</summary><div className="mt-4 grid min-w-0 gap-4 sm:grid-cols-2">
         <InventoryField label="Lot / batch" optional><Input id={`${productPrefix}-lot-input`} maxLength={80} {...field("lotNumber")} className="mt-2"/></InventoryField>
         <InventoryField label="Expiry date" optional><Input id={`${productPrefix}-expiry-input`} type="date" {...field("expiresOn")} className="mt-2"/></InventoryField>
         <div className="sm:col-span-2"><InventoryField label="Description" optional><Input id={`${productPrefix}-description-input`} maxLength={1000} {...field("description")} className="mt-2"/></InventoryField></div>

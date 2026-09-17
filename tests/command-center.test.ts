@@ -56,6 +56,7 @@ test("shared metric rows normalize money and counts and aggregate authorized bra
   ]);
   assert.deepEqual(result.branchPerformance.map(({ branchName }) => branchName), ["BGC", "Makati"]);
   assert.equal(result.metrics.find(({ key }) => key === "revenue_today")?.value, 20000);
+  assert.equal(result.metrics.find(({ key }) => key === "revenue_today")?.label, "Collected today");
   assert.equal(result.metrics.find(({ key }) => key === "appointments_today")?.value, 5);
   assert.equal(result.metrics.find(({ key }) => key === "outstanding")?.value, 6000);
   assert.equal(result.metrics.find(({ key }) => key === "low_stock")?.value, 3);

@@ -17,5 +17,5 @@ export default async function Page({ searchParams }: { searchParams: Promise<Inv
   return <InventoryWorkspace stock={stock.data ?? []} movements={(movements.data ?? []).map(movement => {
     const item = Array.isArray(movement.inventory_items) ? movement.inventory_items[0] : movement.inventory_items;
     return { id: movement.id, itemId: movement.inventory_item_id, name: item?.name ?? "Inventory item", unit: item?.unit ?? "", type: movement.movement_type, quantity: movement.quantity_delta, note: movement.note, createdAt: movement.created_at };
-  })} branches={branches.data ?? []} services={services.data ?? []} branchId={activeMembership.branchId} branchName={activeMembership.branchName} salon={salon} canManage={canManage} query={query} loadError={loadError} timezone={activeMembership.timezone}/>;
+  })} branches={branches.data ?? []} services={services.data ?? []} branchId={activeMembership.branchId} branchName={activeMembership.branchName} salon={salon} canManage={canManage} query={query} loadError={loadError} timezone={activeMembership.timezone} currency={activeMembership.currency}/>;
 }

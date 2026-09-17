@@ -45,7 +45,8 @@ test("Command Center keeps compact hierarchy and names non-color status meaning"
   assert.match(commandCenter, /\{staff\.status\}/);
   assert.match(commandCenter, /elevation="none"/);
   assert.doesNotMatch(commandCenter, /className="[^"]*shadow-none/);
-  for (const id of ["negosu-command-center-header", "negosu-command-center-metrics", "negosu-action-inbox", "negosu-today-operations"]) assert.match(loading, new RegExp(id));
+  for (const id of ["negosu-command-center-loading-header", "negosu-command-center-loading-metrics", "negosu-command-center-loading-actions", "negosu-command-center-loading-operations"]) assert.match(loading, new RegExp(id));
+  for (const id of ["negosu-command-center-header", "negosu-command-center-metrics", "negosu-action-inbox", "negosu-today-operations"]) assert.doesNotMatch(loading, new RegExp(`id="${id}"`));
 });
 
 test("high-traffic schedules and catalog avoid tablet-width overflow traps", () => {
@@ -72,7 +73,8 @@ test("high-traffic schedules and catalog avoid tablet-width overflow traps", () 
 test("inventory and CRM forms expose visible labels and stable operational IDs", () => {
   const inventory = source("components/inventory-forms.tsx");
   const crm = source("components/crm-forms.tsx");
-  for (const label of ["Product name", "Cost (PHP)", "Sell price (PHP)", "Reorder level", "Quantity used"]) assert.match(inventory, new RegExp(`label=\\"${label.replace(/[()]/g, "\\$&")}\\"`));
+  for (const label of ["Cost", "Sell price"]) assert.ok(inventory.includes(`label={\`${label} (\${currency})\`}`));
+  for (const label of ["Product name", "Reorder level", "Quantity used"]) assert.match(inventory, new RegExp(`label=\\"${label.replace(/[()]/g, "\\$&")}\\"`));
   assert.match(inventory, /const productPrefix=salon\?"salon-product":"inventory-item",inventoryPrefix=salon\?"salon-inventory":"inventory"/);
   for (const idTemplate of [
     "`${productPrefix}-create-form`",

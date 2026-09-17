@@ -36,7 +36,7 @@ export function BusinessTypeSelector({
 
   return (
     <fieldset id={`${idPrefix}-business-type-selector`} className="space-y-3">
-      <legend className="text-sm font-semibold">What type of business do you operate?</legend>
+      <legend className="text-sm font-medium">What type of business do you operate?</legend>
       <div className="grid gap-3 sm:grid-cols-2">
         {choices.map(({ industry: value, title, description, Icon }) => (
           <label
@@ -55,13 +55,13 @@ export function BusinessTypeSelector({
               onChange={() => setIndustry(value)}
             />
             <Icon aria-hidden="true" className={`mb-3 ${industry === value ? "text-brand-primary-strong" : "text-slate-600"}`} size={22} />
-            <span className="block text-sm font-black">{title}</span>
+            <span className="block text-sm font-medium">{title}</span>
             <span className="mt-1 block text-xs leading-5 text-zinc-600">{description}</span>
           </label>
         ))}
       </div>
       {includeBusinessType && entry ? (
-        <label className="block text-sm font-semibold" htmlFor={`${idPrefix}-business-subtype`}>
+        <label className="block text-sm font-medium" htmlFor={`${idPrefix}-business-subtype`}>
           Business type
           <select
             id={`${idPrefix}-business-subtype`}

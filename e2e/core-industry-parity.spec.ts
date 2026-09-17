@@ -1,6 +1,6 @@
 import { test, expect, type Page } from "@playwright/test";
 import { createClient } from "@supabase/supabase-js";
-import { authenticatedSmokeEnabled, loginAsOwner } from "./helpers/auth";
+import { authenticatedSmokeEnabled, loginAsOwner, qaPersonaCredentials } from "./helpers/auth";
 import { loadPaymentWorkspace } from "../modules/core/payments/payment-workspace";
 
 test.use({browserName:"chromium",trace:"off"});
@@ -19,12 +19,21 @@ async function seedInvoice() {
  const invoice=await db.from("invoices").insert({organization_id:org.data!.id,branch_id:branch,job_order_id:job.data!.id,invoice_number:`CORE-${Date.now()}`,status:"issued",customer_name_snapshot:"Core Payment QA",vehicle_snapshot:"QA Vehicle",subtotal_centavos:10000,total_centavos:10000,balance_centavos:10000,issued_at:new Date().toISOString()}).select("id").single();expect(invoice.error).toBeNull();
  const item=await db.from("invoice_items").insert({organization_id:org.data!.id,invoice_id:invoice.data!.id,description_snapshot:"Core Payment QA",quantity:1,unit_price_centavos:10000,line_total_centavos:10000});expect(item.error).toBeNull();
 }
+async function seedSalonBalance() {
+ const db=createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!,process.env.SUPABASE_SERVICE_ROLE_KEY!,{auth:{persistSession:false}});
+ const org=await db.from("organizations").select("id,branches(id,is_primary)").eq("slug","negosu-salon-qa").single();expect(org.error).toBeNull();
+ const customer=await db.from("customers").select("id").eq("organization_id",org.data!.id).limit(1).single();expect(customer.error).toBeNull();
+ const start=new Date(Date.now()+86400000*60);
+ const appointment=await db.from("appointments").insert({organization_id:org.data!.id,branch_id:org.data!.branches.find(row=>row.is_primary)!.id,customer_id:customer.data!.id,starts_at:start.toISOString(),ends_at:new Date(start.valueOf()+1800000).toISOString(),expected_total_centavos:10000}).select("id").single();
+ expect(appointment.error).toBeNull();
+}
 async function checkLayout(page:Page){expect(await page.locator("#dashboard-main-content").evaluate(el=>el.scrollWidth<=el.clientWidth+1)).toBe(true);}
 for(const industry of ["automotive","salon","pet_care"]){
  test(`${industry}: shared pages, payment collection, reports and export`,async({page},info)=>{
-  test.setTimeout(150000);if(industry==="automotive")await seedInvoice();await page.setViewportSize({width:1440,height:900});await login(page,industry);
+  test.setTimeout(150000);if(industry==="automotive")await seedInvoice();if(industry==="salon")await seedSalonBalance();await page.setViewportSize({width:1440,height:900});await login(page,industry);
   await expect(page.locator('#negosu-sidebar a[href="/dashboard/payments"]')).toBeVisible();
-  await page.locator("#negosu-sidebar details").filter({has:page.locator('a[href="/dashboard/reports"]')}).locator("summary").click();
+  const reportsGroup = page.locator("#negosu-sidebar details").filter({has:page.locator('a[href="/dashboard/reports"]')});
+  if (!(await reportsGroup.evaluate(node => (node as HTMLDetailsElement).open))) await reportsGroup.locator("summary").click();
   await expect(page.locator('#negosu-sidebar a[href="/dashboard/reports"]')).toBeVisible();
   for(const path of ["customers","services","inventory","settings/staff","settings/branches","settings/resources","settings/public-page","settings/billing","bookings","payments"]){
    const roots:Record<string,string>={customers:industry==="automotive"?"customers-page":"salon-clients-page",services:industry==="salon"?"salon-treatments-page":"services-page",inventory:industry==="automotive"?"inventory-page":"salon-inventory-page","settings/staff":industry==="salon"?"salon-staff-page":"staff-page","settings/branches":"branches-page","settings/resources":industry==="automotive"?"scheduling-resources-page":"salon-resources-page","settings/public-page":"public-page-settings-page","settings/billing":"billing-page",bookings:"booking-requests-page",payments:"payments-page"};
@@ -56,11 +65,11 @@ test("Core payment reads enforce tenant scope and role-specific financial pages"
  test.setTimeout(90000);
  const url=process.env.NEXT_PUBLIC_SUPABASE_URL!,key=process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!;
  const db=createClient(url,key,{auth:{persistSession:false}}),admin=createClient(url,process.env.SUPABASE_SERVICE_ROLE_KEY!,{auth:{persistSession:false}});
- const auth=await db.auth.signInWithPassword({email:process.env.QA_SALON_OWNER_EMAIL!,password:process.env.QA_OWNER_PASSWORD!});expect(auth.error).toBeNull();
+ const auth=await db.auth.signInWithPassword(qaPersonaCredentials("salon"));expect(auth.error).toBeNull();
  const foreign=await admin.from("organizations").select("id,branches(id)").eq("slug","negosu-pet-qa-1").single();expect(foreign.error).toBeNull();
  const records=await loadPaymentWorkspace(db,foreign.data!.id,foreign.data!.branches[0].id,"appointment");expect(records.payments).toHaveLength(0);expect(records.documents).toHaveLength(0);
  const own=await db.from("organization_memberships").select("organization_id").eq("user_id",auth.data.user!.id).single();expect(own.error).toBeNull();
- await db.auth.signOut();
+ await db.auth.signOut({scope:"local"});
  for(const role of ["cashier","viewer"]){
   const email=`parity-${role}-${crypto.randomUUID()}@local.test`,password=`Test-${crypto.randomUUID()}!`;
   const user=await admin.auth.admin.createUser({email,password,email_confirm:true});expect(user.error).toBeNull();

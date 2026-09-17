@@ -54,7 +54,7 @@ function customerState(status: Status): CustomerState {
 
 function TimelineStep({ complete, current, label, description }: { complete: boolean; current: boolean; label: string; description: string }) {
   return <li className="relative flex gap-3 pb-5 last:pb-0">
-    <span aria-hidden="true" className={`mt-0.5 grid size-7 shrink-0 place-items-center rounded-full border text-xs font-bold ${complete ? "border-status-success bg-status-success text-white" : current ? "border-brand-primary bg-brand-tint text-brand-primary-strong" : "border-admin-border bg-white text-admin-text-muted"}`}>{complete ? <Check size={15}/> : current ? <Clock3 size={14}/> : null}</span>
+    <span aria-hidden="true" className={`mt-0.5 grid size-7 shrink-0 place-items-center rounded-full border text-xs font-medium ${complete ? "border-status-success bg-status-success text-white" : current ? "border-brand-primary bg-brand-tint text-brand-primary-strong" : "border-admin-border bg-white text-admin-text-muted"}`}>{complete ? <Check size={15}/> : current ? <Clock3 size={14}/> : null}</span>
     <span><strong className="block text-sm">{label}</strong><small className="mt-0.5 block leading-5 text-admin-text-muted">{description}</small></span>
   </li>;
 }
@@ -90,7 +90,7 @@ export default async function Page({ params }: { params: Promise<{ token: string
     <header id="public-booking-status-header" className="border-b border-admin-border bg-white">
       <div className="mx-auto flex min-h-16 max-w-5xl items-center justify-between gap-4 px-4 sm:px-6">
         <BusinessIdentity name={status.shopName} logoUrl={status.logoUrl}/>
-        {safeShopSlug ? <Link id="public-booking-status-shop-link" href={`/shop/${encodeURIComponent(safeShopSlug)}`} className="shrink-0 text-sm font-semibold text-brand-primary-strong hover:text-brand-primary">Business page</Link> : null}
+        {safeShopSlug ? <Link id="public-booking-status-shop-link" href={`/shop/${encodeURIComponent(safeShopSlug)}`} className="shrink-0 text-sm font-medium text-brand-primary-strong hover:text-brand-primary">Business page</Link> : null}
       </div>
     </header>
 
@@ -98,24 +98,24 @@ export default async function Page({ params }: { params: Promise<{ token: string
       <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_19rem]">
         <Card id="public-booking-status-card" elevation="none" className="overflow-hidden">
           <div className="border-b border-admin-border p-5 sm:p-7">
-            <div className="flex flex-wrap items-start justify-between gap-3"><div><p className="text-xs font-semibold uppercase tracking-wide text-admin-text-muted">Booking {status.reference}</p><Badge id="public-booking-status-badge" className="mt-3" variant={state.variant}>{state.label}</Badge></div><span className={`grid size-11 place-items-center rounded-full ${state.variant === "danger" ? "bg-status-danger-tint text-status-danger" : "bg-brand-tint text-brand-primary-strong"}`}>{state.variant === "danger" ? <X aria-hidden="true" size={21}/> : <ShieldCheck aria-hidden="true" size={21}/>}</span></div>
-            <h1 id="public-booking-status-title" className="mt-4 text-2xl font-semibold tracking-tight text-brand-ink sm:text-3xl">{state.heading}</h1>
+            <div className="flex flex-wrap items-start justify-between gap-3"><div><p className="text-xs font-medium normal-case tracking-wide text-admin-text-muted">Booking {status.reference}</p><Badge id="public-booking-status-badge" className="mt-3" variant={state.variant}>{state.label}</Badge></div><span className={`grid size-11 place-items-center rounded-full ${state.variant === "danger" ? "bg-status-danger-tint text-status-danger" : "bg-brand-tint text-brand-primary-strong"}`}>{state.variant === "danger" ? <X aria-hidden="true" size={21}/> : <ShieldCheck aria-hidden="true" size={21}/>}</span></div>
+            <h1 id="public-booking-status-title" className="mt-4 text-2xl font-medium tracking-tight text-brand-ink sm:text-3xl">{state.heading}</h1>
             <p className="mt-2 max-w-2xl text-admin-text-secondary">{state.message}</p>
           </div>
 
           <div className="grid gap-6 p-5 sm:p-7 md:grid-cols-2">
             <section id="public-booking-status-details" aria-labelledby="public-booking-details-title">
-              <h2 id="public-booking-details-title" className="font-semibold">Booking details</h2>
+              <h2 id="public-booking-details-title" className="font-medium">Booking details</h2>
               <dl className="mt-4 space-y-4 text-sm">
-                <div className="flex gap-3"><CalendarDays aria-hidden="true" className="mt-0.5 shrink-0 text-brand-primary" size={18}/><div><dt className="text-admin-text-muted">{status.status === "confirmed" ? "Scheduled visit" : "Preferred schedule"}</dt><dd className="mt-0.5 font-semibold">{scheduleLabel}</dd></div></div>
-                <div className="flex gap-3"><MapPin aria-hidden="true" className="mt-0.5 shrink-0 text-brand-primary" size={18}/><div><dt className="text-admin-text-muted">Location</dt><dd className="mt-0.5 font-semibold">{status.shopName} · {status.branchName}</dd></div></div>
-                <div className="flex gap-3"><Scissors aria-hidden="true" className="mt-0.5 shrink-0 text-brand-primary" size={18}/><div><dt className="text-admin-text-muted">{serviceLabel}</dt><dd className="mt-1"><ul id="public-booking-status-services" className="space-y-1 font-semibold">{status.services.map((service, index) => <li key={`${index}-${service}`}>{service}</li>)}</ul></dd></div></div>
+                <div className="flex gap-3"><CalendarDays aria-hidden="true" className="mt-0.5 shrink-0 text-brand-primary" size={18}/><div><dt className="text-admin-text-muted">{status.status === "confirmed" ? "Scheduled visit" : "Preferred schedule"}</dt><dd className="mt-0.5 font-medium">{scheduleLabel}</dd></div></div>
+                <div className="flex gap-3"><MapPin aria-hidden="true" className="mt-0.5 shrink-0 text-brand-primary" size={18}/><div><dt className="text-admin-text-muted">Location</dt><dd className="mt-0.5 font-medium">{status.shopName} · {status.branchName}</dd></div></div>
+                <div className="flex gap-3"><Scissors aria-hidden="true" className="mt-0.5 shrink-0 text-brand-primary" size={18}/><div><dt className="text-admin-text-muted">{serviceLabel}</dt><dd className="mt-1"><ul id="public-booking-status-services" className="space-y-1 font-medium">{status.services.map((service, index) => <li key={`${index}-${service}`}>{service}</li>)}</ul></dd></div></div>
               </dl>
-              {status.declineReason ? <div id="public-booking-status-response" className="mt-5 rounded-ui-md border border-status-danger/20 bg-status-danger-tint p-4"><p className="text-xs font-semibold uppercase tracking-wide text-status-danger">Business response</p><p className="mt-1 text-sm">{status.declineReason}</p></div> : null}
+              {status.declineReason ? <div id="public-booking-status-response" className="mt-5 rounded-ui-md border border-status-danger/20 bg-status-danger-tint p-4"><p className="text-xs font-medium normal-case tracking-wide text-status-danger">Business response</p><p className="mt-1 text-sm">{status.declineReason}</p></div> : null}
             </section>
 
             <section id="public-booking-status-progress" aria-labelledby="public-booking-progress-title">
-              <h2 id="public-booking-progress-title" className="font-semibold">Progress</h2>
+              <h2 id="public-booking-progress-title" className="font-medium">Progress</h2>
               <ol className="mt-4">
                 <TimelineStep complete={state.stage > 1} current={state.stage === 1} label="Request received" description="Your selected schedule and details were sent securely."/>
                 <TimelineStep complete={state.stage > 2 || status.status === "confirmed"} current={state.stage === 2} label="Business confirmation" description={status.status === "declined" ? "The request was reviewed but could not be accepted." : status.status === "confirmed" ? "The business confirmed your appointment." : "Waiting for the business to review your request."}/>
@@ -128,7 +128,7 @@ export default async function Page({ params }: { params: Promise<{ token: string
         </Card>
 
         <aside className="space-y-4">
-          <Card elevation="none" className="p-5"><ShieldCheck aria-hidden="true" className="text-brand-primary" size={22}/><h2 className="mt-3 font-semibold">Keep this link private</h2><p className="mt-2 text-sm leading-6 text-admin-text-muted">Anyone with this secure link can see this booking’s progress. Your contact details are not displayed.</p></Card>
+          <Card elevation="none" className="p-5"><ShieldCheck aria-hidden="true" className="text-brand-primary" size={22}/><h2 className="mt-3 font-medium">Keep this link private</h2><p className="mt-2 text-sm leading-6 text-admin-text-muted">Anyone with this secure link can see this booking’s progress. Your contact details are not displayed.</p></Card>
           {queueAvailable ? <Button id="booking-reservation-queue-link" asChild className="w-full"><Link href={`/booking/${encodeURIComponent(token)}/queue`}><ArrowRightIcon aria-hidden="true" size={16} className="shrink-0"/>View your branch’s queue</Link></Button> : null}
           {safeShopSlug ? <Button id="public-booking-status-new-request-button" asChild variant="secondary" className="w-full"><Link href={`/shop/${encodeURIComponent(safeShopSlug)}/book`}><PlusIcon aria-hidden="true" size={16} className="shrink-0"/>Create another booking</Link></Button> : null}
         </aside>

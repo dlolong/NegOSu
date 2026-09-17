@@ -28,10 +28,10 @@ export function EstimateApprovalLinkControls({jobId,estimateId,replacesActiveLin
   }
   return <div id="estimate-approval-link-controls" className="grid gap-4">
     {state.approvalUrl?<div id="estimate-approval-link-result" className="rounded-xl border border-emerald-200 bg-emerald-50 p-4">
-      <h3 className="font-black text-emerald-950">Private approval link created</h3>
+      <h3 className="font-medium text-emerald-950">Private approval link created</h3>
       <p className="mt-1 text-sm text-emerald-900">Copy it now. {productBrand.name} cannot display this private URL again after you leave this result.</p>
       <input id="estimate-approval-link-output" className="mt-3 min-h-11 w-full rounded-xl border bg-white px-3 text-sm" readOnly value={state.approvalUrl}/>
-      <button id="estimate-approval-link-copy-button" type="button" onClick={copyLink} className="inline-flex items-center justify-center gap-2 mt-3 min-h-11 rounded-xl bg-brand-primary px-4 text-sm font-bold text-white hover:bg-brand-primary-strong"><CopyIcon aria-hidden="true" size={16} className="shrink-0"/>Copy link</button>
+      <button id="estimate-approval-link-copy-button" type="button" onClick={copyLink} className="inline-flex items-center justify-center gap-2 mt-3 min-h-11 rounded-xl bg-brand-primary px-4 text-sm font-medium text-white hover:bg-brand-primary-strong"><CopyIcon aria-hidden="true" size={16} className="shrink-0"/>Copy link</button>
       {copyStatus?<p id="estimate-approval-link-copy-status" role="status" className="mt-2 text-sm">{copyStatus}</p>:null}
       <p className="mt-2 text-xs text-zinc-600">Expires {state.expiresAt?new Intl.DateTimeFormat("en-PH",{dateStyle:"medium",timeStyle:"short",timeZone:"Asia/Manila"}).format(new Date(state.expiresAt)):"automatically"}.</p>
       {state.delivery?<div id="estimate-approval-delivery-result" className="mt-3 grid gap-1 border-t border-emerald-200 pt-3 text-xs">
@@ -44,6 +44,6 @@ export function EstimateApprovalLinkControls({jobId,estimateId,replacesActiveLin
       <p className="text-sm text-zinc-600">The customer can review this exact estimate and approve or decline without signing in. The link expires in 7 days.</p>
       <FormActions id="estimate-approval-link-actions" cancelHref={`/dashboard/jobs/${jobId}`}><SubmitButton id="estimate-approval-link-generate-button" pendingText="Generating…"><PlusIcon aria-hidden="true" size={16} className="shrink-0"/>{replacesActiveLink?"Generate replacement link":"Generate approval link"}</SubmitButton></FormActions>
     </form>}
-    {state.error?<p id="estimate-approval-link-error" role="alert" className="rounded-xl bg-red-50 p-3 text-sm font-semibold text-red-800">{state.error}</p>:null}
+    {state.error?<p id="estimate-approval-link-error" role="alert" className="rounded-xl bg-red-50 p-3 text-sm font-medium text-red-800">{state.error}</p>:null}
   </div>;
 }

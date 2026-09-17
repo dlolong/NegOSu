@@ -26,7 +26,7 @@ export function Button({ asChild = false, children, className, size = "default",
     icon: "size-11 shrink-0 p-0",
   } as const;
   const styles = cn(
-    "inline-flex min-w-0 max-w-full items-center justify-center gap-2 whitespace-normal rounded-ui-md text-center text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:shadow-none aria-disabled:pointer-events-none aria-disabled:cursor-not-allowed aria-disabled:shadow-none",
+    "inline-flex min-w-0 max-w-full items-center justify-center gap-2 whitespace-normal rounded-ui-md text-center text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:shadow-none aria-disabled:pointer-events-none aria-disabled:cursor-not-allowed aria-disabled:shadow-none",
     sizes[size],
     variants[variant],
     className,

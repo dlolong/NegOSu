@@ -70,7 +70,7 @@ for (const industry of ["automotive", "salon", "pet_care"] as const) {
     } finally {
       if (previous.data) expect((await admin.from("organization_subscriptions").upsert(previous.data, { onConflict: "organization_id" })).error).toBeNull();
       else expect((await admin.from("organization_subscriptions").delete().eq("organization_id", organizationId)).error).toBeNull();
-      await db.auth.signOut();
+      await db.auth.signOut({scope:"local"});
     }
   });
 }

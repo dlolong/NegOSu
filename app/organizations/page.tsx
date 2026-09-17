@@ -32,7 +32,7 @@ export default async function OrganizationSelectorPage({ searchParams }: { searc
       <section id="negosu-business-selector" className="mx-auto w-full max-w-2xl">
         <div className="mb-6 flex items-center gap-3">
           <span className="grid size-11 place-items-center rounded-2xl bg-brand-primary text-white"><Building2 aria-hidden="true" size={21} /></span>
-          <div><p className="text-sm font-bold text-brand-primary-strong">Your account</p><h1 className="text-3xl font-black tracking-tight">Choose Business</h1></div>
+          <div><p className="text-sm font-medium text-brand-primary-strong">Your account</p><h1 className="text-3xl font-medium tracking-tight">Choose Business</h1></div>
         </div>
         <p className="mb-6 text-sm leading-6 text-zinc-600">Choose the business you want to manage. Your data, navigation, and permissions will follow this selection.</p>
         <FormMessage error={params.error} />
@@ -44,7 +44,7 @@ export default async function OrganizationSelectorPage({ searchParams }: { searc
               <form id={`negosu-business-option-${choice.organization_id}`} action={chooseOrganization} key={choice.organization_id} className="rounded-2xl border border-brand-border bg-white p-4 shadow-sm sm:flex sm:items-center sm:justify-between sm:gap-4">
                 <input type="hidden" name="organizationId" value={choice.organization_id} />
                 <div className="flex min-w-0 items-start gap-3">
-                  <div className="min-w-0"><h2><BusinessIdentity name={organization.name} logoUrl={organization.logo_url}/></h2><p className="mt-2 text-sm text-zinc-600">{choice.role}</p>{!hasActiveBranch ? <p className="mt-1 text-xs font-semibold text-amber-700">Branch setup needs attention</p> : null}</div>
+                  <div className="min-w-0"><h2><BusinessIdentity name={organization.name} logoUrl={organization.logo_url}/></h2><p className="mt-2 text-sm text-zinc-600">{choice.role}</p>{!hasActiveBranch ? <p className="mt-1 text-xs font-medium text-amber-700">Branch setup needs attention</p> : null}</div>
                 </div>
                 <SubmitButton id={`negosu-business-option-${choice.organization_id}-select-button`} pendingText="Opening…" className="mt-4 w-full gap-2 sm:mt-0 sm:w-auto">Open <Check aria-hidden="true" size={16} /></SubmitButton>
               </form>

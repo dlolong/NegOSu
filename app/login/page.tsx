@@ -21,14 +21,14 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
   const contextQuery = entry ? `?industry=${entry.industry}` : "";
 
   return (
-    <AuthShell id="negosu-login-page" industry={entry?.industry} title={entry?.loginTitle ?? "Welcome back"} description={entry?.loginDescription ?? "Sign in to manage your business, from appointments and services to rooms and guest stays."} footer={<>New here? <Link id="negosu-login-create-account-link" className="font-bold text-brand-primary-strong" href={`/signup${contextQuery}`}>Create an account</Link></>}>
+    <AuthShell id="negosu-login-page" industry={entry?.industry} title={entry?.loginTitle ?? "Welcome back"} description={entry?.loginDescription ?? "Sign in to manage your business, from appointments and services to rooms and guest stays."} footer={<>New here? <Link id="negosu-login-create-account-link" className="font-medium text-brand-primary-strong" href={`/signup${contextQuery}`}>Create an account</Link></>}>
       <FormMessage error={params.error} message={params.message} />
       <form id="negosu-login-form" action={signIn} className="mt-6 space-y-4">
         <input type="hidden" name="next" value={next} />
         {entry ? <input type="hidden" name="industry" value={entry.industry} /> : null}
-        <label className="block text-sm font-semibold" htmlFor="negosu-login-email-input">Email address<Input id="negosu-login-email-input" required autoComplete="email" name="email" type="email" inputMode="email" className="mt-2" /></label>
-        <label className="block text-sm font-semibold" htmlFor="negosu-login-password-input">Password<Input id="negosu-login-password-input" required autoComplete="current-password" name="password" type="password" className="mt-2" /></label>
-        <div className="text-right"><Link id="negosu-login-forgot-password-link" href={`/forgot-password${contextQuery}`} className="text-sm font-semibold text-brand-primary-strong">Forgot password?</Link></div>
+        <label className="block text-sm font-medium" htmlFor="negosu-login-email-input">Email address<Input id="negosu-login-email-input" required autoComplete="email" name="email" type="email" inputMode="email" className="mt-2" /></label>
+        <label className="block text-sm font-medium" htmlFor="negosu-login-password-input">Password<Input id="negosu-login-password-input" required autoComplete="current-password" name="password" type="password" className="mt-2" /></label>
+        <div className="text-right"><Link id="negosu-login-forgot-password-link" href={`/forgot-password${contextQuery}`} className="text-sm font-medium text-brand-primary-strong">Forgot password?</Link></div>
         <SubmitButton id="negosu-login-submit-button" className="w-full" pendingText="Signing in…"><LogInIcon aria-hidden="true" size={16} className="shrink-0"/>Sign in</SubmitButton>
       </form>
     </AuthShell>

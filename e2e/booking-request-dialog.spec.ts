@@ -90,7 +90,7 @@ for (const industry of ["automotive", "salon", "pet_care"] as const) {
       await admin.from("organizations").update({ public_page_enabled: org.data!.public_page_enabled }).eq("id", org.data!.id);
       await admin.from("branches").update({ accepts_public_bookings: branch.data!.accepts_public_bookings }).eq("id", branch.data!.id);
       await admin.from("services").update({ is_public: service.data!.is_public }).eq("id", service.data!.id);
-      await db.auth.signOut();
+      await db.auth.signOut({scope:"local"});
     }
   });
 }

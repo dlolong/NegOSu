@@ -15,7 +15,7 @@ export default async function ResetPasswordPage({ searchParams }: { searchParams
   const entry = resolveAuthProductEntry(params.industry);
   const contextQuery = entry ? `?industry=${entry.industry}` : "";
   if (!auth) {
-    return <AuthShell id="negosu-reset-password-page" industry={entry?.industry} title="Reset link required" description="This password reset link is missing, invalid, expired, or has already been used." footer={<Link id="negosu-reset-password-request-link" className="font-bold text-brand-primary-strong" href={`/forgot-password${contextQuery}`}>Request a new reset link</Link>}><FormMessage error={params.error} /></AuthShell>;
+    return <AuthShell id="negosu-reset-password-page" industry={entry?.industry} title="Reset link required" description="This password reset link is missing, invalid, expired, or has already been used." footer={<Link id="negosu-reset-password-request-link" className="font-medium text-brand-primary-strong" href={`/forgot-password${contextQuery}`}>Request a new reset link</Link>}><FormMessage error={params.error} /></AuthShell>;
   }
 
   return (

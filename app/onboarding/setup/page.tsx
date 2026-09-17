@@ -28,27 +28,27 @@ export default async function OnboardingSetupPage() {
           <BusinessIdentity name={activeMembership.organizationName} logoUrl={activeMembership.organizationLogoUrl}/>
         </div>
         <div className="mt-7">
-          <p className="text-sm font-bold text-brand-primary-strong">Business setup</p>
-          <h1 id="negosu-onboarding-title" className="mt-1 text-3xl font-black tracking-tight">Welcome to {activeMembership.organizationName}</h1>
+          <p className="text-sm font-medium text-brand-primary-strong">Business setup</p>
+          <h1 id="negosu-onboarding-title" className="mt-1 text-3xl font-medium tracking-tight">Welcome to {activeMembership.organizationName}</h1>
           <p className="mt-2 max-w-2xl text-sm leading-6 text-zinc-600">{config.description}</p>
         </div>
         <section id="negosu-onboarding-progress" className="mt-6 rounded-xl border border-brand-border bg-brand-tint p-4 text-brand-ink">
-          <div className="flex items-center justify-between gap-4 text-sm"><strong>Setup progress</strong><span className="font-semibold text-slate-600">{progress.completed} / {progress.total}</span></div>
+          <div className="flex items-center justify-between gap-4 text-sm"><strong>Setup progress</strong><span className="font-medium text-slate-600">{progress.completed} / {progress.total}</span></div>
           <div className="mt-3 h-2 overflow-hidden rounded-full bg-blue-100" role="progressbar" aria-label="Setup progress" aria-valuemin={0} aria-valuemax={progress.total} aria-valuenow={progress.completed}>
             <div className="h-full rounded-full bg-brand-primary" style={{ width: `${progress.percentage}%` }} />
           </div>
         </section>
         {nextStep ? <aside id="negosu-onboarding-next-step" className="mt-4 flex flex-col gap-3 rounded-xl border border-blue-200 bg-blue-50 p-4 sm:flex-row sm:items-center sm:justify-between">
-          <div><p className="text-xs font-semibold text-brand-primary-strong">Recommended next step</p><p className="mt-1 font-semibold">{nextStep.label}</p><p className="mt-1 text-sm text-zinc-600">{nextStep.description}</p></div>
+          <div><p className="text-xs font-medium text-brand-primary-strong">Recommended next step</p><p className="mt-1 font-medium">{nextStep.label}</p><p className="mt-1 text-sm text-zinc-600">{nextStep.description}</p></div>
           <Button asChild><Link id="negosu-onboarding-next-step-link" href={nextStep.href}>Set up now <ArrowRight aria-hidden="true" size={16} /></Link></Button>
-        </aside> : <aside id="negosu-onboarding-complete" className="mt-4 rounded-xl border border-emerald-200 bg-emerald-50 p-4"><p className="font-semibold text-emerald-800">Your essential setup is complete.</p><p className="mt-1 text-sm text-emerald-700">Open the dashboard and start managing today&apos;s work.</p></aside>}
+        </aside> : <aside id="negosu-onboarding-complete" className="mt-4 rounded-xl border border-emerald-200 bg-emerald-50 p-4"><p className="font-medium text-emerald-800">Your essential setup is complete.</p><p className="mt-1 text-sm text-emerald-700">Open the dashboard and start managing today&apos;s work.</p></aside>}
         <div id="negosu-onboarding-steps" className="mt-5 grid gap-3 sm:grid-cols-2">
           {config.steps.map((step) => {
             const complete = signals[step.key];
             return (
               <article id={`negosu-onboarding-step-${step.key}`} key={step.key} className="flex items-start gap-3 rounded-xl border border-zinc-200 p-4">
                 <span className={`mt-0.5 grid size-7 shrink-0 place-items-center rounded-full ${complete ? "bg-emerald-100 text-emerald-700" : "bg-zinc-100 text-zinc-500"}`}>{complete ? <Check aria-hidden="true" size={16} /> : <Circle aria-hidden="true" size={15} />}</span>
-                <div className="min-w-0 flex-1"><h2 className="font-black">{step.label}</h2><p className="mt-1 text-xs leading-5 text-zinc-600">{step.description}</p>{!complete ? <Link id={`negosu-onboarding-step-${step.key}-link`} href={step.href} className="mt-2 inline-flex items-center gap-1 text-sm font-bold text-brand-primary-strong">Continue <ArrowRight aria-hidden="true" size={14} /></Link> : <span className="mt-2 block text-xs font-bold text-emerald-700">Complete</span>}</div>
+                <div className="min-w-0 flex-1"><h2 className="font-medium">{step.label}</h2><p className="mt-1 text-xs leading-5 text-zinc-600">{step.description}</p>{!complete ? <Link id={`negosu-onboarding-step-${step.key}-link`} href={step.href} className="mt-2 inline-flex items-center gap-1 text-sm font-medium text-brand-primary-strong">Continue <ArrowRight aria-hidden="true" size={14} /></Link> : <span className="mt-2 block text-xs font-medium text-emerald-700">Complete</span>}</div>
               </article>
             );
           })}

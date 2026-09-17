@@ -16,7 +16,7 @@ export function SettlementFields({ base, currency, prefix, closeHref, depositEna
   const ready = final !== null && final <= base && held !== null && tendered !== null && tendered >= due && (final === base || kind !== "none");
   const card = ["card", "pwd", "senior"].includes(kind);
   return <>
-    <h2 className="sm:col-span-2 border-t border-slate-200 pt-4 text-sm font-semibold">{depositEnabled ? "2. Collect payment" : "Payment"}</h2>
+    <h2 className="sm:col-span-2 border-t border-slate-200 pt-4 text-sm font-medium">{depositEnabled ? "2. Collect payment" : "Payment"}</h2>
     <Field label={`Final price (${currency}) *`}><input id={`${prefix}-final-price`} name="finalPrice" required inputMode="decimal" className={fieldClass} value={price} onChange={e => { setPrice(e.target.value); if (kind === "none") setKind("manual"); }}/><span className="mt-1 block text-xs text-slate-500">Room rate: {formatMoney(base, currency)}</span></Field>
     <Field label="Discount type"><select id={`${prefix}-discount-type`} name="discountType" className={fieldClass} value={kind} onChange={e => { setKind(e.target.value); if (e.target.value === "none") setPrice((base / 100).toFixed(2)); }}><option value="none">No discount</option><option value="manual">Other / discretionary</option><option value="card">Discount card</option><option value="pwd">PWD</option><option value="senior">Senior citizen</option></select></Field>
     {card ? <Field label="Card number *" full><input id={`${prefix}-discount-card`} name="discountCard" required maxLength={80} className={fieldClass} placeholder="Number only"/></Field> : <input type="hidden" name="discountCard" value=""/>}

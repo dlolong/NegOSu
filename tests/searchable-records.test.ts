@@ -5,7 +5,7 @@ import { createQuickCategory, createQuickService } from "../lib/quick-catalog";
 import { searchRecords } from "../lib/record-lookup";
 import { createVisitPet } from "../modules/pet-care/quick-pet";
 const org="13000000-0000-4000-8000-000000000001",id="53000000-0000-4000-8000-000000000001",categoryId="63000000-0000-4000-8000-000000000001";
-const actor={organizationId:org,role:"owner",industry:"pet_care"};
+const actor={organizationId:org,role:"owner",industry:"pet_care",currency:"USD"};
 const service={requestId:id,name:"Bath",categoryId:"",basePrice:"125.50",durationMinutes:"30"};
 type Result={data:unknown;error:null|{code:string}};
 function database(responses:Result[]) {
@@ -21,8 +21,8 @@ test("catalog creation rejects non-admin actors and invalid input before writes"
 });
 test("quick service converts money and writes only to actor tenant",async()=>{
  const {db,calls}=database([{data:{id,name:"Bath"},error:null}]);
- assert.equal((await createQuickService({...service,organizationId:"forged",is_add_on:true},actor,db)).data?.id,id);
- assert.deepEqual(calls.find(call=>call.operation==="insert")?.args[0],{id,organization_id:org,name:"Bath",category_id:null,base_price_centavos:12550,duration_minutes:30,is_active:true,is_add_on:false});
+ assert.equal((await createQuickService({...service,organizationId:"forged",currency:"PHP",is_add_on:true},actor,db)).data?.id,id);
+ assert.deepEqual(calls.find(call=>call.operation==="insert")?.args[0],{id,organization_id:org,name:"Bath",category_id:null,base_price_centavos:12550,currency:"USD",duration_minutes:30,is_active:true,is_add_on:false});
 });
 test("quick service rejects foreign or inactive category and does not create a partial service",async()=>{
  const {db,calls}=database([{data:null,error:null}]);
@@ -32,7 +32,7 @@ test("quick service rejects foreign or inactive category and does not create a p
  assert.ok(!calls.some(call=>call.operation==="insert"));
 });
 test("service retry reuses only its own unchanged record",async()=>{
- const row={id,name:"Bath",category_id:null,base_price_centavos:12550,duration_minutes:30};
+ const row={id,name:"Bath",category_id:null,base_price_centavos:12550,currency:"USD",duration_minutes:30};
  for(const changed of [false,true]){const {db,calls}=database([{data:null,error:{code:"23505"}},{data:{...row,duration_minutes:changed?60:30},error:null}]);const result=await createQuickService(service,actor,db);assert.equal(Boolean(result.data),!changed);assert.ok(calls.some(call=>call.operation==="eq"&&call.args[0]==="organization_id"&&call.args[1]===org));}
 });
 test("category retry handles its matching insert but does not select a same-name record with another request id",async()=>{
@@ -51,7 +51,7 @@ test("customer search is tenant scoped, active only, bounded and includes contac
  assert.ok(calls.some(call=>call.operation==="or"&&String(call.args[0]).includes("phone.ilike")));
 });
 test("service search uses category matches while scoping both queries",async()=>{
- const {db,calls}=database([{data:[{id:categoryId}],error:null},{data:[{id,name:"Bath",base_price_centavos:12550,duration_minutes:30,service_categories:{name:"Grooming"}}],error:null}]);
+ const {db,calls}=database([{data:[{id:categoryId}],error:null},{data:[{id,name:"Bath",base_price_centavos:12550,currency:"USD",duration_minutes:30,service_categories:{name:"Grooming"}}],error:null}]);
  const result=await searchRecords({kind:"service",query:"Grooming"},actor,db);
  assert.equal(result.data?.[0].keywords,"Grooming");assert.equal(calls.filter(call=>call.operation==="eq"&&call.args[0]==="organization_id"&&call.args[1]===org).length,2);
  assert.ok(calls.some(call=>call.operation==="or"&&String(call.args[0]).includes(`category_id.in.(${categoryId})`)));

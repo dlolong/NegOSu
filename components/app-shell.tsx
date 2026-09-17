@@ -148,7 +148,7 @@ function MobileMoreMenu({ groups, activeHref }: { groups: NavigationGroup[]; act
     >
       <div className="space-y-3">
         {groups.map((group) => <section id={`mobile-more-group-${group.key}`} key={group.key}>
-          <h2 className="px-2 text-[10px] font-medium uppercase tracking-[0.12em] text-admin-text-muted">{group.label}</h2>
+          <h2 className="px-2 text-[10px] font-medium normal-case tracking-[0.12em] text-admin-text-muted">{group.label}</h2>
           <div className="mt-1 space-y-0.5">{group.items.map((item) => {
             const Icon = navigationIcons[item.key] ?? Settings;
             const active = item.href === activeHref;

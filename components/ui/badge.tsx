@@ -14,5 +14,5 @@ const variants = {
 export type BadgeProps = HTMLAttributes<HTMLSpanElement> & { variant?: keyof typeof variants };
 
 export function Badge({ className, variant = "neutral", ...props }: BadgeProps) {
-  return <span className={cn("inline-flex items-center rounded-full border px-2.5 py-1 text-xs font-semibold leading-none", variants[variant], className)} {...props} />;
+  return <span className={cn("inline-flex items-center rounded-full border px-2.5 py-1 text-xs font-medium leading-none", variants[variant], className)} {...props} />;
 }

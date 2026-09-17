@@ -14,13 +14,13 @@ export function BusinessIdentityFields({ initialIndustry }: { initialIndustry: P
   return (
     <>
       <BusinessTypeSelector idPrefix="negosu-onboarding" initialIndustry={initialIndustry} includeBusinessType />
-      <label className="block text-sm font-semibold" htmlFor="negosu-business-name-input">
+      <label className="block text-sm font-medium" htmlFor="negosu-business-name-input">
         Business name
         <Input id="negosu-business-name-input" required maxLength={120} name="businessName" autoComplete="organization" placeholder={initialIndustry === "hospitality" ? "Sunrise Apartelle" : initialIndustry === "salon" ? "Glow Beauty Lounge" : initialIndustry === "pet_care" ? "Happy Paws" : "AutoShine Detailing"} className="mt-2" onChange={(event) => {
           if (!slugEdited) setSlug(slugifyOrganizationName(event.target.value));
         }} />
       </label>
-      <label className="block text-sm font-semibold" htmlFor="negosu-business-slug-input">
+      <label className="block text-sm font-medium" htmlFor="negosu-business-slug-input">
         {initialIndustry === "hospitality" ? "Business identifier" : "Business URL"}
         <div className="mt-2 flex min-w-0 items-center rounded-xl border border-slate-300 bg-white shadow-sm focus-within:border-brand-primary focus-within:ring-2 focus-within:ring-blue-100">
           {initialIndustry !== "hospitality" ? <span className="shrink-0 pl-3 text-sm text-zinc-600">/shop/</span> : null}

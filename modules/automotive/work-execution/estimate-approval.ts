@@ -25,7 +25,7 @@ const estimatePayloadSchema = z.object({
   state: z.enum(["active", "approved", "declined"]),
   expiresAt: z.iso.datetime({ offset: true }),
   decidedAt: z.iso.datetime({ offset: true }).nullable(),
-  business: z.object({ name: z.string(), phone: z.string().nullable(), logoUrl: z.string().nullable().optional() }),
+  business: z.object({ currency: z.string().length(3).optional(), name: z.string(), phone: z.string().nullable(), logoUrl: z.string().nullable().optional() }),
   branch: z.object({
     name: z.string(),
     phone: z.string().nullable(),

@@ -63,7 +63,7 @@ export async function saveService(data:FormData) {
   }
   const supabase=await createClient();
   const payload={organization_id:activeMembership.organizationId,category_id:parsed.data.categoryId,name:parsed.data.name,description:parsed.data.description,short_description:parsed.data.shortDescription,code:parsed.data.code,duration_minutes:parsed.data.durationMinutes,base_price_centavos:Number(base),is_add_on:parsed.data.isAddOn,parent_service_id:parsed.data.isAddOn?parsed.data.parentServiceId:null};
-  const result=id?await supabase.from("services").update(payload).eq("id",id).eq("organization_id",activeMembership.organizationId).select("id").maybeSingle():await supabase.from("services").insert(payload).select("id").single();
+  const result=id?await supabase.from("services").update(payload).eq("id",id).eq("organization_id",activeMembership.organizationId).select("id").maybeSingle():await supabase.from("services").insert({...payload,currency:activeMembership.currency}).select("id").single();
   if(result.error||!result.data) go(back,"error",result.error?.code==="23505"?"A service with this name or code already exists.":"Unable to save service.");
   const serviceId=result.data.id,branchIds=selectedValues(data,"branchIds");
   await Promise.all([supabase.from("service_prices").delete().eq("service_id",serviceId),supabase.from("service_branch_availability").delete().eq("service_id",serviceId)]);

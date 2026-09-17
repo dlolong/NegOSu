@@ -27,7 +27,7 @@ Each palette changes structural chrome, interactive accents, borders, and canvas
 
 ## Typography and spacing
 
-Authenticated page titles are compact: 24px on mobile and no more than 30px at normal desktop widths. Use semibold for titles and important actions, medium for labels, and regular body text. Typical page and section gaps are 12–20px; ordinary cards use 12–20px padding.
+Authenticated page titles are compact: 24px on mobile and no more than 30px at normal desktop widths. Use regular body, field, navigation and status text, with restrained medium weight for titles and important actions. Operational labels use sentence case, never CSS uppercase. Typical page and section gaps are 12–20px; ordinary cards use 12–20px padding.
 
 ## Radius and shadows
 

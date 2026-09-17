@@ -38,7 +38,7 @@ for (const providerStatus of ["active", "expired"] as const) {
       await page.reload(); await expect(page.locator("#billing-payment-cancel")).toHaveCount(0);
     } finally {
       expect((await admin.from("billing_orders").delete().eq("id", id)).error).toBeNull();
-      await db.auth.signOut();
+      await db.auth.signOut({scope:"local"});
     }
   });
 }
@@ -142,7 +142,7 @@ for (const industry of ["automotive", "salon", "pet_care"] as const) {
       if (created.length) expect((await admin.from("billing_orders").delete().in("id", created)).error).toBeNull();
       if (previous.data) expect((await admin.from("organization_subscriptions").upsert(previous.data, { onConflict: "organization_id" })).error).toBeNull();
       else expect((await admin.from("organization_subscriptions").delete().eq("organization_id", org)).error).toBeNull();
-      await db.auth.signOut();
+      await db.auth.signOut({scope:"local"});
     }
   });
 }

@@ -99,7 +99,7 @@ for(const industry of ["automotive","salon","pet_care"] as const) {
    const old=branch.data!;await admin.from("branches").update({map_url:old.map_url,opening_hours:old.opening_hours,public_description:old.public_description,accepts_public_bookings:old.accepts_public_bookings,phone:old.phone,email:old.email}).eq("id",id);
    await admin.from("organizations").update({public_page_enabled:org.data!.public_page_enabled,phone:org.data!.phone,email:org.data!.email}).eq("id",org.data!.id);
    await admin.from("services").update({is_public:service.data!.is_public}).eq("id",service.data!.id);
-   await db.auth.signOut();
+   await db.auth.signOut({scope:"local"});
   }
  });
 }
