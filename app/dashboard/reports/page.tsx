@@ -1,3 +1,4 @@
+import { Input } from "@/components/ui/input";
 import { PlanUpgradeNotice } from "@/components/plan-upgrade";
 
 import { Download as DownloadIcon, RefreshCw as RefreshCwIcon, Search as SearchIcon } from "lucide-react";
@@ -113,8 +114,8 @@ export default async function Page({ searchParams }: { searchParams: Promise<Rec
             <option value="today">Today</option><option value="7d">Last 7 days</option><option value="30d">Last 30 days</option><option value="month">This month</option><option value="custom">Custom</option>
           </select>
         </label>
-        <label className="grid gap-1 text-xs font-medium" htmlFor="reports-start-date-input">From<input id="reports-start-date-input" className={inputClass} type="date" name="start" defaultValue={range.start} /></label>
-        <label className="grid gap-1 text-xs font-medium" htmlFor="reports-end-date-input">To<input id="reports-end-date-input" className={inputClass} type="date" name="end" defaultValue={range.end} /></label>
+        <label className="grid gap-1 text-xs font-medium" htmlFor="reports-start-date-input">From<Input id="reports-start-date-input" className={inputClass} type="date" name="start" defaultValue={range.start} /></label>
+        <label className="grid gap-1 text-xs font-medium" htmlFor="reports-end-date-input">To<Input id="reports-end-date-input" className={inputClass} type="date" name="end" defaultValue={range.end} /></label>
         <label className="grid gap-1 text-xs font-medium" htmlFor="reports-branch-select">
           Branch
           <select id="reports-branch-select" className={inputClass} name="branch" defaultValue={branch}>

@@ -57,6 +57,8 @@ Published storefronts use a compact business header, clear cover/identity area, 
 
 ## Lists, tables, and cards
 
+Hospitality Payments keeps period/date filters behind the header’s **Filters** button. The native popover opens over the page, closes through its close button, Escape, or an outside click, and stays within the viewport. Applying filters preserves the selected payment section and starts at the first page; the activity-period summary remains visible when the popover is closed. Branch scope continues to come from the active workspace.
+
 - Use `RecordTable` for directories with comparable fields at every viewport width. Keep the record name and trailing amount/actions visible; group secondary fields in the row’s `mobile` content below `lg`.
 - Use `Tabs` or `ListTabs` for meaningful sections/status groups. Preserve search/date filters and reset pagination when changing views. Purpose-built workflow boards may retain cards.
 - Keep rows approximately 40–56 pixels where content permits. Combine identity details such as vehicle/model and plate instead of creating secondary columns.

@@ -27,7 +27,7 @@ Each palette changes structural chrome, interactive accents, borders, and canvas
 
 ## Typography and spacing
 
-Authenticated page titles are compact: 24px on mobile and no more than 30px at normal desktop widths. Use regular body, field, navigation and status text, with restrained medium weight for titles and important actions. Operational labels use sentence case, never CSS uppercase. Typical page and section gaps are 12–20px; ordinary cards use 12–20px padding.
+Authenticated page titles are compact: 24px on mobile and no more than 30px at normal desktop widths. The shared weight scale is **400** for body text and input/select/textarea values, **500** for labels, legends, buttons, disclosure summaries, table headers, and explicitly emphasized navigation/status text, and **600** for headings (`h1`–`h6`) and semantic emphasis (`strong`/`b`). Global semantic rules in `app/globals.css` own these element weights across public pages and workspaces; local utilities control their size and color. Field values stay regular even inside a medium-weight label. Operational labels use sentence case, never CSS uppercase. Typical page and section gaps are 12–20px; ordinary cards use 12–20px padding.
 
 ## Radius and shadows
 
@@ -65,6 +65,8 @@ Interactive cards may strengthen their border and shadow slightly. Static cards 
 ## Forms and feedback
 
 Fields are at least 44px tall, use a visible brand focus ring, and show invalid state semantically. Labels remain explicit. `FormMessage` uses live status or alert roles, and shared empty/error/loading states keep feedback concise.
+
+Use the shared `Input` for date, time, and local date/time fields. Native pickers remain in place with their original values, bounds, and validation. Because these input types do not reliably display placeholders, the component shows a persistent, accessible hint below the control (or the supplied placeholder text). Both the control and its label can shrink within mobile grids; do not replace this with overflow clipping or a text input that changes the submitted date format.
 
 ## Dialogs
 

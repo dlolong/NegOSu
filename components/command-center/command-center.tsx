@@ -18,7 +18,6 @@ export type CommandCenterQuickAction = {
 
 export function CommandCenter({
   snapshot,
-  organizationName,
   firstName,
   branches,
   todayTitle,
@@ -30,7 +29,6 @@ export function CommandCenter({
   sectionErrors = {},
 }: {
   snapshot: SharedCommandCenterSnapshot;
-  organizationName: string;
   firstName: string;
   branches: ReadonlyArray<{ id: string; name: string }>;
   todayTitle: string;
@@ -45,7 +43,7 @@ export function CommandCenter({
   const attentionCount = snapshot.metrics.find(({ key }) => key === "attention")?.value ?? snapshot.actions.length;
   return <main id="negosu-command-center-page" className="mx-auto min-w-0 max-w-7xl pb-5">
     <header id="negosu-command-center-header" className="flex flex-wrap items-center justify-between gap-3 border-b border-admin-border pb-4 min-w-0 [&>a]:ml-auto [&>button]:ml-auto [&>form]:ml-auto">
-      <div className="min-w-0 flex-1 basis-full sm:basis-64 [overflow-wrap:anywhere]"><p className="text-xs font-medium tracking-[0.12em] text-brand-primary">{organizationName}</p><h1 className="mt-0.5 text-2xl font-medium tracking-tight text-admin-text sm:text-3xl">Command Center</h1><p id="negosu-command-center-operational-date" className="mt-0.5 text-xs font-medium text-slate-500">{operationalDate(snapshot)} · {snapshot.scope.label}</p><p className="mt-0.5 text-sm text-slate-600">Good day, {firstName}. Here&apos;s what needs attention at {organizationName}.</p></div>
+      <div className="min-w-0 flex-1 basis-full sm:basis-64 [overflow-wrap:anywhere]"><h1 className="mt-0.5 text-2xl font-medium tracking-tight text-admin-text sm:text-3xl">Command Center</h1><p id="negosu-command-center-operational-date" className="mt-0.5 text-xs font-medium text-slate-500">{operationalDate(snapshot)} · {snapshot.scope.label}</p><p className="mt-0.5 text-sm text-slate-600">Good day, {firstName}. Here&apos;s what needs attention today.</p></div>
       <form id="negosu-command-center-branch-selector-form" action="/dashboard/branch-context" className="ml-auto flex w-full items-end gap-2 sm:w-auto" method="get"><input type="hidden" name="next" value="/dashboard"/>
         <label className="min-w-0 flex-1 text-xs font-medium normal-case tracking-wide text-slate-500 sm:min-w-48">View
           <select id="negosu-command-center-branch-selector" name="branch" defaultValue={snapshot.scope.mode === "all" ? "all" : snapshot.scope.selectedBranchId ?? ""} className="mt-1 min-h-10 w-full rounded-xl border border-admin-border bg-white px-3 text-sm font-medium normal-case text-admin-text">

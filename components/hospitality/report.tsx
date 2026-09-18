@@ -1,6 +1,6 @@
 import { PlanUpgradeNotice } from "@/components/plan-upgrade";
 import Link from "next/link";
-import { Download, Search, BedDouble } from "lucide-react";
+import { Download, BedDouble } from "lucide-react";
 import { reportAccessSchema, reportQuerySchema, resolveReportRange, resolveReportScope } from "@/lib/reporting";
 import { roleHasPermission } from "@/lib/rbac";
 import { formatMoney } from "@/lib/operations";
@@ -11,7 +11,8 @@ import { Button } from "@/components/ui/button";
 import { ListTabs } from "@/components/list-tabs";
 import { RecordTable } from "@/components/record-table";
 import { RecordLink } from "@/components/record-item";
-import { Field, fieldClass, pageNumber, PageLinks, dateLabel, LoadError } from "./shared";
+import { pageNumber, PageLinks, dateLabel, LoadError } from "./shared";
+import { HospitalityReportFilters } from "./report-filters";
 export type HospitalityReportQuery = Record<string, string | undefined>;
 const sections = [{ value: "stays", label: "Stays" }, { value: "rooms", label: "Room status" }, { value: "collections", label: "Collections" }, { value: "outstanding", label: "Outstanding" }, { value: "inventory", label: "Stock" }, { value: "movements", label: "Stock movements" }, { value: "deposits", label: "Deposits" }];
 export async function HospitalityReport({ query: q, mode = "report" }: { query: HospitalityReportQuery; mode?: "report" | "payments" | "history" }) {
@@ -44,10 +45,11 @@ export async function HospitalityReport({ query: q, mode = "report" }: { query: 
   ] : section === "inventory" ? [
     { label: "Products now", value: report.stockItems ?? 0 }, { label: "Low-stock products now", value: report.lowStock ?? 0 },
   ] : [{ label: "Movements in period", value: report.rowCount }];
+  const filterControls = advanced ? <HospitalityReportFilters mode={mode} section={section} scope={scope} branchName={m.branchName} branches={m.branches}/> : null;
   return <main id={mode === "report" ? "hospitality-reports-page" : mode === "payments" ? "hospitality-payments-page" : "hospitality-stay-history-page"} className="mx-auto min-w-0 max-w-7xl">
-    <PageHeader id={`hospitality-${mode}-header`} title={mode === "report" ? "Reports" : mode === "payments" ? "Payments" : "Stay history"} description={mode === "payments" ? "Guest collections and balances. NegOSu subscription payments are under Settings → Billing & Plan." : "Activity uses each branch’s local dates. Room status, in-house stays, balances and stock are current snapshots."} action={mode === "report" && advanced ? <Button asChild variant="secondary"><Link id="hospitality-report-export" href={`/dashboard/reports/export?${qs}`}><Download size={16}/>Export CSV</Link></Button> : mode === "history" ? <Button asChild variant="secondary"><Link href="/dashboard/hospitality/rooms"><BedDouble size={16}/>Rooms</Link></Button> : undefined}/>
+    <PageHeader id={`hospitality-${mode}-header`} title={mode === "report" ? "Reports" : mode === "payments" ? "Payments" : "Stay history"} description={mode === "payments" ? "Guest collections and balances." : "Activity uses each branch’s local dates. Room status, in-house stays, balances and stock are current snapshots."} action={mode === "payments" ? filterControls : mode === "report" && advanced ? <Button asChild variant="secondary"><Link id="hospitality-report-export" href={`/dashboard/reports/export?${qs}`}><Download size={16}/>Export CSV</Link></Button> : mode === "history" ? <Button asChild variant="secondary"><Link href="/dashboard/hospitality/rooms"><BedDouble size={16}/>Rooms</Link></Button> : undefined}/>
     {mode === "report" && !advanced ? <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-3 text-sm">Free plan: current branch and the last 30 days. <div className="mt-3"><PlanUpgradeNotice id="hospitality-reports-plan-upgrade" capability="advanced_reports" compact/></div></div> : null}
-    {advanced ? <details id="hospitality-report-filter-panel" className="my-4 rounded-xl border border-admin-border bg-white shadow-sm"><summary className="min-h-11 cursor-pointer px-4 py-3 text-sm">Period & branch filters</summary><form id="hospitality-report-filters" className="grid items-end gap-3 border-t border-admin-border p-4 sm:grid-cols-2 lg:grid-cols-5"><input type="hidden" name="section" value={section}/>{mode === "history" ? <input type="hidden" name="tab" value="history"/> : null}<Field label="Period"><select id="hospitality-report-period" name="preset" defaultValue={scope.filters.preset} className={fieldClass}><option value="today">Today</option><option value="7d">Last 7 days</option><option value="30d">Last 30 days</option><option value="month">This month</option><option value="custom">Custom dates</option></select></Field><Field label="Start (custom)"><input id="hospitality-report-start" name="start" type="date" defaultValue={scope.range.start} className={fieldClass}/></Field><Field label="End (custom)"><input id="hospitality-report-end" name="end" type="date" defaultValue={scope.range.end} className={fieldClass}/></Field>{mode === "report" ? <Field label="Branch"><select id="hospitality-report-branch" name="branch" defaultValue={scope.branch} className={fieldClass}><option value="all">All accessible branches</option>{m.branches.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}</select></Field> : <p className="text-sm text-slate-500">{m.branchName}</p>}<Button id="hospitality-report-apply" type="submit" variant="secondary"><Search size={16}/>Apply</Button></form></details> : null}
+    {mode !== "payments" ? filterControls : null}
     <p className="mt-4 text-xs text-slate-500">Activity period: {scope.range.start} to {scope.range.end}</p>
     <div id="hospitality-report-summary" className="mt-3 grid grid-cols-2 gap-3 lg:grid-cols-3">{metrics.map(metric => <Metric key={metric.label} {...metric}/>)}</div>
     <ListTabs id="hospitality-report-tabs" baseHref={base} parameter="section" query={query} value={section} options={options}/>

@@ -162,12 +162,44 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+  font-weight: 400;
 }
-strong, b { font-weight: 600; }
+
+/* Shared semantic weights keep every page on the same 400 / 500 / 600 scale.
+   Typography roles own weight; local utilities still control size and color. */
+h1, h2, h3, h4, h5, h6, strong, b { font-weight: 600; }
+label, legend, summary, th { font-weight: 500; }
 a { text-decoration: none; }
 a:not([class]) { color: var(--brand-primary-strong); text-decoration: underline; text-decoration-color: currentColor; text-underline-offset: 0.2em; }
 a:not([class]):hover { text-decoration-color: currentColor; }
 button, input, select, textarea { font: inherit; }
+button { font-weight: 500; }
+input, select, textarea { font-weight: 400; }
+
+/* Native date/time controls have an intrinsic width in mobile WebKit. Let the
+   control and its label shrink inside narrow form grids without clipping it. */
+label:has(input:is([type="date"], [type="time"], [type="datetime-local"], [type="month"], [type="week"])) {
+  min-width: 0;
+}
+input:is([type="date"], [type="time"], [type="datetime-local"], [type="month"], [type="week"]) {
+  -webkit-appearance: none;
+  appearance: none;
+  display: block;
+  box-sizing: border-box;
+  min-width: 0;
+  max-width: 100%;
+  min-height: 2.75rem;
+}
+input:is([type="date"], [type="time"], [type="datetime-local"], [type="month"], [type="week"])::-webkit-date-and-time-value {
+  min-width: 0;
+  min-height: 1.5em;
+  text-align: start;
+}
+input:is([type="date"], [type="time"], [type="datetime-local"], [type="month"], [type="week"])::-webkit-datetime-edit {
+  min-width: 0;
+  padding: 0;
+}
+
 :focus-visible {
   outline: 3px solid color-mix(in srgb, var(--accent) 75%, white);
   outline-offset: 2px;

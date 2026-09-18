@@ -199,10 +199,10 @@ export default async function Page({
                     <div className="mt-3 divide-y divide-admin-border">{publicOpeningDayKeys.map(day => {
                       const schedule = hours?.[day] ?? { closed: true };
                       const enabled = schedule.closed !== true;
-                      return <div id={`public-branch-hours-${day}-${branch.id}`} key={day} className="grid gap-2 py-3 grid-cols-2 sm:grid-cols-[minmax(7rem,1fr)_auto_auto] sm:items-end">
-                        <label className="col-span-2 flex min-h-11 items-center gap-2 text-sm font-medium sm:col-span-1"><input id={`public-branch-${day}-enabled-${branch.id}`} type="checkbox" name={`hours-${day}-enabled`} defaultChecked={enabled}/>{openingDayLabels[day]}</label>
-                        <label className="text-xs font-medium text-admin-text-secondary">Opens<Input id={`public-branch-${day}-open-${branch.id}`} type="time" required name={`hours-${day}-open`} defaultValue={schedule.open ?? "09:00"} className="mt-1 w-full sm:w-28"/></label>
-                        <label className="text-xs font-medium text-admin-text-secondary">Closes<Input id={`public-branch-${day}-close-${branch.id}`} type="time" required name={`hours-${day}-close`} defaultValue={schedule.close ?? "17:00"} className="mt-1 w-full sm:w-28"/></label>
+                      return <div id={`public-branch-hours-${day}-${branch.id}`} key={day} className="grid gap-2 py-3 grid-cols-[repeat(auto-fit,minmax(min(100%,9rem),1fr))] sm:grid-cols-[minmax(7rem,1fr)_auto_auto] sm:items-end">
+                        <label className="col-span-full flex min-h-11 items-center gap-2 text-sm font-medium sm:col-span-1"><input id={`public-branch-${day}-enabled-${branch.id}`} type="checkbox" name={`hours-${day}-enabled`} defaultChecked={enabled}/>{openingDayLabels[day]}</label>
+                        <label className="text-xs font-medium text-admin-text-secondary">Opens<Input id={`public-branch-${day}-open-${branch.id}`} type="time" required name={`hours-${day}-open`} defaultValue={schedule.open ?? "09:00"} className="mt-1 w-full sm:w-36"/></label>
+                        <label className="text-xs font-medium text-admin-text-secondary">Closes<Input id={`public-branch-${day}-close-${branch.id}`} type="time" required name={`hours-${day}-close`} defaultValue={schedule.close ?? "17:00"} className="mt-1 w-full sm:w-36"/></label>
                       </div>;
                     })}</div>
                   </fieldset>

@@ -43,7 +43,7 @@ test("command center preserves fractional currency amounts", async () => {
   const { CommandCenter } = await import("../components/command-center/command-center");
   const html = renderToStaticMarkup(createElement(CommandCenter, {
     snapshot: { scope:{mode:"branch",organizationId:"qa",branchIds:["main"],selectedBranchId:"main",label:"Main",currency:"USD"}, metrics:[{key:"revenue_today",label:"Collected today",value:12505,valueKind:"currency"}], actions:[],operations:[],staff:[],branchPerformance:[] },
-    organizationName:"QA", firstName:"QA", branches:[{id:"main",name:"Main"}], todayTitle:"Today", todayDescription:"Visits", todayVerticalId:"qa-visits", staffDescription:"Staff", quickActions:[],
+    firstName:"QA", branches:[{id:"main",name:"Main"}], todayTitle:"Today", todayDescription:"Visits", todayVerticalId:"qa-visits", staffDescription:"Staff", quickActions:[],
   }));
   assert.ok(html.includes(formatMoney(12505,"USD")));
 });

@@ -39,7 +39,6 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
   const salon = activeMembership.industry === "salon";
   return <CommandCenter
     snapshot={loaded.snapshot}
-    organizationName={activeMembership.organizationName}
     firstName={firstName(profile.fullName)}
     branches={activeMembership.branches}
     todayTitle={salon ? "Today’s Appointments" : "Today’s Automotive Operations"}
