@@ -1,3 +1,4 @@
+import { DashboardChart } from "@/components/dashboard-chart";
 import { RecordRow, RecordItem, RecordLink } from "@/components/record-item";
 import { Search as SearchIcon, AlertCircle, ArrowRight, CalendarDays, ChevronRight, UsersRound } from "lucide-react";
 import Link from "next/link";
@@ -65,6 +66,10 @@ export function CommandCenter({
       })}
     </section>
 
+    <div className="grid min-w-0 gap-3 lg:grid-cols-2">
+      <DashboardChart id="command-center-activity-chart" title="Operations at a glance" description={`${snapshot.scope.label} · Current dashboard counts; categories may overlap.`} points={snapshot.metrics.filter(metric => metric.valueKind === "count").map(metric => ({ label: metric.label, value: metric.value }))}/>
+      {snapshot.metrics.some(metric => metric.valueKind === "currency") ? <DashboardChart id="command-center-finance-chart" title="Financial snapshot" description={`${snapshot.scope.label} · Today's collections and current balances, as labeled.`} currency={snapshot.scope.currency} points={snapshot.metrics.filter(metric => metric.valueKind === "currency").map(metric => ({ label: metric.label, value: metric.value }))}/> : null}
+    </div>
     <div className="mt-3 grid min-w-0 gap-3 xl:grid-cols-[1.05fr_0.95fr]">
       <section id="negosu-action-inbox" aria-labelledby="negosu-action-inbox-title" className="min-w-0 rounded-xl border border-admin-border border-l-4 border-l-brand-primary bg-admin-surface p-4">
         <div className="flex items-start justify-between gap-3"><div><h2 id="negosu-action-inbox-title" className="font-medium text-admin-text">Action Inbox</h2><p className="text-xs text-slate-500">Live conditions disappear when the underlying work is resolved.</p></div><Badge>{attentionCount} {attentionCount === 1 ? "condition" : "conditions"}</Badge></div>

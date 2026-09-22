@@ -166,7 +166,7 @@ function MobileMoreMenu({ groups, activeHref }: { groups: NavigationGroup[]; act
   </DismissibleDetails>;
 }
 
-export function AppShell({ children, activeMembership, memberships, profileName, dashboardTheme, upgrades = null }: { upgrades?: UpgradeState | null; children: React.ReactNode; activeMembership: OrganizationMembership; memberships: OrganizationMembership[]; profileName: string; dashboardTheme: DashboardThemeId }) {
+export function AppShell({ children, activeMembership, memberships, profileName, dashboardTheme, platformAdmin = false, upgrades = null }: { platformAdmin?: boolean; upgrades?: UpgradeState | null; children: React.ReactNode; activeMembership: OrganizationMembership; memberships: OrganizationMembership[]; profileName: string; dashboardTheme: DashboardThemeId }) {
   const pathname = usePathname();
   const industryConfig = resolveIndustryConfig(activeMembership.industry);
   const nav = navigationForIndustry(industryConfig, activeMembership.role);
@@ -222,6 +222,7 @@ export function AppShell({ children, activeMembership, memberships, profileName,
                 {memberships.length > 1 ? <form id="negosu-mobile-business-switcher" action={switchOrganization} className="mt-3 border-t border-admin-border pt-3 xl:hidden"><label className="text-xs font-medium" htmlFor="negosu-mobile-business-switcher-select">Business</label><select id="negosu-mobile-business-switcher-select" name="organizationId" defaultValue={activeMembership.organizationId} className="mt-1 min-h-11 w-full rounded-ui-md border border-admin-border-strong bg-admin-surface px-3 text-sm">{memberships.map((membership) => <option key={membership.organizationId} value={membership.organizationId}>{membership.organizationName}</option>)}</select><SubmitButton id="negosu-mobile-business-switcher-submit-button" className="mt-2 w-full" pendingText="Switching…" variant="secondary"><ArrowRightLeftIcon aria-hidden="true" size={16} className="shrink-0"/>Switch business</SubmitButton></form> : null}
                 <Link id="negosu-user-menu-continue-setup-link" href="/onboarding/setup" className="mt-3 block rounded-ui-md px-2 py-2 text-sm font-medium text-admin-text hover:bg-admin-surface-muted">Continue setup</Link>
                 <Link id="user-menu-profile-settings-link" href="/dashboard/settings" className="mt-1 block rounded-ui-md px-2 py-2 text-sm font-medium text-admin-text hover:bg-admin-surface-muted">Profile settings</Link>
+                {platformAdmin ? <Link id="user-menu-platform-admin" href="/admin" className="block rounded-ui-md px-2 py-2 text-sm font-medium text-admin-text hover:bg-admin-surface-muted">Platform admin</Link> : null}
                 <form id="user-menu-sign-out-form" action={signOut}><SubmitButton id="user-menu-sign-out-button" className="w-full justify-start px-2" pendingText="Signing out…" variant="destructive"><LogOutIcon aria-hidden="true" size={16} className="shrink-0"/>Sign out</SubmitButton></form>
               </div>
             </DismissibleDetails>

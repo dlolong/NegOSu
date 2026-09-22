@@ -1,3 +1,5 @@
+import { DashboardChart } from "@/components/dashboard-chart";
+import { statusChart } from "@/modules/platform/chart-data";
 
 import { ArrowRight as ArrowRightIcon, Plus as PlusIcon, Settings as SettingsIcon } from "lucide-react";
 import Link from "next/link";
@@ -83,6 +85,7 @@ async function StaffOperationalDashboard({ query, context }: { query: DashboardQ
   return <main id="negosu-staff-dashboard-page" className="mx-auto max-w-6xl pb-5">
     {query.error ? <div id="negosu-staff-dashboard-message" role="alert" className="mb-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">{query.error}</div> : null}
     <header id="negosu-staff-dashboard-header" className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-admin-border bg-admin-surface px-4 py-4 shadow-sm min-w-0 [&>a]:ml-auto [&>button]:ml-auto [&>form]:ml-auto"><div className="min-w-0 flex-1 basis-full sm:basis-64 [overflow-wrap:anywhere]"><Badge>{activeMembership.branchName}</Badge><h1 className="mt-2 text-2xl font-medium text-admin-text">Welcome, {firstName(profile.fullName)}.</h1><p className="mt-1 text-sm text-slate-500">Your operational view for today.</p></div>{canCreate ? <Button className="ml-auto" asChild><Link id="negosu-staff-dashboard-new-appointment" href="/dashboard/appointments/new"><PlusIcon aria-hidden="true" size={16} className="shrink-0"/>New Appointment</Link></Button> : null}</header>
+    {!error ? <DashboardChart id="staff-appointments-chart" title="Appointment status" description="Today · Status of the first 10 appointments in this branch schedule." points={statusChart(appointments)}/> : null}
     <section id="negosu-staff-dashboard-today" className="mt-3 rounded-2xl border border-admin-border bg-admin-surface p-4 shadow-sm"><div className="flex justify-between gap-3 items-center flex-wrap min-w-0 [&>a]:ml-auto [&>button]:ml-auto [&>form]:ml-auto"><div className="min-w-0 flex-1 basis-full sm:basis-64 [overflow-wrap:anywhere]"><h2 className="font-medium text-admin-text">Today&apos;s Appointments</h2><p className="text-xs text-slate-500">A compact branch schedule with no financial or organization-wide metrics.</p></div><Link className="text-sm font-medium text-brand-primary-strong" href="/dashboard/appointments">View all</Link></div>
       {error ? <p id="negosu-staff-dashboard-error" role="alert" className="mt-3 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">Unable to load today&apos;s appointments.</p> : null}
       <div className="mt-3 divide-y divide-slate-100">{appointments.map((appointment) => {

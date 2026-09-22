@@ -1,5 +1,6 @@
 "use server";
 
+import { isPlatformAdmin } from "@/modules/platform/admin-access";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
@@ -43,6 +44,7 @@ export async function signIn(formData: FormData) {
     redirect(withMessage(loginPath, "error", message));
   }
 
+  if ((next === "/admin" || next.startsWith("/admin/")) && isPlatformAdmin(data.user.id, process.env.PLATFORM_ADMIN_USER_IDS)) redirect(next);
   const destination = await resolveOnboardingDestination(supabase, data.user.id);
   if (destination.organizationId) {
     const cookieStore = await cookies();

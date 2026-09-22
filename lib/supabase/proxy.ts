@@ -20,7 +20,7 @@ export async function refreshSession(request: NextRequest) {
 
   const { data: { user } } = await supabase.auth.getUser();
   const pathname = request.nextUrl.pathname;
-  const protectedRoute = ["/dashboard", "/onboarding", "/customers", "/vehicles", "/appointments", "/jobs", "/services", "/inventory", "/reports", "/settings"].some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`));
+  const protectedRoute = ["/admin", "/dashboard", "/onboarding", "/customers", "/vehicles", "/appointments", "/jobs", "/services", "/inventory", "/reports", "/settings"].some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`));
 
   if (!user && protectedRoute) {
     const url = request.nextUrl.clone();
@@ -35,5 +35,9 @@ export async function refreshSession(request: NextRequest) {
     for(const [name,value] of Object.entries(privateHeaders))response.headers.set(name,value);
   }
 
+  if (pathname === "/admin" || pathname.startsWith("/admin/")) {
+    response.headers.set("Cache-Control", "private, no-store");
+    response.headers.set("X-Robots-Tag", "noindex, nofollow");
+  }
   return response;
 }

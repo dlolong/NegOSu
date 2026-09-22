@@ -1,3 +1,5 @@
+import { DashboardChart } from "@/components/dashboard-chart";
+import { statusChart } from "@/modules/platform/chart-data";
 import Link from "next/link";
 import { Pencil, Plus, Search, LogIn, LogOut, CheckCheck } from "lucide-react";
 import { z } from "zod";
@@ -38,6 +40,7 @@ export default async function RoomsPage({ searchParams }: { searchParams: Promis
   const price = (r: Room) => r.rates.length ? `From ${formatMoney(Math.min(...r.rates.map(rate => rate.priceCentavos)), m.currency)}` : "Rates not configured";
   return <main id="hospitality-rooms-page" className="mx-auto min-w-0 max-w-7xl">
     <PageHeader id="hospitality-rooms-header" eyebrow={m.branchName} title="Rooms" description="See every room and its current status. Check in available rooms, check out occupied rooms, and mark cleaned rooms ready." action={manage ? <Button id="hospitality-add-room-button" asChild><Link href={`${base}?tab=${tab}&dialog=room`}><Plus size={16}/>Add room</Link></Button> : undefined}/>
+    {!rooms.error ? <DashboardChart id="hospitality-room-chart" title="Room availability" description="Current branch · Rooms on this page, including any search filter (up to 50)." points={statusChart(rows.map(room => ({ status: room.occupancy_status })))}/> : null}
     <ListTabs id="hospitality-rooms-tabs" baseHref={base} query={{}} value={tab} options={[{ value: "all", label: "Rooms" }, { value: "history", label: "Stay history" }]} parameter="tab"/>
     <form className="my-4 flex items-end gap-2"><input type="hidden" name="tab" value={tab}/><Field label="Search rooms"><input id="hospitality-room-search" className={fieldClass} name="q" defaultValue={q.q} placeholder="Room name or number"/></Field><Button id="hospitality-room-search-button" type="submit" variant="secondary"><Search size={16}/><span className="sr-only sm:not-sr-only">Search</span></Button></form>
     {rooms.error ? <LoadError/> : <RecordTable id="hospitality-room-grid" caption="Rooms and current occupancy" empty="No rooms found." columns={[{ key: "room", label: "Room" }, { key: "status", label: "Status", secondary: true, className: "lg:w-32" }, { key: "period", label: "Stay / rate", secondary: true }, { key: "capacity", label: "Capacity", secondary: true }, { key: "actions", label: "Actions", align: "right", className: "w-36 sm:w-56" }]} rows={rows.map(r => {
