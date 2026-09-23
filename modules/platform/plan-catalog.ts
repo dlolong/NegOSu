@@ -12,8 +12,8 @@ export type LaunchPlan = {
 };
 
 /**
- * Customer-facing launch catalog shared by public Plans and authenticated Billing.
- * Keep the matching database plan rows and Stripe Prices synchronized with this file.
+ * Launch feature descriptions and Stripe price baseline. Public names and prices
+ * are read from the database catalog; checkout uses authoritative database quotes.
  */
 export const launchPlanCatalog: readonly LaunchPlan[] = [
   {
@@ -72,7 +72,7 @@ export function formatPlanPrice(priceCentavos: number) {
   return new Intl.NumberFormat("en-PH", {
     style: "currency",
     currency: "PHP",
-    maximumFractionDigits: 0,
+    maximumFractionDigits: 2,
   }).format(priceCentavos / 100);
 }
 
@@ -103,4 +103,11 @@ export function visiblePlanFeatureLabels(industry: string, features: Record<stri
   // `ai` exists in the historical entitlement catalog but has no launch-ready
   // customer workflow. Do not advertise it until the product enables one.
   return labels;
+}
+
+export function presentLivePlans(rows: readonly { id: string; name: string; monthly_price_centavos: number; yearly_price_centavos: number | null; is_custom: boolean }[]): LaunchPlan[] {
+  return rows.flatMap(row => {
+    const template = findLaunchPlan(row.id);
+    return template ? [{ ...template, name: row.name, monthlyPriceCentavos: Number(row.monthly_price_centavos), yearlyPriceCentavos: row.yearly_price_centavos == null ? null : Number(row.yearly_price_centavos), custom: row.is_custom }] : [];
+  });
 }

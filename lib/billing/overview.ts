@@ -33,10 +33,12 @@ export async function loadBillingOverview(db: Pick<SupabaseClient, "from" | "rpc
     const config = configurations.get(plan.id);
     const fullPlan = { ...plan, is_custom: config?.is_custom ?? findLaunchPlan(plan.id)?.custom ?? false };
     const matchesCatalog = planMatchesLaunchCatalog(fullPlan);
+    // Stripe IDs stay usable after a display-name edit; price drift still fails closed.
+    const matchesProviderPrices = planMatchesLaunchCatalog({ ...fullPlan, name: findLaunchPlan(plan.id)?.name ?? fullPlan.name });
     return {
       ...fullPlan, matchesCatalog,
-      provider_monthly_price_id: paymentSetupAvailable && matchesCatalog ? config?.provider_monthly_price_id ?? null : null,
-      provider_yearly_price_id: paymentSetupAvailable && matchesCatalog ? config?.provider_yearly_price_id ?? null : null,
+      provider_monthly_price_id: paymentSetupAvailable && matchesProviderPrices ? config?.provider_monthly_price_id ?? null : null,
+      provider_yearly_price_id: paymentSetupAvailable && matchesProviderPrices ? config?.provider_yearly_price_id ?? null : null,
     };
   });
   return {

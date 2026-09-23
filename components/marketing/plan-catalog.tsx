@@ -1,10 +1,16 @@
+import { createPublicClient } from "@/lib/supabase/public";
 import { petCareBrand } from "@/modules/platform/brand";
 import { Check } from "lucide-react";
 import Link from "next/link";
 
-import { launchPlanCatalog, formatPlanPrice } from "@/modules/platform/plan-catalog";
+import { presentLivePlans, formatPlanPrice } from "@/modules/platform/plan-catalog";
 
-export function PublicPlanCatalog({ compact = false }: { compact?: boolean }) {
+export async function PublicPlanCatalog({ compact = false }: { compact?: boolean }) {
+  let plans: ReturnType<typeof presentLivePlans> = [];
+  try {
+    const { data, error } = await createPublicClient().rpc("public_plan_catalog");
+    if (!error && data) plans = presentLivePlans(data);
+  } catch { /* Do not advertise stale fallback prices when the catalog is unavailable. */ }
   return (
     <section id={compact ? "negosu-home-plans" : "negosu-plans-catalog"} aria-labelledby={compact ? "negosu-home-plans-title" : "negosu-plans-title"} className={compact ? "border-y border-zinc-100 bg-zinc-50" : "bg-white"}>
       <div className="mx-auto max-w-7xl px-4 py-14 sm:px-6 sm:py-18">
@@ -19,8 +25,9 @@ export function PublicPlanCatalog({ compact = false }: { compact?: boolean }) {
 
         <p id={compact ? "negosu-home-pet-care-note" : "negosu-plans-pet-care-note"} className="mt-4 rounded-xl border border-brand-border bg-brand-tint p-4 text-sm leading-6 text-zinc-600">Pet Care includes grooming appointments, pet records, and pickup tracking. Public pages and reminders follow your selected plan. <Link href={petCareBrand.path} className="text-brand-primary-strong underline">Explore Pet Care.</Link></p>
 
+        {!plans.length ? <p id="negosu-plans-unavailable" role="status" className="mt-6 text-sm">Plan prices are temporarily unavailable. Please try again shortly.</p> : null}
         <div id="negosu-plan-grid" className="mt-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
-          {launchPlanCatalog.map((plan) => (
+          {plans.map((plan) => (
             <article id={`negosu-plan-${plan.id}`} key={plan.id} className={`relative flex min-w-0 flex-col rounded-ui-lg border bg-white p-5 shadow-ui-sm ${plan.recommended ? "border-brand-primary ring-2 ring-blue-100" : "border-zinc-200"}`}>
               {plan.recommended ? <span className="mb-3 w-fit rounded-full bg-brand-tint px-2.5 py-1 text-xs font-medium text-brand-primary-strong">Most popular</span> : null}
               <h3 className="text-lg font-medium">{plan.name}</h3>

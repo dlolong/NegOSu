@@ -9,7 +9,7 @@ export const adminSections = {
   payments: "Payments", events: "Billing events", plans: "Plan catalog",
 } as const;
 export type AdminSection = keyof typeof adminSections;
-export type AdminQuery = { page?: string; q?: string; status?: string; mode?: string };
+export type AdminQuery = { page?: string; q?: string; status?: string; mode?: string; edit?: string };
 export type AdminOverview = {
   users: number; businesses: number; activeBusinesses: number; unverifiedUsers: number;
   pastDue: number; reviewOrders: number; webhookErrors: number; collected: number;
@@ -45,10 +45,10 @@ export async function loadAdminDirectory(section: AdminSection, query: AdminQuer
   }
   const definitions = {
     businesses: ["organizations", "id,name,slug,industry,status,created_at", "created_at"],
-    subscriptions: ["organization_subscriptions", "organization_id,plan_id,status,provider,current_period_end,cancel_at_period_end,billing_interval,organizations(name)", "created_at"],
+    subscriptions: ["organization_subscriptions", "organization_id,plan_id,status,provider,current_period_end,cancel_at_period_end,billing_interval,updated_at,organizations(name)", "created_at"],
     payments: ["billing_orders", "id,organization_id,plan_name,billing_interval,amount_centavos,currency,status,kind,livemode,created_at,paid_at,organizations(name)", "created_at"],
     events: ["billing_webhook_events", "id,provider,event_type,created_at,processed_at,processing_error", "created_at"],
-    plans: ["plans", "id,name,monthly_price_centavos,yearly_price_centavos,is_active,is_custom", "sort_order"],
+    plans: ["plans", "id,name,monthly_price_centavos,yearly_price_centavos,is_active,is_custom,admin_revision", "sort_order"],
   } as const;
   const [table, projection, order] = definitions[section];
   let request = db.from(table as string).select(projection as string, { count: "exact" });
@@ -68,4 +68,11 @@ export async function loadAdminDirectory(section: AdminSection, query: AdminQuer
     return { ...safe, processing_status: processing_error != null ? "Error" : row.processed_at ? "Processed" : "Pending" };
   }) : rows;
   return { rows: safeRows, total: count ?? 0, page, term, status, livemode };
+}
+
+export async function loadAdminPlanOptions() {
+  await requirePlatformAdmin();
+  const { data, error } = await createAdminClient().from("plans").select("id,name").eq("is_active", true).order("sort_order");
+  if (error) throw new Error("Unable to load plans.");
+  return data ?? [];
 }

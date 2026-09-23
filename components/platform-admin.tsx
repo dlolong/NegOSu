@@ -35,7 +35,7 @@ function organization(row: AdminRow) {
   return related && typeof related === "object" && "name" in related ? String(related.name) : value(row, "organization_id");
 }
 
-export function PlatformDirectory({ section, rows }: { section: AdminSection; rows: AdminRow[] }) {
+export function PlatformDirectory({ section, rows, baseHref }: { section: AdminSection; rows: AdminRow[]; baseHref?: string }) {
   const headers: Record<AdminSection, [string, string, string]> = {
     signups: ["Account", "Activity · UTC", "Verification"], businesses: ["Business", "Created · UTC", "Status"],
     subscriptions: ["Business / plan", "Period ends · UTC", "Status"], payments: ["Business / order", "Payment · UTC", "Amount / status"],
@@ -53,6 +53,6 @@ export function PlatformDirectory({ section, rows }: { section: AdminSection; ro
       case "events": title = value(row, "event_type"); subtitle = value(row, "provider"); detail = date(row.created_at); status = value(row, "processing_status"); break;
       case "plans": title = value(row, "name"); subtitle = `${row.is_active ? "Active" : "Inactive"}${row.is_custom ? " · Custom" : ""}`; detail = row.yearly_price_centavos == null ? "Not offered" : money(row.yearly_price_centavos); status = money(row.monthly_price_centavos); break;
     }
-    return { id: `admin-${section}-${id}`, cells: { primary: <><strong className="text-sm">{title}</strong><p className="mt-1 text-xs capitalize text-admin-text-secondary">{subtitle}</p><p className="mt-1 break-all font-mono text-[10px] text-admin-text-muted">{id}</p></>, detail, status: <span className="text-xs capitalize">{status}</span> }, mobile: detail };
+    return { id: `admin-${section}-${id}`, cells: { primary: <><strong className="text-sm">{title}</strong><p className="mt-1 text-xs capitalize text-admin-text-secondary">{subtitle}</p><p className="mt-1 break-all font-mono text-[10px] text-admin-text-muted">{id}</p></>, detail, status: <><span className="text-xs capitalize">{status}</span>{baseHref && ["signups", "businesses", "subscriptions", "plans"].includes(section) ? <Link id={`admin-manage-${section}-${id}`} href={`${baseHref}&edit=${encodeURIComponent(id)}`} className="mt-2 block text-xs font-medium text-brand-primary underline">{section === "signups" || section === "businesses" ? "Delete" : "Edit"}</Link> : null}</> }, mobile: detail };
   })}/>;
 }

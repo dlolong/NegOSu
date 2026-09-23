@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 import { ArrowRight as ArrowRightIcon, ArrowRight, Boxes, Building2, CalendarDays, CarFront, CheckCircle2, CreditCard, PawPrint, Scissors, ShieldCheck, Store, Users } from "lucide-react";
 import type { Metadata } from "next";
 
