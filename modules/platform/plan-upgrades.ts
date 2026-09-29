@@ -14,7 +14,7 @@ export type UpgradeState = {
   current: z.infer<typeof upgradeEntitlementsSchema>;
   higherPlans: z.infer<typeof upgradePlanSchema>[];
 };
-export type UpgradeCapability = "advanced_reports" | "public_page" | "reminders" | "staff" | "branches" | "monthly_jobs";
+export type UpgradeCapability = "image_uploads" | "advanced_reports" | "public_page" | "reminders" | "staff" | "branches" | "monthly_jobs";
 
 /** Presentation only: effective entitlements and database enforcement remain authoritative. */
 export function resolveUpgradeState(entitlements: unknown, catalog: unknown): UpgradeState | null {
@@ -38,6 +38,7 @@ function supportsCapability(industry: IndustryKey, capability: UpgradeCapability
 }
 
 const featureLabels = {
+  image_uploads: "direct image uploads",
   advanced_reports: "custom report dates, detailed reports and CSV exports",
   public_page: "publishing your public website and accepting online booking requests",
   reminders: "maintenance reminders",

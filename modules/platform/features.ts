@@ -1,7 +1,7 @@
 import type { Permission } from "@/lib/rbac";
 import type { IndustryFeatureKey } from "@/modules/platform/industry";
 
-export const subscriptionFeatureKeys = ["public_page", "reminders", "advanced_reports", "ai"] as const;
+export const subscriptionFeatureKeys = ["image_uploads", "public_page", "reminders", "advanced_reports", "ai"] as const;
 export type SubscriptionFeatureKey = (typeof subscriptionFeatureKeys)[number];
 
 export type FeatureAccessRequirement = {

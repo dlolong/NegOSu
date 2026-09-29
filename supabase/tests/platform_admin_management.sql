@@ -1,0 +1,36 @@
+begin;
+create extension if not exists pgtap with schema extensions;
+set search_path=public,extensions;
+select no_plan();
+select ok(not has_function_privilege('anon','public.platform_admin_mutate(uuid,uuid,text,text,text,jsonb,text,text)','execute'),'anonymous mutation denied');
+select ok(not has_function_privilege('authenticated','public.platform_admin_mutate(uuid,uuid,text,text,text,jsonb,text,text)','execute'),'tenant mutation denied');
+select ok(not has_table_privilege('authenticated','public.platform_admin_audit','select'),'audit hidden from tenants');
+insert into auth.users(id,instance_id,aud,role,email,encrypted_password,raw_app_meta_data,raw_user_meta_data,created_at,updated_at) values
+('99100000-0000-4000-8000-000000000001','00000000-0000-0000-0000-000000000000','authenticated','authenticated','admin-management@test.local','','{}','{}',now(),now()),
+('99100000-0000-4000-8000-000000000002','00000000-0000-0000-0000-000000000000','authenticated','authenticated','admin-delete@test.local','','{}','{}',now(),now());
+insert into organizations(id,name,slug) values('99000000-0000-4000-8000-000000000001','Admin test','admin-management-test');
+insert into organization_memberships(organization_id,user_id,role) values('99000000-0000-4000-8000-000000000001','99100000-0000-4000-8000-000000000002','owner');
+insert into organization_subscriptions(organization_id,plan_id,status) values('99000000-0000-4000-8000-000000000001','free','free') on conflict(organization_id) do nothing;
+insert into plans(id,name,monthly_price_centavos,yearly_price_centavos) values('admin_test_plan','Test Plan',10000,100000);
+set local role service_role;
+select lives_ok($$select platform_admin_mutate('99100000-0000-4000-8000-000000000001','99200000-0000-4000-8000-000000000001','update_plan','admin_test_plan','0','{"name":"Edited plan","monthly":12345,"yearly":123450}','Test catalog edit','')$$,'plan update');
+select is((select name from plans where id='admin_test_plan'),'Edited plan','name saved');
+select is((select monthly_price_centavos from public_plan_catalog() where id='admin_test_plan'),12345::bigint,'public catalog updated');
+select lives_ok($$select platform_admin_mutate('99100000-0000-4000-8000-000000000001','99200000-0000-4000-8000-000000000001','update_plan','admin_test_plan','0','{"name":"Edited plan","monthly":12345,"yearly":123450}','Test catalog edit','')$$,'idempotent retry');
+select is((select count(*) from platform_admin_audit where request_id='99200000-0000-4000-8000-000000000001'),1::bigint,'one audit per request');
+select throws_ok($$select platform_admin_mutate('99100000-0000-4000-8000-000000000001',gen_random_uuid(),'update_plan','admin_test_plan','0','{"name":"Stale edit","monthly":100,"yearly":1000}','Test stale edit','')$$,'40001','Record changed; reload and try again','stale price rejected');
+select throws_ok($$select platform_admin_mutate('99100000-0000-4000-8000-000000000001',gen_random_uuid(),'delete_user','99100000-0000-4000-8000-000000000002','','{}','Test delete owner','DELETE 99100000-0000-4000-8000-000000000002')$$,'22023','Transfer business ownership before deleting this user','last owner protected');
+select throws_ok($$select platform_admin_mutate('99100000-0000-4000-8000-000000000001',gen_random_uuid(),'delete_user','99100000-0000-4000-8000-000000000001','','{}','Test delete self','DELETE 99100000-0000-4000-8000-000000000001')$$,'22023','You cannot delete your own account','self deletion denied');
+select lives_ok(format($q$select platform_admin_mutate('99100000-0000-4000-8000-000000000001',gen_random_uuid(),'update_subscription','99000000-0000-4000-8000-000000000001',%L,%L,'Test access grant','')$q$,(select updated_at::text from organization_subscriptions where organization_id='99000000-0000-4000-8000-000000000001'),jsonb_build_object('planId','admin_test_plan','status','active','expiresAt',now()+interval '1 month')::text),'manual subscription update');
+select is(effective_entitlements('99000000-0000-4000-8000-000000000001')->>'planId','admin_test_plan','manual entitlement active');
+select throws_ok($$select platform_admin_mutate('99100000-0000-4000-8000-000000000001',gen_random_uuid(),'delete_business','99000000-0000-4000-8000-000000000001','','{}','Test active deletion','DELETE 99000000-0000-4000-8000-000000000001')$$,'22023','Business has retained billing or stay records','active subscription blocks deletion');
+reset role;
+update organization_subscriptions set current_period_end=now()-interval '1 day' where organization_id='99000000-0000-4000-8000-000000000001';
+select is(effective_entitlements('99000000-0000-4000-8000-000000000001')->>'planId','free','manual grant expires');
+update organization_subscriptions set status='cancelled' where organization_id='99000000-0000-4000-8000-000000000001';
+set local role service_role;
+select lives_ok($$select platform_admin_mutate('99100000-0000-4000-8000-000000000001',gen_random_uuid(),'delete_business','99000000-0000-4000-8000-000000000001','','{}','Test empty deletion','DELETE 99000000-0000-4000-8000-000000000001')$$,'empty business deletion');
+select lives_ok($$select platform_admin_mutate('99100000-0000-4000-8000-000000000001',gen_random_uuid(),'delete_user','99100000-0000-4000-8000-000000000002','','{}','Test user deletion','DELETE 99100000-0000-4000-8000-000000000002')$$,'unreferenced user deletion');
+select is((select count(*) from platform_admin_audit where action='delete_business' and target_id='99000000-0000-4000-8000-000000000001'),1::bigint,'audit survives deletion');
+select * from finish();
+rollback;

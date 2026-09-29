@@ -1,0 +1,22 @@
+import { expect, test } from "@playwright/test";
+import { renderFormFixture } from "./fixtures/form-browser";
+let html: string;
+const id = "a1000000-0000-4000-8000-000000000001";
+test.beforeAll(async () => { html = await renderFormFixture("e2e/fixtures/service-thumbnail.tsx"); });
+test("service previews handle images, failures and removal without overflow", async ({ page }) => {
+  const submissions: unknown[] = [];
+  await page.exposeFunction("recordFormAction", (name: string, entries: unknown) => { submissions.push({ name, entries }); });
+  await page.route("https://photos.test/**", route => route.request().url().endsWith("broken.png") ? route.fulfill({ status: 404 }) : route.fulfill({ contentType: "image/svg+xml", body: '<svg xmlns="http://www.w3.org/2000/svg" width="640" height="400"><rect width="640" height="400" fill="#b8cddd"/></svg>' }));
+  await page.route("https://thumbnail.test/**", route => route.fulfill({ contentType: "text/html", body: html }));
+  await page.goto("https://thumbnail.test/");
+  await expect(page.locator("#public-valid-photo img")).toBeVisible();
+  await expect(page.locator("#public-empty-photo")).toContainText("Service preview");
+  await expect(page.locator("#public-broken-photo")).toContainText("Photo unavailable");
+  await page.locator(`#service-thumbnail-clear-${id}`).click();
+  await expect(page.locator(`#service-thumbnail-url-${id}`)).toHaveValue("");
+  await expect(page.locator(`#service-thumbnail-preview-${id}`)).toContainText("Service preview");
+  await page.locator(`#service-thumbnail-save-${id}`).click();
+  await expect.poll(() => submissions.length).toBe(1);
+  expect(submissions[0]).toEqual({ name: "saveServiceThumbnail", entries: [["serviceId", id], ["thumbnailUrl", ""]] });
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(page.viewportSize()!.width);
+});

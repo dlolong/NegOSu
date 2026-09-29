@@ -1,3 +1,5 @@
+import { ImageUploadField } from "@/components/image-upload-field";
+import { ServiceThumbnailForm } from "@/components/service-thumbnail-form";
 import { PlanUpgradeNotice } from "@/components/plan-upgrade";
 import { LocationMapField, PublicBranchForm } from "@/components/location-map-field";
 import { LocationMap } from "@/components/location-map";
@@ -61,7 +63,7 @@ export default async function Page({
         .order("name"),
       supabase
         .from("services")
-        .select("id,name,is_public")
+        .select("id,name,is_public,thumbnail_url")
         .eq("organization_id", activeMembership.organizationId)
         .eq("is_active", true)
         .order("name"),
@@ -137,9 +139,9 @@ export default async function Page({
                 className="mt-1.5 min-h-28 w-full rounded-ui-md border border-admin-border bg-white p-3"
               />
             </label>
-            <PublicPageField id="public-page-logo-url-input" label="Business logo URL" name="logoUrl" value={organization?.logo_url} />
+            <ImageUploadField id="public-page-logo-url-input" label="Business logo URL" name="logoUrl" value={organization?.logo_url} />
             <p className="col-span-full -mt-2 text-xs text-admin-text-muted">This logo also represents your business inside the workspace. You can update it in Profile and workspace settings.</p>
-            <PublicPageField id="public-page-cover-url-input" label="Cover image URL" name="coverUrl" value={organization?.cover_url} />
+            <ImageUploadField id="public-page-cover-url-input" label="Cover image URL" name="coverUrl" value={organization?.cover_url} />
             <PublicPageField id="public-page-website-input" label="Website URL" name="website" value={organization?.website} />
             <PublicPageField id="public-page-facebook-input" label="Facebook URL" name="facebookPage" value={organization?.facebook_page} />
             <PublicPageField id="public-page-instagram-input" label="Instagram URL" name="instagramUrl" value={organization?.instagram_url} />
@@ -152,6 +154,7 @@ export default async function Page({
           <p className="mt-1 text-sm text-admin-text-muted">Only services marked Visible publicly appear in the Request Booking dropdown.</p>
           <div id="public-services-list" className="mt-4 divide-y divide-admin-border">
             {services?.map((service) => (
+              <div key={service.id}>
               <form
                 id={`public-service-form-${service.id}`}
                 action={togglePublicService}
@@ -168,6 +171,8 @@ export default async function Page({
                   {service.is_public ? "Hide" : "Publish"}
                 </SubmitButton>
               </form>
+              <ServiceThumbnailForm key={`${service.id}-${service.thumbnail_url ?? ""}`} service={service}/>
+              </div>
             ))}
             {!services?.length ? <p id="public-services-empty-state" className="py-4 text-sm text-admin-text-muted">No active services are available. Create a service before enabling online booking.</p> : null}
           </div>
@@ -217,7 +222,7 @@ export default async function Page({
           <div><h2 className="font-medium text-admin-text">Gallery</h2><p className="mt-1 text-sm text-admin-text-muted">Add clear, well-lit photos that help customers understand your business.</p></div>
           <div className="mt-4 grid gap-5 lg:grid-cols-[minmax(0,22rem)_minmax(0,1fr)]">
             <form id="public-gallery-form" action={addGalleryImage} className="grid content-start gap-4 rounded-ui-lg bg-admin-surface-muted p-4">
-              <PublicPageField id="public-gallery-url-input" label="Public image URL" name="url" type="url" required />
+              <ImageUploadField id="public-gallery-url-input" label="Gallery photo" name="url" required />
               <PublicPageField id="public-gallery-alt-input" label="Image description" name="alt" required />
               <FormActions id="public-gallery-actions" cancelHref="/dashboard/settings/public-page?tab=profile"><SubmitButton id="public-gallery-add-button" pendingText="Adding…"><PlusIcon aria-hidden="true" size={16} className="shrink-0"/>Add image</SubmitButton></FormActions>
             </form>

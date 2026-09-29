@@ -4,7 +4,7 @@ import { renderFormFixture } from "./fixtures/form-browser";
 test.use({ browserName: "chromium" });
 let html: string;
 test.beforeAll(async () => { html = await renderFormFixture("e2e/fixtures/staff-access.tsx"); });
-for (const industry of ["salon", "automotive"]) for (const mode of ["grant", "replace", "manage", "profile"]) {
+for (const industry of ["salon", "automotive", "pet_care", "hospitality"]) for (const mode of ["grant", "replace", "manage", "profile"]) {
   test(`${industry} ${mode} keeps fields and actions aligned and working`, async ({ page }) => {
     const submissions: Array<{ name: string; entries: Array<[string, string]> }> = [];
     await page.exposeFunction("recordFormAction", (name: string, entries: Array<[string, string]>) => { submissions.push({ name, entries }); });
@@ -66,3 +66,37 @@ for (const industry of ["salon", "automotive"]) {
     await expect(details).not.toHaveAttribute("open");
   });
 }
+
+for (const [industry, expected, excluded] of [
+  ["hospitality", "Receptionist", ["Facialist", "Groomer", "Master Technician"]],
+  ["pet_care", "Groomer", ["Facialist", "Housekeeper", "Master Technician"]],
+  ["automotive", "Master Technician", ["Facialist", "Groomer", "Housekeeper"]],
+  ["salon", "Facialist", ["Groomer", "Housekeeper", "Master Technician"]],
+] as const) {
+  test(`${industry} job functions are isolated and custom titles remain editable`, async ({ page }) => {
+    await page.route("https://staff.test/**", route => route.fulfill({ contentType: "text/html", body: html }));
+    await page.goto(`https://staff.test/fixture?mode=profile&industry=${industry}`);
+    const select = page.locator("#staff-job-function-input");
+    for (const value of excluded) await expect(select.locator("option", { hasText: value })).toHaveCount(0);
+    await select.selectOption(expected);
+    await expect(page.locator('input[name="jobFunction"]')).toHaveValue(expected);
+    await select.selectOption("custom");
+    await page.locator("#staff-job-function-custom").fill("Team Lead");
+    await expect(page.locator('input[name="jobFunction"]')).toHaveValue("Team Lead");
+    await select.selectOption("");
+    await expect(page.locator('input[name="jobFunction"]')).toHaveValue("");
+    await expect(page.locator("#staff-job-function-custom")).toHaveCount(0);
+    await page.goto(`https://staff.test/fixture?mode=profile&industry=${industry}&jobFunction=Existing%20Title`);
+    await expect(select).toHaveValue("custom");
+    await expect(page.locator("#staff-job-function-custom")).toHaveValue("Existing Title");
+  });
+}
+
+test("hospitality permission reference matches front-desk and cashier check-in access", async ({ page }) => {
+  await page.route("https://staff.test/**", route => route.fulfill({ contentType: "text/html", body: html }));
+  await page.goto("https://staff.test/fixture?mode=permissions&industry=hospitality");
+  await page.locator("#staff-permission-toggle").click();
+  await expect(page.locator("#staff-permission-details")).toContainText("Checkout only");
+  const cashier = page.locator("#staff-permission-details tbody tr").filter({ hasText: "Cashier" });
+  await expect(cashier.locator("td").nth(2)).toHaveText("Manage");
+});

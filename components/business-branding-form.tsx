@@ -1,5 +1,6 @@
 "use client";
 
+import { ImageUploadButton } from "@/components/image-upload-field";
 import { Save as SaveIcon } from "lucide-react";
 
 import { FormActions } from "@/components/form-actions";
@@ -18,6 +19,7 @@ export function BusinessBrandingForm({ name, logoUrl }: { name: string; logoUrl:
       <Input id="settings-business-logo-url-input" name="logoUrl" type="url" maxLength={2048} value={preview} onChange={event => setPreview(event.target.value)} placeholder="https://example.com/your-logo.png" aria-describedby="settings-business-logo-help" className="mt-2"/>
     </label>
     <p id="settings-business-logo-help" className="text-sm text-admin-text-muted">Use a publicly accessible image URL. Your logo appears in your workspace and customer pages. Leave this blank to use your business initials.</p>
+    <ImageUploadButton id="settings-business-logo-upload" onUploaded={setPreview}/>
     <FormActions id="settings-business-branding-actions"><SubmitButton id="settings-business-branding-save-button" pendingText="Saving logo…"><SaveIcon aria-hidden="true" size={16} className="shrink-0"/>Save business logo</SubmitButton></FormActions>
   </form>;
 }

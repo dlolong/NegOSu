@@ -5,7 +5,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireIndustryFeature } from "@/lib/auth/industry-access";
 import { firstError, formValue } from "@/lib/crm";
-import { branchPublicSchema, publicGallerySchema, publicOpeningHoursFromFormData, publicPageSchema, publicServiceSchema } from "@/lib/public-booking";
+import { branchPublicSchema, publicGallerySchema, publicOpeningHoursFromFormData, publicPageSchema, publicServiceSchema, publicServiceThumbnailSchema } from "@/lib/public-booking";
 import { roleHasPermission } from "@/lib/rbac";
 import { createClient } from "@/lib/supabase/server";
 
@@ -57,4 +57,15 @@ export async function addGalleryImage(data: FormData) {
   const { error } = await supabase.from("shop_gallery_images").insert({ organization_id: membership.organizationId, url: parsed.data.url, alt_text: parsed.data.alt });
   if (error) go("error", "Unable to add gallery image.","gallery");
   saved(membership.organizationSlug, "Gallery image added.","gallery");
+}
+
+export async function saveServiceThumbnail(data: FormData) {
+  const membership = await settingsContext();
+  const parsed = publicServiceThumbnailSchema.safeParse({ serviceId: formValue(data, "serviceId"), thumbnailUrl: formValue(data, "thumbnailUrl") });
+  if (!parsed.success) go("error", firstError(parsed.error), "services");
+  const supabase = await createClient();
+  const { data: updated, error } = await supabase.from("services").update({ thumbnail_url: parsed.data.thumbnailUrl || null })
+    .eq("id", parsed.data.serviceId).eq("organization_id", membership.organizationId).eq("is_active", true).select("id").maybeSingle();
+  if (error || !updated) go("error", "Unable to save the service thumbnail.", "services");
+  saved(membership.organizationSlug, "Service thumbnail saved.", "services");
 }

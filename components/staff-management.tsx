@@ -1,3 +1,4 @@
+import { StaffJobFunctionField } from "@/components/staff-job-function-field";
 
 import { RecordTable } from "@/components/record-table";
 import { RecordLink } from "@/components/record-item";
@@ -15,7 +16,6 @@ import {
 import {
   staffAccessStatusLabel,
   staffContactLabel,
-  staffJobFunctionSuggestions,
 } from "@/app/dashboard/settings/staff/staff-forms";
 import { SubmitButton } from "@/components/submit-button";
 import { StaffBranchFieldset as BranchFieldset } from "@/components/staff-branch-fieldset";
@@ -58,7 +58,6 @@ export function StaffProfileForm({ profile, branches, industry, prefix }: {
   industry: StaffManagementIndustry;
   prefix: string;
 }) {
-  const suggestions = staffJobFunctionSuggestions[industry];
   return <form id={`${prefix}-form`} action={saveStaffProfile} className="grid min-w-0 grid-cols-1 gap-4 sm:grid-cols-2">
     <input type="hidden" name="staffId" value={profile?.id ?? ""}/>
     <label className="text-sm font-medium sm:col-span-2">Full name <span aria-hidden="true">*</span>
@@ -73,12 +72,9 @@ export function StaffProfileForm({ profile, branches, industry, prefix }: {
       <span className="mt-1 block text-xs font-normal text-slate-500">Optional — used for Staff notifications when available.</span>
     </label>
     <p className="-mt-2 text-xs text-slate-500 sm:col-span-2">Contact details are optional and do not create a login. System access is managed separately.</p>
-    <label className="text-sm font-medium">Job function <span className="font-normal text-slate-500">(optional)</span>
-      <Input id={`${prefix}-job-function-input`} name="jobFunction" list={`${prefix}-job-function-suggestions`} maxLength={80} defaultValue={profile?.jobFunction ?? ""} className="mt-2" placeholder={industry === "hospitality" ? "e.g. Receptionist" : industry === "pet_care" ? "e.g. Groomer" : industry === "salon" ? "e.g. Senior Stylist" : "e.g. Master Technician"}/>
-      <datalist id={`${prefix}-job-function-suggestions`}>{suggestions.map((suggestion) => <option key={suggestion} value={suggestion}/>)}</datalist>
-    </label>
+    <StaffJobFunctionField key={`${industry}-${profile?.id ?? "new"}`} industry={industry} prefix={prefix} initialValue={profile?.jobFunction ?? ""}/>
     <label className="text-sm font-medium">Specialties <span className="font-normal text-slate-500">(optional)</span>
-      <Input id={`${prefix}-specializations-input`} name="specializations" maxLength={1_000} defaultValue={profile?.specializations.join(", ") ?? ""} className="mt-2" placeholder={industry === "hospitality" ? "Guest service, supplies" : industry === "pet_care" ? "Coat care, nail trimming" : industry === "salon" ? "Hair color, facials" : "Diagnostics, electrical"}/>
+      <Input id={`${prefix}-specializations-input`} name="specializations" autoComplete="off" maxLength={1_000} defaultValue={profile?.specializations.join(", ") ?? ""} className="mt-2" placeholder={industry === "hospitality" ? "Guest service, supplies" : industry === "pet_care" ? "Coat care, nail trimming" : industry === "salon" ? "Hair color, facials" : "Diagnostics, electrical"}/>
     </label>
     <label className="text-sm font-medium">Operational status
       <select id={`${prefix}-status-select`} name="isActive" defaultValue={String(profile?.isActive ?? true)} className="mt-2 min-h-11 w-full rounded-xl border border-slate-300 bg-white px-3">
@@ -146,7 +142,7 @@ export function StaffDirectoryViews({ staff, branches, timezone, industry, prefi
 
 export function PermissionMatrix({ industry, prefix }: { industry: StaffManagementIndustry; prefix: string }) {
   const headings = industry === "hospitality" ? ["Access role", "Guests", "Check-in/out", "Charges & payments", "Inventory", "Settings"] : industry === "pet_care" ? ["Access role", "Pet owners", "Appointments", "Services", "Inventory", "Settings"] : industry === "salon" ? ["Access role", "Clients", "Appointments", "Treatments", "Inventory", "Settings"] : ["Access role", "Customers", "Appointments", "Jobs", "Finance", "Inventory", "Settings"];
-  const rows = industry === "hospitality" ? [["Owner", "Manage", "Manage", "Manage", "Manage", "Manage"], ["Manager", "Manage", "Manage", "Manage", "Manage", "Business settings"], ["Front Desk", "Manage", "Manage", "View", "—", "—"], ["Operations Staff", "View", "View", "—", "—", "—"], ["Cashier", "View", "View", "Manage", "—", "—"], ["Viewer", "View", "View", "—", "—", "—"]] : industry !== "automotive" ? salonPermissions : automotivePermissions;
+  const rows = industry === "hospitality" ? [["Owner", "Manage", "Manage", "Manage", "Manage", "Manage"], ["Manager", "Manage", "Manage", "Manage", "Manage", "Business settings"], ["Front Desk", "Manage", "Checkout only", "View", "—", "—"], ["Operations Staff", "View", "View", "—", "—", "—"], ["Cashier", "View", "Manage", "Manage", "—", "—"], ["Viewer", "View", "View", "—", "—", "—"]] : industry === "pet_care" ? salonPermissions.map(row => [row[0] === "Front Desk / Coordinator" ? "Front Desk" : row[0], ...row.slice(1)]) : industry === "salon" ? salonPermissions : automotivePermissions;
   return <aside id={`${prefix}-permission-matrix`} aria-labelledby={`${prefix}-permission-info-title`} className="mt-4 min-w-0 rounded-xl border border-admin-border bg-admin-surface-muted p-3 text-sm text-admin-text-secondary">
     <div className="flex items-start gap-2"><Info aria-hidden="true" size={16} className="mt-0.5 shrink-0"/><div className="min-w-0"><h2 id={`${prefix}-permission-info-title`} className="text-sm font-medium">About access permissions</h2><p className="mt-1 text-xs">Access roles control what staff can do in the system. They are separate from job functions and apply within assigned access branches.</p></div></div>
     <details id={`${prefix}-permission-details`} className="mt-2">

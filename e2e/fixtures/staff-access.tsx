@@ -1,13 +1,13 @@
 import { createRoot } from "react-dom/client";
 import { FormDialog } from "@/components/management-ui";
-import { PermissionMatrix, StaffAccessForm, StaffProfileForm, type StaffProfileRow } from "@/components/staff-management";
+import { PermissionMatrix, StaffAccessForm, StaffProfileForm, type StaffManagementIndustry, type StaffProfileRow } from "@/components/staff-management";
 
 const params = new URLSearchParams(location.search);
 const mode = params.get("mode") ?? "grant";
-const industry = params.get("industry") === "automotive" ? "automotive" : "salon";
+const industry = (["automotive", "salon", "pet_care", "hospitality"].includes(params.get("industry") ?? "") ? params.get("industry") : "salon") as StaffManagementIndustry;
 const branches = [{ id: "branch-one", name: "Main branch" }, { id: "branch-two", name: "SecondBranch".repeat(6) }];
 const profile: StaffProfileRow = {
-  id: "staff-one", organizationId: "organization-one", fullName: "Ana Santos", jobFunction: null,
+  id: "staff-one", organizationId: "organization-one", fullName: "Ana Santos", jobFunction: params.get("jobFunction"),
   specializations: [], isActive: true, branchIds: ["branch-one"], hasLogin: mode === "manage",
   membershipId: mode === "manage" ? "membership-one" : null, userId: null, email: "ana@example.test", mobile: null,
   systemAccessStatus: mode === "manage" ? "active" : mode === "replace" ? "pending" : "none",
