@@ -4,7 +4,7 @@ import { useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { SlidersHorizontal, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-export function FilterPopover({ id, title = "Filters", children }: { id: string; title?: string; children: ReactNode }) {
+export function FilterPopover({ id, title = "Filters", children, iconOnly = false }: { id: string; title?: string; children: ReactNode; iconOnly?: boolean }) {
   const triggerRef = useRef<HTMLSpanElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
   const [open, setOpen] = useState(false);
@@ -45,8 +45,8 @@ export function FilterPopover({ id, title = "Filters", children }: { id: string;
 
   return <>
     <span ref={triggerRef} className="inline-flex">
-      <Button id={`${id}-button`} variant="secondary" popoverTarget={panelId} aria-haspopup="dialog" aria-controls={panelId} aria-expanded={open}>
-        <SlidersHorizontal size={16} aria-hidden="true"/>Filters
+      <Button id={`${id}-button`} variant="secondary" size={iconOnly ? "icon" : "default"} title={title} aria-label={iconOnly ? title : undefined} popoverTarget={panelId} aria-haspopup="dialog" aria-controls={panelId} aria-expanded={open}>
+        <SlidersHorizontal size={16} aria-hidden="true"/>{iconOnly ? null : "Filters"}
       </Button>
     </span>
     <div ref={panelRef} id={panelId} popover="auto" role="dialog" aria-labelledby={`${id}-title`} onToggle={event => setOpen(event.newState === "open")} className="fixed inset-auto left-4 top-4 m-0 max-h-[calc(100dvh-2rem)] w-[min(24rem,calc(100vw-2rem))] overflow-y-auto overscroll-contain rounded-ui-lg border border-admin-border bg-admin-surface p-4 text-admin-text shadow-ui-lg">

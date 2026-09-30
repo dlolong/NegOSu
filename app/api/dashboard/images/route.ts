@@ -1,6 +1,6 @@
 import { getDashboardContext } from "@/lib/auth/context";
 import { createClient } from "@/lib/supabase/server";
-import { imageFileType, imageUploadAllowed, MAX_IMAGE_BYTES } from "@/modules/platform/image-upload";
+import { imageFileType, imageUploadAccess, IMAGE_UPLOAD_UNAVAILABLE, MAX_IMAGE_BYTES } from "@/modules/platform/image-upload";
 
 const reply = (body: object, status = 200) => Response.json(body, { status, headers: { "Cache-Control": "private, no-store" } });
 
@@ -10,7 +10,9 @@ export async function GET() {
   const db = await createClient();
   const { data, error } = await db.rpc("get_org_entitlements", { p_organization_id: member.organizationId });
   if (error || !data) return reply({ error: "Upload availability could not be checked." }, 503);
-  return reply({ allowed: imageUploadAllowed(data), owner: member.role === "owner" });
+  const access = imageUploadAccess(data);
+  if (access === "unavailable") return reply({ error: IMAGE_UPLOAD_UNAVAILABLE }, 503);
+  return reply({ allowed: access === "allowed", owner: member.role === "owner" });
 }
 
 export async function POST(request: Request) {
@@ -21,7 +23,9 @@ export async function POST(request: Request) {
   const db = await createClient();
   const { data: ent, error: entError } = await db.rpc("get_org_entitlements", { p_organization_id: member.organizationId });
   if (entError || !ent) return reply({ error: "Upload availability could not be checked." }, 503);
-  if (!imageUploadAllowed(ent)) return reply({ error: "Upgrade your plan to upload images.", upgrade: true }, 403);
+  const access = imageUploadAccess(ent);
+  if (access === "unavailable") return reply({ error: IMAGE_UPLOAD_UNAVAILABLE }, 503);
+  if (access === "upgrade") return reply({ error: "Upgrade your plan to upload images.", upgrade: true }, 403);
   // Bound streamed bodies too; Content-Length alone is not trustworthy.
   const reader = request.body?.getReader();
   if (!reader) return reply({ error: "Choose an image." }, 400);

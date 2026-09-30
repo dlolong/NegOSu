@@ -9,7 +9,7 @@ export function PageHeader({ id, eyebrow, title, description, action }: { id: st
 }
 
 export function FilterBar({ id, children }: { id: string; children: ReactNode }) {
-  return <div id={id} className="mt-4 rounded-ui-lg border border-admin-border bg-admin-surface p-3 shadow-ui-sm">{children}</div>;
+  return <div id={id} className="mt-3 min-w-0">{children}</div>;
 }
 
 export function EmptyState({ id, title, description, action }: { id: string; title: string; description: string; action?: ReactNode }) {

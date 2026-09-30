@@ -1,3 +1,4 @@
+import { CompactFilters } from "@/components/compact-filters";
 
 import { RecordLink } from "@/components/record-item";
 import Link from "next/link";
@@ -61,14 +62,14 @@ export function InventoryWorkspace({ stock, movements, branches, services, branc
           type:<span className="capitalize">{movement.type.replaceAll("_"," ")}</span>,date:<time dateTime={movement.createdAt}>{new Intl.DateTimeFormat("en-PH",{dateStyle:"medium",timeStyle:"short",timeZone:timezone}).format(new Date(movement.createdAt))}</time>,quantity:<strong className={Number(movement.quantity)<0?"text-red-700":"text-emerald-700"}>{Number(movement.quantity)>0?"+":""}{quantityLabel(movement.quantity,movement.unit)}</strong>,
         },mobile:<><p className="capitalize">{movement.type.replaceAll("_"," ")}</p><p><time dateTime={movement.createdAt}>{new Intl.DateTimeFormat("en-PH",{dateStyle:"medium",timeStyle:"short",timeZone:timezone}).format(new Date(movement.createdAt))}</time></p></>}))}/>
       </Card> : <>
-        <Card elevation="none" className="min-w-0 p-4 sm:p-5">
-          <form id={`${prefix}-filters`} method="get" action="/dashboard/inventory" className="grid min-w-0 items-end gap-3 sm:grid-cols-2 xl:grid-cols-[minmax(0,2fr)_minmax(0,1fr)_minmax(0,1fr)_auto]">
-            <label className="min-w-0 text-xs font-medium">Search products<Input id={`${prefix}-search-input`} name="q" defaultValue={query.q} placeholder="Product name, SKU or category" className="mt-2"/></label>
+        <div className="min-w-0">
+          <CompactFilters id={`${prefix}-filters`} action="/dashboard/inventory" hasFilters searchLabel="Search products" search={<Input id={`${prefix}-search-input`} name="q" defaultValue={query.q} placeholder="Product name, SKU or category" type="search" className="min-h-11 w-full min-w-0 rounded-ui-md border border-admin-border bg-admin-surface px-3 py-2 text-sm"/>} searchValue={query.q}>
+
             <label className="min-w-0 text-xs font-medium">Category<select id={`${prefix}-category-filter`} name="category" defaultValue={query.category ?? ""} className="mt-2 min-h-11 w-full min-w-0 max-w-full rounded-xl border border-admin-border bg-white px-3 text-sm"><option value="">All categories</option>{categories.map(category => <option key={category} value={category}>{category}</option>)}</select></label>
             <label className="min-w-0 text-xs font-medium">Stock status<select id={`${prefix}-status-filter`} name="status" defaultValue={query.status ?? ""} className="mt-2 min-h-11 w-full min-w-0 rounded-xl border border-admin-border bg-white px-3 text-sm"><option value="">All stock</option><option value="healthy">In stock</option><option value="low">Low stock</option><option value="out">Out of stock</option></select></label>
             <div className="flex flex-wrap justify-end gap-2"><Button id={`${prefix}-filter-button`} type="submit" variant="secondary"><Search size={16} aria-hidden="true"/>Search</Button>{query.q || query.category || query.status ? <Button asChild variant="ghost"><Link id={`${prefix}-clear-filters`} href={inventoryHref()}><X size={16} aria-hidden="true"/>Clear</Link></Button> : null}</div>
-          </form>
-        </Card>
+          </CompactFilters>
+        </div>
         <div className="my-4 flex flex-wrap items-center justify-between gap-2"><h2 className="text-sm font-medium">Branch stock <span className="font-normal text-admin-text-muted">({filtered.length} of {branchStock.length} products)</span></h2><p className="text-xs text-admin-text-muted">On hand is your physical stock balance.</p></div>
         {!rows.length ? <Card id={`${prefix}-empty-state`} elevation="none" className="p-8 text-center"><Package aria-hidden="true" className="mx-auto text-admin-text-muted"/><h3 className="mt-3 font-medium">{branchStock.length ? "No matching products" : "Your inventory starts here"}</h3><p className="mt-2 text-sm text-admin-text-muted">{branchStock.length ? "Try a different search or clear the filters." : canManage ? "Add your first product, then record its opening stock." : "Your manager can add products to this branch."}</p>{branchStock.length ? <Button asChild className="mt-4" variant="outline"><Link href={inventoryHref()}><SlidersHorizontal size={16} aria-hidden="true"/>Clear filters</Link></Button> : null}</Card> : <>
           <RecordTable id={`${prefix}-table`} caption="Branch stock" columns={[{key:"product",label:"Product"},{key:"quantity",label:"On hand",secondary:true},{key:"status",label:"Status",secondary:true},{key:"actions",label:canManage?"Actions":"Stock value",align:"right"}]} rows={rows.map(item=>({id:`${productPrefix}-row-${item.id}`,cells:{

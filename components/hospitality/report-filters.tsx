@@ -13,7 +13,7 @@ export function HospitalityReportFilters({ mode, section, scope, branchName, bra
   branches: readonly { id: string; name: string }[];
 }) {
   const payments = mode === "payments";
-  const form = <form id="hospitality-report-filters" method="get" className={payments ? "grid gap-3 sm:grid-cols-2" : "grid items-end gap-3 border-t border-admin-border p-4 sm:grid-cols-2 lg:grid-cols-5"}>
+  const form = <form id="hospitality-report-filters" method="get" className="grid min-w-0 gap-3 sm:grid-cols-2">
     <input type="hidden" name="section" value={section}/>
     {mode === "history" ? <input type="hidden" name="tab" value="history"/> : null}
     <Field label="Period" full={payments}><select id="hospitality-report-period" name="preset" defaultValue={scope.filters.preset} className={fieldClass}>
@@ -24,9 +24,8 @@ export function HospitalityReportFilters({ mode, section, scope, branchName, bra
     {mode === "report" ? <Field label="Branch"><select id="hospitality-report-branch" name="branch" defaultValue={scope.branch} className={fieldClass}>
       <option value="all">All accessible branches</option>{branches.map(branch => <option key={branch.id} value={branch.id}>{branch.name}</option>)}
     </select></Field> : <p className={payments ? "text-sm text-admin-text-secondary sm:col-span-2" : "text-sm text-slate-500"}>{branchName}</p>}
-    <Button id="hospitality-report-apply" type="submit" variant="secondary" className={payments ? "sm:col-span-2" : undefined}><Search size={16} aria-hidden="true"/>Apply</Button>
+    <Button id="hospitality-report-apply" type="submit" variant="secondary" className="sm:col-span-2"><Search size={16} aria-hidden="true"/>Apply</Button>
   </form>;
 
-  return payments ? <FilterPopover key={`${section}-${scope.filters.preset}-${scope.range.start}-${scope.range.end}`} id="hospitality-payments-filters" title="Payment filters">{form}</FilterPopover> :
-    <details id="hospitality-report-filter-panel" className="my-4 rounded-xl border border-admin-border bg-white shadow-sm"><summary className="min-h-11 cursor-pointer px-4 py-3 text-sm">Period &amp; branch filters</summary>{form}</details>;
+  return <div className="my-3 flex justify-end"><FilterPopover iconOnly key={`${section}-${scope.filters.preset}-${scope.range.start}-${scope.range.end}`} id={payments ? "hospitality-payments-filters" : "hospitality-report-filter-panel"} title={payments ? "Payment filters" : "Period & branch filters"}>{form}</FilterPopover></div>;
 }

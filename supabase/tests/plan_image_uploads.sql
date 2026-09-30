@@ -4,6 +4,11 @@ set search_path=public,extensions;
 select no_plan();
 select is((select (features->>'image_uploads')::boolean from plans where id='free'),false,'Free cannot upload');
 select is((select (features->>'image_uploads')::boolean from plans where id='starter'),true,'Starter can upload');
+select ok(not exists(
+ select 1 from plans where id in ('starter','business','pro','multi_branch')
+ and (jsonb_typeof(limits->'storage_mb') is distinct from 'number'
+   or not ((limits->>'storage_mb')::numeric = -1 or (limits->>'storage_mb')::numeric > 0))
+),'paid plans have usable storage allowances after hosted prerequisite repair');
 select is((select file_size_limit from storage.buckets where id='business-images'),2097152::bigint,'bucket has file size limit');
 insert into auth.users(id,instance_id,aud,role,email,encrypted_password,raw_app_meta_data,raw_user_meta_data,created_at,updated_at) values
 ('a1100000-0000-4000-8000-000000000001','00000000-0000-0000-0000-000000000000','authenticated','authenticated','upload-owner@test.local','','{}','{}',now(),now());

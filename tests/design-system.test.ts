@@ -117,6 +117,7 @@ test("Tabs chooses one longest route match and honors explicit state", () => {
 test("record and settings layouts use shared path-aware Tabs with semantic IDs", () => {
   const sources = [
     read("app/dashboard/settings/layout.tsx"),
+    read("components/settings-navigation.tsx"),
     read("app/dashboard/vehicles/[vehicleId]/layout.tsx"),
     read("app/dashboard/customers/[customerId]/layout.tsx"),
     read("app/dashboard/jobs/[jobId]/layout.tsx"),

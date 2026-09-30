@@ -1,3 +1,4 @@
+import { CompactFilters } from "@/components/compact-filters";
 import { addStarterServices } from "@/app/dashboard/operations-actions";
 import { starterServices, hasStarterCatalog } from "@/modules/core/catalog/starter-services";
 import { SubmitButton } from "@/components/submit-button";
@@ -49,11 +50,11 @@ export default async function Page({ searchParams }: { searchParams: Promise<Cat
       {id:"service-catalog-categories-tab",label:"Categories",href:closeHref,active:categoryTab,count:categories.length},
     ]}/>
     {categoryTab ? <div className="mt-4"><ServiceCategoryList categories={categories} canManage={canManage && !categoryResult.error} salon={salon} q={params.q} category={params.category}/></div> : <>
-      <FilterBar id={salon ? "salon-treatments-filter-bar" : "services-filter-bar"}><form id={salon ? "salon-treatments-filter-form" : "services-filter-form"} className="grid min-w-0 gap-2 sm:grid-cols-[minmax(0,1fr)_minmax(0,14rem)_auto]">
-        <Input id={salon ? "salon-treatments-search-input" : "services-search-input"} aria-label={`Search ${config.terminology.service.toLowerCase()}s`} name="q" defaultValue={params.q} placeholder={`Search ${config.terminology.service.toLowerCase()} name`}/>
+      <FilterBar id={salon ? "salon-treatments-filter-bar" : "services-filter-bar"}><CompactFilters id={salon ? "salon-treatments-filter-form" : "services-filter-form"} hasFilters searchLabel={`Search ${config.terminology.service.toLowerCase()}s`} search={<Input id={salon ? "salon-treatments-search-input" : "services-search-input"} aria-label={`Search ${config.terminology.service.toLowerCase()}s`} name="q" defaultValue={params.q} placeholder={`Search ${config.terminology.service.toLowerCase()} name`} type="search" className="min-h-11 w-full min-w-0 rounded-ui-md border border-admin-border bg-admin-surface px-3 py-2 text-sm"/>} searchValue={params.q}>
+
         <select id={salon ? "salon-treatments-category-filter" : "services-category-filter"} aria-label="Category" className="min-h-11 min-w-0 max-w-full rounded-ui-md border border-admin-border bg-white px-3" name="category" defaultValue={safeFilter ?? ""}><option value="">All categories</option>{categories.map(category => <option key={category.id} value={category.id}>{category.name}</option>)}</select>
         <Button id={salon ? "salon-treatments-filter-button" : "services-filter-button"} type="submit" variant="secondary"><Search aria-hidden="true" size={16} className="shrink-0"/>Search</Button>
-      </form></FilterBar>
+      </CompactFilters></FilterBar>
       <div className="mt-4"><ServiceCatalogList currency={activeMembership.currency} services={services} salon={salon} canManage={canManage}/></div>
     </>}
     {params.dialog === "starter-services" && canManage && hasStarterCatalog(activeMembership.industry) ? <FormDialog id="starter-services-dialog" title="Add starter services" closeHref="/dashboard/services" size="lg">

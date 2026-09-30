@@ -8,5 +8,16 @@ export function imageFileType(bytes: Uint8Array): { extension: string; mime: str
 }
 export function imageUploadAllowed(entitlements: unknown) {
   const ent = entitlements as { features?: { image_uploads?: boolean }; limits?: { storage_mb?: number } } | null;
-  return ent?.features?.image_uploads === true && typeof ent.limits?.storage_mb === "number" && (ent.limits.storage_mb === -1 || ent.limits.storage_mb > 0);
+  return ent?.features?.image_uploads === true && typeof ent.limits?.storage_mb === "number" && Number.isSafeInteger(ent.limits.storage_mb) && (ent.limits.storage_mb === -1 || ent.limits.storage_mb > 0);
+}
+
+export const IMAGE_UPLOAD_UNAVAILABLE = "Image uploads are not configured for this business yet. Contact support to enable them; you do not need to purchase another plan.";
+
+/** Only an effective Free plan should be directed to upgrade. Missing paid-plan
+ * configuration fails closed and must be repaired in the database. */
+export function imageUploadAccess(entitlements: unknown): "allowed" | "upgrade" | "unavailable" {
+  const ent = entitlements as { planId?: string } | null;
+  if (ent?.planId === "free") return "upgrade";
+  if (imageUploadAllowed(entitlements)) return "allowed";
+  return "unavailable";
 }

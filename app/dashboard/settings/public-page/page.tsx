@@ -1,3 +1,4 @@
+import { SettingsFormSection } from "@/components/settings-form-section";
 import { ImageUploadField } from "@/components/image-upload-field";
 import { ServiceThumbnailForm } from "@/components/service-thumbnail-form";
 import { PlanUpgradeNotice } from "@/components/plan-upgrade";
@@ -114,21 +115,25 @@ export default async function Page({
         </div>
       </Card>
 
-      <ListTabs id="website-settings-tabs" baseHref="/dashboard/settings/public-page" query={{}} parameter="tab" value={tab} options={[{value:"profile",label:"Website"},{value:"services",label:"Services",count:publicServiceCount},{value:"locations",label:"Locations",count:branches.length},{value:"gallery",label:"Gallery",count:gallery.length}]}/>
+      <ListTabs wrap id="website-settings-tabs" baseHref="/dashboard/settings/public-page" query={{}} parameter="tab" value={tab} options={[{value:"profile",label:"Business details"},{value:"services",label:"Services",count:publicServiceCount},{value:"locations",label:"Locations & hours",count:branches.length},{value:"gallery",label:"Gallery",count:gallery.length}]}/>
       <div id="public-page-settings-grid" className="mt-6 grid min-w-0 gap-5">
-        {tab==="profile"?<Card id="public-page-profile-card" className="p-5">
-          <h2 className="font-medium text-admin-text">Business website</h2>
+        {tab==="profile"?<Card id="public-page-profile-card" className="p-4 sm:p-6">
+          <h2 className="text-lg font-medium text-admin-text">Business details</h2>
+          <p className="mt-1 text-sm text-admin-text-secondary">Update your public information, then save to apply your changes.</p>
           <PlanUpgradeNotice id="public-page-publish-upgrade" capability="public_page"/>
           <form id="public-page-profile-form" action={savePublicPage} className="mt-4 grid gap-4 sm:grid-cols-2">
-            <label className="col-span-full flex min-h-11 items-center gap-2 text-sm font-medium text-admin-text">
+            <SettingsFormSection id="public-page-publishing-section" title="Page visibility" description="Publish your page when you are ready to share it with customers.">
+            <label className="col-span-full flex min-h-11 items-center gap-3 rounded-ui-md bg-admin-surface-muted p-3 text-sm font-medium text-admin-text">
               <input
                 id="public-page-enabled-checkbox"
                 type="checkbox"
                 name="enabled"
                 defaultChecked={organization?.public_page_enabled}
               />
-              Publish public page
+              <span>Publish public page<span className="mt-1 block text-xs font-normal text-admin-text-secondary">Turn this off to keep your page private.</span></span>
             </label>
+            </SettingsFormSection>
+            <SettingsFormSection id="public-page-branding-section" title="Business introduction & images" description="Tell customers what you offer. Upload photos or paste links to existing images.">
             <label className="col-span-full text-sm font-medium text-admin-text">
               Business description
               <textarea
@@ -139,19 +144,22 @@ export default async function Page({
                 className="mt-1.5 min-h-28 w-full rounded-ui-md border border-admin-border bg-white p-3"
               />
             </label>
-            <ImageUploadField id="public-page-logo-url-input" label="Business logo URL" name="logoUrl" value={organization?.logo_url} />
-            <p className="col-span-full -mt-2 text-xs text-admin-text-muted">This logo also represents your business inside the workspace. You can update it in Profile and workspace settings.</p>
-            <ImageUploadField id="public-page-cover-url-input" label="Cover image URL" name="coverUrl" value={organization?.cover_url} />
-            <PublicPageField id="public-page-website-input" label="Website URL" name="website" value={organization?.website} />
-            <PublicPageField id="public-page-facebook-input" label="Facebook URL" name="facebookPage" value={organization?.facebook_page} />
-            <PublicPageField id="public-page-instagram-input" label="Instagram URL" name="instagramUrl" value={organization?.instagram_url} />
+            <ImageUploadField id="public-page-logo-url-input" label="Business logo" name="logoUrl" value={organization?.logo_url} />
+
+            <ImageUploadField id="public-page-cover-url-input" label="Cover image" name="coverUrl" value={organization?.cover_url} />
+            </SettingsFormSection>
+            <SettingsFormSection id="public-page-links-section" title="Website & social links" description="Optional. Use the full address, starting with https://.">
+            <PublicPageField type="url" id="public-page-website-input" label="Website URL" name="website" value={organization?.website} />
+            <PublicPageField type="url" id="public-page-facebook-input" label="Facebook URL" name="facebookPage" value={organization?.facebook_page} />
+            <PublicPageField type="url" id="public-page-instagram-input" label="Instagram URL" name="instagramUrl" value={organization?.instagram_url} />
+            </SettingsFormSection>
             <FormActions id="public-page-profile-actions" cancelHref="/dashboard/settings"><SubmitButton id="public-page-save-button" pendingText="Saving…"><SaveIcon aria-hidden="true" size={16} className="shrink-0"/>Save public page</SubmitButton></FormActions>
           </form>
         </Card>:null}
 
         {tab==="services"?<Card id="public-services-card" className="p-5">
           <h2 className="font-medium text-admin-text">Public services</h2>
-          <p className="mt-1 text-sm text-admin-text-muted">Only services marked Visible publicly appear in the Request Booking dropdown.</p>
+          <p className="mt-1 text-sm text-admin-text-muted">Choose which services customers can see and request. Save each photo separately from its visibility setting.</p>
           <div id="public-services-list" className="mt-4 divide-y divide-admin-border">
             {services?.map((service) => (
               <div key={service.id}>
@@ -165,16 +173,16 @@ export default async function Page({
                 <input type="hidden" name="isPublic" value={String(!service.is_public)} />
                 <span className="min-w-0 text-sm font-medium text-admin-text">
                   {service.name}
-                  <small className="block text-admin-text-muted">{service.is_public ? "Visible publicly" : "Private"}</small>
+                  <small className="mt-1 block font-normal text-admin-text-muted">{service.is_public ? "Visible on your page and booking form" : "Hidden from customers"}</small>
                 </span>
                 <SubmitButton id={`public-service-toggle-button-${service.id}`} pendingText="Updating…" variant="secondary"><EyeIcon aria-hidden="true" size={16} className="shrink-0"/>
-                  {service.is_public ? "Hide" : "Publish"}
+                  {service.is_public ? "Hide service" : "Show service"}
                 </SubmitButton>
               </form>
               <ServiceThumbnailForm key={`${service.id}-${service.thumbnail_url ?? ""}`} service={service}/>
               </div>
             ))}
-            {!services?.length ? <p id="public-services-empty-state" className="py-4 text-sm text-admin-text-muted">No active services are available. Create a service before enabling online booking.</p> : null}
+            {!services?.length ? <p id="public-services-empty-state" className="py-4 text-sm text-admin-text-muted">No active services yet. Add services in your service catalog, then return here to publish them.</p> : null}
           </div>
         </Card>:null}
 
@@ -192,15 +200,15 @@ export default async function Page({
                 <p className="mt-3 flex gap-2 text-sm text-admin-text-secondary"><MapPin size={16} aria-hidden="true" className="mt-0.5 shrink-0"/><span>{address.filter(Boolean).join(", ")||"Address not set"}</span></p>
                 <div className="mt-4"><LocationMap id={`website-location-map-${branch.id}`} name={branch.name} address={address} mapUrl={branch.map_url} compact/></div>
                 <div className="mt-4 flex flex-wrap justify-end gap-2"><Button asChild variant="secondary" size="sm"><Link id={`website-location-address-${branch.id}`} href={`/dashboard/settings/branches/${branch.id}/edit`}><Pencil size={16} aria-hidden="true"/>Edit address</Link></Button><Button asChild size="sm"><Link id={`website-location-edit-${branch.id}`} href={`/dashboard/settings/public-page?tab=locations&branchId=${branch.id}`}><MapPin size={16} aria-hidden="true"/>Map and hours</Link></Button></div>
-                {query.branchId===branch.id?<FormDialog id={`website-location-dialog-${branch.id}`} title={`${branch.name} · Map and hours`} closeHref="/dashboard/settings/public-page?tab=locations">
+                {query.branchId===branch.id?<FormDialog id={`website-location-dialog-${branch.id}`} title={`${branch.name} · Map and hours`} description="Set the map location and weekly hours, then save this location." closeHref="/dashboard/settings/public-page?tab=locations">
                 <PublicBranchForm id={`public-branch-form-${branch.id}`} className="mt-4 grid gap-4">
                   <input type="hidden" name="branchId" value={branch.id}/>
                   <label className="flex min-h-11 items-center gap-2 rounded-ui-md border border-admin-border bg-admin-surface-muted px-3 text-sm font-medium text-admin-text"><input id={`public-branch-bookings-checkbox-${branch.id}`} type="checkbox" name="acceptsBookings" defaultChecked={branch.accepts_public_bookings}/>Accept online requests at this location</label>
                   <label className="text-sm font-medium text-admin-text">Branch description<textarea id={`public-branch-description-input-${branch.id}`} name="description" defaultValue={branch.public_description ?? ""} className="mt-1.5 min-h-20 w-full rounded-ui-md border border-admin-border bg-white p-3"/></label>
                   <LocationMapField branchId={branch.id} name={branch.name} address={address} value={branch.map_url}/>
                   <fieldset id={`public-branch-hours-${branch.id}`} className="rounded-ui-lg border border-admin-border p-3">
-                    <legend className="px-1 text-sm font-medium text-admin-text">Weekly booking hours</legend>
-                    <p className="px-1 text-xs text-admin-text-muted">Turn a day off to mark the location closed.</p>
+                    <legend className="px-1 text-sm font-medium text-admin-text">Weekly opening hours</legend>
+                    <p className="px-1 text-xs text-admin-text-muted">Check the days this location is open, then set the opening and closing times.</p>
                     <div className="mt-3 divide-y divide-admin-border">{publicOpeningDayKeys.map(day => {
                       const schedule = hours?.[day] ?? { closed: true };
                       const enabled = schedule.closed !== true;
@@ -223,7 +231,8 @@ export default async function Page({
           <div className="mt-4 grid gap-5 lg:grid-cols-[minmax(0,22rem)_minmax(0,1fr)]">
             <form id="public-gallery-form" action={addGalleryImage} className="grid content-start gap-4 rounded-ui-lg bg-admin-surface-muted p-4">
               <ImageUploadField id="public-gallery-url-input" label="Gallery photo" name="url" required />
-              <PublicPageField id="public-gallery-alt-input" label="Image description" name="alt" required />
+              <PublicPageField id="public-gallery-alt-input" label="Photo description" name="alt" required />
+              <p className="text-xs leading-relaxed text-admin-text-secondary">Describe what is in the photo, such as “Reception and waiting area”. This helps customers using screen readers.</p>
               <FormActions id="public-gallery-actions" cancelHref="/dashboard/settings/public-page?tab=profile"><SubmitButton id="public-gallery-add-button" pendingText="Adding…"><PlusIcon aria-hidden="true" size={16} className="shrink-0"/>Add image</SubmitButton></FormActions>
             </form>
             <div id="public-gallery-grid" className="grid grid-cols-2 content-start gap-2 sm:grid-cols-3">
@@ -240,7 +249,7 @@ export default async function Page({
                 key={image.id}
               />
               ))}
-              {!gallery.length ? <p id="public-gallery-empty-state" className="col-span-full rounded-ui-lg border border-dashed border-admin-border-strong p-6 text-center text-sm text-admin-text-muted">No gallery images yet.</p> : null}
+              {!gallery.length ? <p id="public-gallery-empty-state" className="col-span-full rounded-ui-lg border border-dashed border-admin-border-strong p-6 text-center text-sm text-admin-text-muted">Your gallery is empty. Add your first photo using the form.</p> : null}
             </div>
           </div>
         </Card>:null}

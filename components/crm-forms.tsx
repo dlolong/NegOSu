@@ -1,3 +1,4 @@
+import { SettingsFormSection } from "@/components/settings-form-section";
 
 import { Save as SaveIcon } from "lucide-react";
 
@@ -19,6 +20,7 @@ export type BranchRecord = { id: string; name: string; address_line: string | nu
 export function BranchForm({ branch, error }: { branch?: BranchRecord; error?: string }) {
   return <Card className="p-5 sm:p-7"><FormMessage error={error}/><form id={branch?"branch-edit-form":"branch-create-form"} action={saveBranch} className="mt-5 grid gap-5 sm:grid-cols-2">
     {branch?<input type="hidden" name="id" value={branch.id}/>:null}
+    <SettingsFormSection id="branch-location-section" title="Location details" description="Fields marked * are required. Use the address customers should visit.">
     <Field label="Branch name *"><Input id="branch-name-input" name="name" required maxLength={120} defaultValue={branch?.name}/></Field>
     <Field label="Country *"><Input id="branch-country-input" name="country" required defaultValue={branch?.country??"Philippines"}/></Field>
     <div className="sm:col-span-2"><Field label="Address line *"><Input id="branch-address-input" name="addressLine" required maxLength={200} defaultValue={branch?.address_line??""}/></Field></div>
@@ -26,9 +28,12 @@ export function BranchForm({ branch, error }: { branch?: BranchRecord; error?: s
     <Field label="City / municipality *"><Input id="branch-city-input" name="city" required maxLength={120} defaultValue={branch?.city??""}/></Field>
     <Field label="Province *"><Input id="branch-province-input" name="province" required maxLength={120} defaultValue={branch?.province??""}/></Field>
     <Field label="Postal code"><Input id="branch-postal-input" name="postalCode" maxLength={20} defaultValue={branch?.postal_code??""}/></Field>
-    <Field label="Phone"><Input id="branch-phone-input" name="phone" autoComplete="tel" maxLength={40} defaultValue={branch?.phone??""}/></Field>
+    </SettingsFormSection>
+    <SettingsFormSection id="branch-contact-section" title="Contact & visiting information" description="Optional. Add the contact details and notes that help people reach this branch.">
+    <Field label="Phone"><Input type="tel" id="branch-phone-input" name="phone" autoComplete="tel" maxLength={40} defaultValue={branch?.phone??""}/></Field>
     <Field label="Email"><Input id="branch-email-input" name="email" type="email" autoComplete="email" defaultValue={branch?.email??""}/></Field>
     <div className="sm:col-span-2"><Field label="Opening hours notes"><textarea id="branch-opening-notes-input" className={textarea} name="openingNotes" maxLength={500} defaultValue={branch?.opening_notes??""}/></Field></div>
+    </SettingsFormSection>
     <FormActions id={branch?"branch-edit-actions":"branch-create-actions"} cancelHref="/dashboard/settings/branches" cancelId="branch-cancel-button"><SubmitButton id="branch-save-button" pendingText="Saving branch…"><SaveIcon aria-hidden="true" size={16} className="shrink-0"/>Save branch</SubmitButton></FormActions>
   </form></Card>;
 }

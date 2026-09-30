@@ -1,3 +1,4 @@
+import { SettingsFormSection } from "@/components/settings-form-section";
 import { StaffJobFunctionField } from "@/components/staff-job-function-field";
 
 import { RecordTable } from "@/components/record-table";
@@ -60,6 +61,7 @@ export function StaffProfileForm({ profile, branches, industry, prefix }: {
 }) {
   return <form id={`${prefix}-form`} action={saveStaffProfile} className="grid min-w-0 grid-cols-1 gap-4 sm:grid-cols-2">
     <input type="hidden" name="staffId" value={profile?.id ?? ""}/>
+    <SettingsFormSection id={`${prefix}-contact-section`} title="Personal details" description="Contact details are optional and do not create a login. A name is required.">
     <label className="text-sm font-medium sm:col-span-2">Full name <span aria-hidden="true">*</span>
       <Input id={`${prefix}-name-input`} name="fullName" required maxLength={120} defaultValue={profile?.fullName ?? ""} className="mt-2" autoComplete="name"/>
     </label>
@@ -71,18 +73,20 @@ export function StaffProfileForm({ profile, branches, industry, prefix }: {
       <Input id={`${prefix}-mobile-input`} name="mobile" type="tel" inputMode="tel" maxLength={40} defaultValue={profile?.mobile ?? ""} placeholder="09xx xxx xxxx" className="mt-2" autoComplete="tel"/>
       <span className="mt-1 block text-xs font-normal text-slate-500">Optional — used for Staff notifications when available.</span>
     </label>
-    <p className="-mt-2 text-xs text-slate-500 sm:col-span-2">Contact details are optional and do not create a login. System access is managed separately.</p>
+    </SettingsFormSection>
+    <SettingsFormSection id={`${prefix}-work-section`} title="Work details" description="Choose this person’s job function and where they work.">
     <StaffJobFunctionField key={`${industry}-${profile?.id ?? "new"}`} industry={industry} prefix={prefix} initialValue={profile?.jobFunction ?? ""}/>
     <label className="text-sm font-medium">Specialties <span className="font-normal text-slate-500">(optional)</span>
       <Input id={`${prefix}-specializations-input`} name="specializations" autoComplete="off" maxLength={1_000} defaultValue={profile?.specializations.join(", ") ?? ""} className="mt-2" placeholder={industry === "hospitality" ? "Guest service, supplies" : industry === "pet_care" ? "Coat care, nail trimming" : industry === "salon" ? "Hair color, facials" : "Diagnostics, electrical"}/>
     </label>
-    <label className="text-sm font-medium">Operational status
+    <label className="text-sm font-medium">Staff availability
       <select id={`${prefix}-status-select`} name="isActive" defaultValue={String(profile?.isActive ?? true)} className="mt-2 min-h-11 w-full rounded-xl border border-slate-300 bg-white px-3">
         <option value="true">Active</option><option value="false">Inactive</option>
       </select>
     </label>
-    <div className="hidden sm:block"/>
-    <BranchFieldset id={`${prefix}-branches`} branches={branches} selected={profile?.branchIds ?? []} label="Operational branches"/>
+    <p className="self-center text-xs text-admin-text-secondary">Inactive staff are unavailable for new work assignments. Their login access is controlled separately.</p>
+    <BranchFieldset id={`${prefix}-branches`} branches={branches} selected={profile?.branchIds ?? []} label="Work locations"/>
+    </SettingsFormSection>
     <FormActions id={`${prefix}-actions`} cancelHref="/dashboard/settings/staff" cancelId={`${prefix}-cancel-button`}><SubmitButton id={`${prefix}-save-button`} pendingText="Saving…"><SaveIcon aria-hidden="true" size={16} className="shrink-0"/>{profile ? "Save profile" : "Add staff"}</SubmitButton></FormActions>
   </form>;
 }
@@ -144,9 +148,9 @@ export function PermissionMatrix({ industry, prefix }: { industry: StaffManageme
   const headings = industry === "hospitality" ? ["Access role", "Guests", "Check-in/out", "Charges & payments", "Inventory", "Settings"] : industry === "pet_care" ? ["Access role", "Pet owners", "Appointments", "Services", "Inventory", "Settings"] : industry === "salon" ? ["Access role", "Clients", "Appointments", "Treatments", "Inventory", "Settings"] : ["Access role", "Customers", "Appointments", "Jobs", "Finance", "Inventory", "Settings"];
   const rows = industry === "hospitality" ? [["Owner", "Manage", "Manage", "Manage", "Manage", "Manage"], ["Manager", "Manage", "Manage", "Manage", "Manage", "Business settings"], ["Front Desk", "Manage", "Checkout only", "View", "—", "—"], ["Operations Staff", "View", "View", "—", "—", "—"], ["Cashier", "View", "Manage", "Manage", "—", "—"], ["Viewer", "View", "View", "—", "—", "—"]] : industry === "pet_care" ? salonPermissions.map(row => [row[0] === "Front Desk / Coordinator" ? "Front Desk" : row[0], ...row.slice(1)]) : industry === "salon" ? salonPermissions : automotivePermissions;
   return <aside id={`${prefix}-permission-matrix`} aria-labelledby={`${prefix}-permission-info-title`} className="mt-4 min-w-0 rounded-xl border border-admin-border bg-admin-surface-muted p-3 text-sm text-admin-text-secondary">
-    <div className="flex items-start gap-2"><Info aria-hidden="true" size={16} className="mt-0.5 shrink-0"/><div className="min-w-0"><h2 id={`${prefix}-permission-info-title`} className="text-sm font-medium">About access permissions</h2><p className="mt-1 text-xs">Access roles control what staff can do in the system. They are separate from job functions and apply within assigned access branches.</p></div></div>
+    <div className="flex items-start gap-2"><Info aria-hidden="true" size={16} className="mt-0.5 shrink-0"/><div className="min-w-0"><h2 id={`${prefix}-permission-info-title`} className="text-sm font-medium">Who can access what?</h2><p className="mt-1 text-xs">A job function describes someone’s work. An access role controls what they can see and do after signing in.</p></div></div>
     <details id={`${prefix}-permission-details`} className="mt-2">
-      <summary id={`${prefix}-permission-toggle`} className="min-h-11 cursor-pointer content-center text-xs font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary">View permission matrix</summary>
+      <summary id={`${prefix}-permission-toggle`} className="min-h-11 cursor-pointer content-center text-xs font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary">Compare access roles</summary>
     <div className="mt-4 hidden overflow-hidden rounded-xl border md:block"><table className="w-full text-left text-sm"><thead className="bg-slate-50 text-xs normal-case text-slate-500"><tr>{headings.map((heading) => <th className="px-3 py-2" key={heading}>{heading}</th>)}</tr></thead><tbody className="divide-y">{rows.map((row) => <tr key={row[0]}>{row.map((cell, index) => <td className="px-3 py-2" key={`${row[0]}-${index}`}>{cell}</td>)}</tr>)}</tbody></table></div>
     <div className="mt-3 grid gap-2 md:hidden">{rows.map((row) => <details className="rounded-xl border p-3" key={row[0]}><summary className="cursor-pointer font-medium">{row[0]}</summary><dl className="mt-2 grid grid-cols-2 gap-2 text-xs">{headings.slice(1).map((heading, index) => <div key={heading}><dt className="text-slate-500">{heading}</dt><dd className="font-medium">{row[index + 1]}</dd></div>)}</dl></details>)}</div>
     </details>

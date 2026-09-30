@@ -22,8 +22,9 @@ for (const industry of ["automotive","salon","pet_care"]) {
     await expect(page.locator("#payments-history-table")).toHaveCount(0);
     const totals=await page.locator("#payments-metrics").innerText();
     const customer=await page.locator('[id^="payments-document-"]').first().innerText();
+    if (!await page.locator("#payments-search-input").isVisible()) await page.locator("#payments-search-form-search-toggle").click();
     await page.locator("#payments-search-input").fill(customer);
-    await page.locator("#payments-search-button").click();
+    await page.locator("#payments-search-input").press("Enter");
     await expect(page.locator("#payments-search-results")).toContainText(customer);
     await expect(page.locator("#payments-metrics")).toHaveText(totals,{useInnerText:true});
     const row=page.locator("#payments-outstanding-table tbody tr").first();
@@ -43,8 +44,9 @@ for (const industry of ["automotive","salon","pet_care"]) {
     const historyLink=page.locator('[id^="payment-record-"]').first();
     const historyHref=await historyLink.getAttribute("href");
     await historyLink.click();await expect(page).toHaveURL(new RegExp(`${historyHref}$`));await page.goBack();
+    if (!await page.locator("#payments-search-input").isVisible()) await page.locator("#payments-search-form-search-toggle").click();
     await page.locator("#payments-search-input").fill("No matching payment fixture 914772");
-    await page.locator("#payments-search-button").click();
+    await page.locator("#payments-search-input").press("Enter");
     await expect(page.locator("#payments-history-empty")).toBeVisible();
     await expect(page.locator("#payments-history-table tbody tr")).toHaveCount(0);
     await page.locator("#payments-search-clear").click();

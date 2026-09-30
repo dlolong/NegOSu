@@ -1,3 +1,4 @@
+import { CompactFilters } from "@/components/compact-filters";
 import Link from "next/link";
 import { ChevronLeft, ChevronRight, CalendarDays, RefreshCw, Search, X } from "lucide-react";
 import { notFound } from "next/navigation";
@@ -52,12 +53,12 @@ export async function PaymentWorkspace({ query, legacyPet = false }: { query: Pa
     <section id={isHistory ? "payments-history-section" : "payments-outstanding-invoices"} aria-labelledby="payments-section-title" className="mt-4 min-w-0">
       <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
         <div><h2 id="payments-section-title" className="text-base font-medium text-admin-text">{isHistory ? "Payment history" : "Outstanding balances"}</h2><p className="mt-1 text-sm text-admin-text-secondary">{isHistory ? "Select a payment to review its invoice or appointment." : "Select a row to review the balance and record payment."}</p></div>
-        <form id="payments-search-form" action={baseHref} className="flex w-full min-w-0 flex-wrap items-center gap-2 sm:w-auto">
-          <input type="hidden" name="tab" value={view.tab}/>
-          <label className="relative min-w-0 flex-1 sm:w-64"><span className="sr-only">{isHistory ? "Search payments" : "Search outstanding balances"}</span><Search size={16} aria-hidden="true" className="pointer-events-none absolute left-3 top-3.5 text-admin-text-muted"/><input key={`${view.tab}-${view.search}`} id="payments-search-input" type="search" name="q" defaultValue={view.search} maxLength={120} placeholder={isHistory ? "Customer, reference, method…" : `Customer or ${kind}…`} className="min-h-11 w-full min-w-0 rounded-ui-md border border-admin-border bg-admin-surface py-2 pl-9 pr-3 text-sm"/></label>
+        <CompactFilters id="payments-search-form" action={baseHref} searchLabel="Search payments" search={<input key={`${view.tab}-${view.search}`} id="payments-search-input"  name="q" defaultValue={view.search} maxLength={120} placeholder={isHistory ? "Customer, reference, method…" : `Customer or ${kind}…`} type="search" className="min-h-11 w-full min-w-0 rounded-ui-md border border-admin-border bg-admin-surface px-3 py-2 text-sm"/>} searchValue={view.search} clearAction={view.search && <Button asChild variant="ghost" size="icon"><Link id="payments-search-clear" href={paymentViewHref(baseHref,view.tab)} aria-label="Clear search"><X size={17} aria-hidden="true"/></Link></Button>} hiddenFields={<><input type="hidden" name="tab" value={view.tab}/></>}>
+
+
           <Button id="payments-search-button" type="submit" variant="secondary" size="icon" aria-label="Search"><Search size={17} aria-hidden="true"/></Button>
-          {view.search && <Button asChild variant="ghost" size="icon"><Link id="payments-search-clear" href={paymentViewHref(baseHref,view.tab)} aria-label="Clear search"><X size={17} aria-hidden="true"/></Link></Button>}
-        </form>
+
+        </CompactFilters>
       </div>
       {view.search && <p id="payments-search-results" role="status" className="mb-3 break-words text-sm text-admin-text-secondary">{view.count} results for “{view.search}” · Branch totals above include all records.</p>}
       {isHistory ? <TableFrame id={legacyPet ? "pet-payments-list" : "payments-list"}>

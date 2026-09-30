@@ -35,11 +35,14 @@ test("stock list is focused, responsive and handles long product metadata", asyn
 });
 test("search and stock status filters find products, and Clear restores the list", async ({ page }) => {
   await page.goto("https://forms.test/dashboard/inventory");
+  await page.locator("#inventory-filters-search-toggle").click();
   await page.locator("#inventory-search-input").fill("Supplies");
+  await page.locator("#inventory-filters-filters-button").click();
   await page.locator("#inventory-status-filter").selectOption("out");
   await page.locator("#inventory-filter-button").click();
   await expect(page.getByRole("link", { name: "Record movement", exact: true }).filter({ visible: true })).toHaveCount(1);
   await expect(page.getByText("Brush", { exact: true }).filter({ visible: true })).toBeVisible();
+  await page.locator("#inventory-filters-filters-button").click();
   await page.locator("#inventory-clear-filters").click();
   await expect(page.getByRole("link", { name: "Record movement", exact: true }).filter({ visible: true })).toHaveCount(3);
 });

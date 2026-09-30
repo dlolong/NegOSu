@@ -1,3 +1,4 @@
+import { CompactFilters } from "@/components/compact-filters";
 import { Input } from "@/components/ui/input";
 import { PlanUpgradeNotice } from "@/components/plan-upgrade";
 
@@ -106,8 +107,8 @@ export default async function Page({ searchParams }: { searchParams: Promise<Rec
         <PlanUpgradeNotice id="reports-plan-upgrade" capability="advanced_reports" compact/>
       </Card> : null}
 
-      {advanced ? <form id="reports-filter-form" className="mt-5 grid gap-3 rounded-2xl border border-zinc-200 bg-white p-4 sm:grid-cols-2 lg:grid-cols-[repeat(4,minmax(0,1fr))_auto] lg:items-end">
-        <input type="hidden" name="section" value={section} />
+      {advanced ? <CompactFilters id="reports-filter-form" hasFilters hiddenFields={<><input type="hidden" name="section" value={section} /></>}>
+
         <label className="grid gap-1 text-xs font-medium" htmlFor="reports-period-select">
           Period
           <select id="reports-period-select" className={inputClass} name="preset" defaultValue={filters.preset}>
@@ -124,7 +125,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<Rec
           </select>
         </label>
         <Button id="reports-apply-filters-button" type="submit"><SearchIcon aria-hidden="true" size={16} className="shrink-0"/>Apply</Button>
-      </form> : null}
+      </CompactFilters> : null}
       <p id="reports-range-description" className="mt-2 text-xs text-zinc-500">{range.start} to {range.end} · local calendar dates per branch timezone{appointmentBased ? " · Sales: completed appointments by scheduled date. Receipts: payment date. Outstanding: current balances for appointments in this period." : ""}</p>
 
       <section id="reports-summary" aria-label="Report summary" className="mt-4 grid grid-cols-2 gap-3 lg:grid-cols-5">

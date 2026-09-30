@@ -69,7 +69,7 @@ test("billing keeps plan decisions visible and moves secondary details behind di
   }
 
   assert.match(billing, /<details/);
-  assert.match(billing, /View plan details/);
+  assert.match(billing, /All features & limits/);
   assert.match(billing, /sm:grid-cols-2 xl:grid-cols-3/);
   assert.match(billing, /Could not load billing/);
   assert.doesNotMatch(billing, /font-black|font-extrabold/);

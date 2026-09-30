@@ -53,7 +53,7 @@ test("Public Page and Billing settings expose clear operational sections", () =>
   const publicPage = source("app/dashboard/settings/public-page/page.tsx");
   const billing = source("app/dashboard/settings/billing/page.tsx") + source("components/billing-overview.tsx");
   for (const id of ["public-page-readiness-card", "public-page-locations-section", "public-gallery-empty-state"]) assert.match(publicPage, new RegExp(id));
-  assert.match(publicPage, /Weekly booking hours/);
+  assert.match(publicPage, /Weekly opening hours/);
   assert.doesNotMatch(publicPage, /Opening-hours JSON/);
   assert.match(billing, /id="billing-current-plan"/);
   assert.match(billing, /hasMonthlyCheckout \? <option/);

@@ -1,3 +1,4 @@
+import { CompactFilters } from "@/components/compact-filters";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Pencil, Plus, Search } from "lucide-react";
@@ -12,7 +13,7 @@ import { PageHeader } from "@/components/page-patterns";
 import { RecordTable } from "@/components/record-table";
 import { RecordLink } from "@/components/record-item";
 import { formatMoney } from "@/lib/operations";
-import { Field, fieldClass, PageLinks, pageNumber, dateLabel, LoadError } from "./shared";
+import { PageLinks, pageNumber, dateLabel, LoadError } from "./shared";
 
 type Query = { q?: string; page?: string; create?: string; edit?: string; error?: string; message?: string; warning?: string; duplicateId?: string };
 export async function HospitalityGuests({ query: q }: { query: Query }) {
@@ -25,7 +26,7 @@ export async function HospitalityGuests({ query: q }: { query: Query }) {
   const edit = z.uuid().safeParse(q.edit).success ? await db.from("customers").select("id,full_name,phone,email,address_line,city,province,notes").eq("organization_id", m.organizationId).eq("id", q.edit!).maybeSingle() : { data: null };
   const write = canHospitality(m.role, "guestsWrite"), base = "/dashboard/customers";
   return <main id="hospitality-guests-page" className="mx-auto min-w-0 max-w-7xl"><PageHeader id="hospitality-guests-header" title="Guests" description="Guest profiles and their current room assignments. Contacts are optional." action={write ? <Button id="hospitality-add-guest" asChild><Link href={`${base}?create=1`}><Plus size={16}/>Add guest</Link></Button> : undefined}/><FormMessage message={q.message} error={q.error}/>
-    <form className="my-4 flex items-end gap-2"><Field label="Search guests"><input id="hospitality-guest-search" name="q" defaultValue={q.q} className={fieldClass} placeholder="Guest name"/></Field><Button id="hospitality-guest-search-button" type="submit" variant="secondary"><Search size={16}/><span className="sr-only sm:not-sr-only">Search</span></Button></form>
+    <CompactFilters id="hospitality-guest-search-form" searchLabel="Search guests" search={<input id="hospitality-guest-search" name="q" defaultValue={q.q}  placeholder="Guest name" type="search" className="min-h-11 w-full min-w-0 rounded-ui-md border border-admin-border bg-admin-surface px-3 py-2 text-sm"/>} searchValue={q.q}><Button id="hospitality-guest-search-button" type="submit" variant="secondary"><Search size={16}/><span className="sr-only sm:not-sr-only">Search</span></Button></CompactFilters>
     {guests.error || stays.error ? <LoadError/> : <RecordTable id="hospitality-guests-table" caption="Guests" columns={[{ key: "name", label: "Guest" }, { key: "contact", label: "Contact", secondary: true }, { key: "rooms", label: "Current rooms", secondary: true }, { key: "actions", label: "Actions", align: "right" }]} rows={(guests.data ?? []).map(g => {
       const assignment = (stays.data ?? []).find(s => s.guest_id === g.id);
       const assigned = assignment ? `${assignment.room_names}${assignment.room_count > 10 ? ` and ${assignment.room_count - 10} more` : ""}` : "No current stay";

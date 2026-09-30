@@ -192,6 +192,10 @@ The Staff permission matrix is secondary reference information: show a compact, 
 
 `components/list-tabs.tsx` composes route-based `Tabs`. `lib/list-navigation.ts` preserves list filters while dropping pagination on tab changes and stripping transient dialog, notification and invitation parameters. Inventory and catalog keep their existing specialized URL helpers.
 
+Settings uses `SettingsNavigation` with the shared `Tabs` card variant: two columns on phones, brief section descriptions, and the existing path-aware active state. Settings subtabs use `ListTabs wrap` so all choices remain visible without horizontal scrolling. Other pages retain the default underline tabs. Keep the industry-specific section visibility and existing semantic IDs.
+
+Group related settings fields with `SettingsFormSection`, which supplies a native fieldset, legend, and associated help text. Keep the existing form action and input names; grouping must not split a single save into separate submissions. Describe optional fields, explain resource capacity, and distinguish staff work details from login permissions. Public-page visibility, images, and external links have separate groups within one form. Billing exposes branch/staff capacity before the expandable feature list and labels prepaid access with its end date.
+
 Booking Requests uses Pending, Confirmed, Declined and All views. Search covers customer/contact, reference, service and pet name. Selecting a row opens the request dialog, including existing confirmation/decline forms only when the request and actor allow review. Closing returns to the filtered list.
 
 Staff separates Directory and Invitations. My Work separates Working, Assigned and History; work controls still use the existing server actions, and history labels are batch-loaded within the active tenant and branch. Appointments uses Day/Week tabs with one date/status/search toolbar.

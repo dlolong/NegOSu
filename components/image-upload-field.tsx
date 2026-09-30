@@ -23,7 +23,10 @@ export function ImageUploadButton({ id, onUploaded }: { id: string; onUploaded: 
     const controller = new AbortController();
     fetch("/api/dashboard/images", { signal: controller.signal }).then(async response => {
       const result = await response.json();
-      if (!response.ok) throw new Error();
+      if (!response.ok) {
+        if (!controller.signal.aborted) setError(typeof result.error === "string" ? result.error : "Upload availability could not be checked. Refresh to retry.");
+        return;
+      }
       setAccess(result);
     }).catch(() => { if (!controller.signal.aborted) setError("Upload availability could not be checked. Refresh to retry."); });
     return () => controller.abort();
