@@ -11,5 +11,5 @@ export function SettingsNavigation({ industry }: { industry: string }) {
     {id:`${prefix}-tab-public-page`,label:"Website & booking",description:"What your customers see",href:"/dashboard/settings/public-page"},
     {id:`${prefix}-tab-billing`,label:"Billing & plan",description:"Subscription and payments",href:"/dashboard/settings/billing"},
   ];
-  return <Tabs id={salon?"salon-settings-navigation":"settings-sections-navigation"} variant="cards" ariaLabel="Settings sections" items={items.filter(item => industry !== "hospitality" || !["/dashboard/settings/resources", "/dashboard/settings/public-page"].includes(item.href))}/>;
+  return <Tabs id={salon?"salon-settings-navigation":"settings-sections-navigation"} variant="sidebar" ariaLabel="Settings sections" items={items.filter(item => industry !== "hospitality" || !["/dashboard/settings/resources", "/dashboard/settings/public-page"].includes(item.href))}/>;
 }
