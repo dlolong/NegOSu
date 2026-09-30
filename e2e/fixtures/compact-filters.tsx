@@ -12,7 +12,7 @@ createRoot(document.getElementById("root")!).render(<>
     hiddenFields={<><input type="hidden" name="tab" value="history"/><input type="hidden" name="mode" value={mode}/></>}>
     {mode !== "search" ? <>
       <label>Status<select id="records-status" name="status" defaultValue={query.get("status") ?? "active"} className="block min-h-11 w-full rounded-md border px-3"><option value="active">Active</option><option value="archived">Archived</option></select></label>
-      <label>From<Input id="records-start" type="date" name="start" defaultValue={query.get("start") ?? "2026-09-01"}/></label>
+      <label>From<Input id="records-start" type="date" name="start" max="2026-12-31" defaultValue={query.get("start") ?? "2026-09-01"}/></label>
       <Button id="records-apply" type="submit">Apply filters</Button>
     </> : null}
   </CompactFilters>

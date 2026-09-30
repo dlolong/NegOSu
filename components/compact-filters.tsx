@@ -18,7 +18,17 @@ export function CompactFilters({ id, action, search, searchLabel = "Search recor
     setExpanded(false);
     trigger.current?.focus();
   }
-  return <form id={id} action={action} method="get" className={cn("my-3 flex min-w-0 flex-wrap items-center justify-end gap-2", className)}>
+  return <form id={id} action={action} method="get" className={cn("my-3 flex min-w-0 max-w-full flex-wrap items-center justify-end gap-2", className)} onInvalidCapture={event => {
+    // A collapsed invalid field must be visible before the browser focuses it.
+    const control = event.target as HTMLInputElement;
+    const panel = control.closest<HTMLElement>("[popover]");
+    if (panel && !panel.matches(":popover-open")) panel.showPopover();
+    if (field.current?.hidden && field.current.contains(control)) {
+      event.preventDefault();
+      setExpanded(true);
+      requestAnimationFrame(() => control.reportValidity());
+    }
+  }}>
     {hiddenFields}
     {/* First submitter preserves native Enter-to-search with several filter fields. */}
     <button type="submit" hidden aria-hidden="true" tabIndex={-1}/>

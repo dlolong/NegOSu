@@ -59,3 +59,15 @@ test("popover supports dismissal and search-only/filter-only pages stay compact"
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   }
 });
+
+test("submitting search reveals an invalid filter instead of silently blocking", async ({ page }) => {
+  await page.locator("#records-filters-filters-button").click();
+  await page.locator("#records-start").fill("2027-01-01");
+  await page.locator("#records-filters-filters-close-button").click();
+  await page.locator("#records-filters-search-toggle").click();
+  await page.locator("#records-search").fill("Ana");
+  await page.locator("#records-search").press("Enter");
+  await expect(page.locator("#records-filters-filters-popover")).toBeVisible();
+  await expect(page.locator("#records-start")).toBeFocused();
+  expect(new URL(page.url()).searchParams.get("q")).toBeNull();
+});
