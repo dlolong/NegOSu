@@ -176,6 +176,25 @@ button, input, select, textarea { font: inherit; }
 button { font-weight: 500; }
 input, select, textarea { font-weight: 400; }
 
+/* Give compact text more room and contrast on phones, including landscape.
+   Adjust text tokens rather than the root size so spacing stays compact. */
+@media (max-width: 767px), (pointer: coarse) {
+  :root {
+    --text-xs: 0.8125rem;
+    --text-xs--line-height: calc(18 / 13);
+    --text-sm: 0.9375rem;
+    --text-sm--line-height: calc(22 / 15);
+    --text-base: 1.0625rem;
+    --text-base--line-height: calc(26 / 17);
+  }
+
+  :root, [data-dashboard-theme] {
+    --muted: #475569;
+    --admin-text-secondary: #334155;
+    --admin-text-muted: #475569;
+  }
+}
+
 /* Mobile browsers can zoom when focusing small form text and retain that zoom
    after login/navigation. Cover inherited label sizes and compact controls,
    including phones in landscape, without restricting the user's pinch zoom. */

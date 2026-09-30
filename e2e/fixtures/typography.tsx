@@ -11,7 +11,7 @@ createRoot(document.getElementById("root")!).render(<div className="grid gap-5">
   <p id="typography-body">Body text stays regular. <strong id="typography-emphasis">Important information</strong> has a consistent emphasis.</p>
   <fieldset className="grid min-w-0 gap-3 rounded-xl border bg-white p-4">
     <legend id="typography-legend">Payment information</legend>
-    <label id="typography-label" className="text-sm font-medium">Reference<Input id="typography-input" defaultValue="PAY-001" className="mt-1"/><small id="typography-help" className="font-normal">Use the reference on your receipt.</small></label>
+    <label id="typography-label" className="text-sm font-medium">Reference<Input id="typography-input" defaultValue="PAY-001" className="mt-1"/><small id="typography-help" className="text-xs font-normal text-admin-text-muted">Use the reference on your receipt.</small></label>
     <label>Method<select id="typography-select" className="block w-full rounded-xl border p-2 text-sm" defaultValue="cash"><option value="cash">Cash</option></select></label>
     <label>Notes<textarea id="typography-textarea" className="block w-full rounded-xl border p-2 text-sm" defaultValue="Payment received"/></label>
     <label>Date<Input id="typography-date" type="date" defaultValue="2026-09-18"/></label>
