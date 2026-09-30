@@ -46,20 +46,11 @@ test("search and stock status filters find products, and Clear restores the list
   await page.locator("#inventory-clear-filters").click();
   await expect(page.getByRole("link", { name: "Record movement", exact: true }).filter({ visible: true })).toHaveCount(3);
 });
-test("Add product validates, preserves drafts on errors and Cancel keeps search context", async ({ page }) => {
+test("inventory links to the single Products management page", async ({ page }) => {
   await page.goto("https://forms.test/dashboard/inventory?q=clean");
-  await page.locator("#inventory-item-add-button").click();
-  await page.locator("#inventory-item-save-button").click();
+  await expect(page.locator("#inventory-manage-products")).toHaveAttribute("href", "/dashboard/products");
+  await expect(page.getByRole("link", { name: "Add product", exact: true })).toHaveCount(0);
   expect(calls).toEqual([]);
-  await page.locator("#inventory-item-name-input").fill("Test product");
-  failure = "This SKU already exists in the selected branch.";
-  await page.locator("#inventory-item-save-button").click();
-  await expect(page.getByRole("alert")).toContainText("This SKU already exists");
-  await expect(page.locator("#inventory-item-name-input")).toHaveValue("Test product");
-  await contained(page);
-  await page.getByRole("link", { name: "Cancel", exact: true }).click();
-  await expect(page).toHaveURL("https://forms.test/dashboard/inventory?q=clean");
-  expect(calls).toHaveLength(1);
 });
 test("movement explains deductions and keeps an idempotency key when a retry is needed", async ({ page }) => {
   await page.goto("https://forms.test/dashboard/inventory");
@@ -138,7 +129,7 @@ test("empty, failed, missing product, read-only and Salon states do not expose i
   await expect(page.getByRole("alert")).toContainText("not available in the selected branch");
   await expect(page.locator("dialog form")).toHaveCount(0);
   await page.goto("https://forms.test/dashboard/inventory?readonly=1&dialog=create");
-  await expect(page.locator("dialog, #inventory-item-add-button")).toHaveCount(0);
+  await expect(page.locator("dialog, #inventory-manage-products")).toHaveCount(0);
   await page.goto("https://forms.test/dashboard/inventory?industry=salon&dialog=recipe");
   await expect(page.locator("dialog, #inventory-recipe-open-button")).toHaveCount(0);
   await expect(page.locator("#salon-inventory-page")).toBeVisible();
@@ -150,23 +141,16 @@ test("stock pagination keeps filters and Escape closes a dialog", async ({ page 
   await expect(page.getByRole("link", { name: "Next", exact: true })).toHaveAttribute("href", "/dashboard/inventory?q=extra&page=2");
   await page.goto("https://forms.test/dashboard/inventory?many=1&q=extra&page=2");
   await expect(page.getByRole("link", { name: "Record movement", exact: true }).filter({ visible: true })).toHaveCount(4);
-  await page.locator("#inventory-item-add-button").click();
+  await page.getByRole("link", { name: "Record movement", exact: true }).filter({ visible: true }).first().click();
   await page.keyboard.press("Escape");
   await expect(page.locator("dialog")).toHaveCount(0);
   expect(calls).toEqual([]);
 });
 
-test("additional product details fit the dialog and save with visible fields", async ({ page }) => {
+test("legacy create query no longer opens a second inventory product form", async ({ page }) => {
   await page.goto("https://forms.test/dashboard/inventory?dialog=create");
-  await page.locator("#inventory-item-name-input").fill("New stock");
-  await page.getByText("Additional details (optional)").click();
-  await page.locator("#inventory-item-lot-input").fill("BATCH-1");
-  await page.locator("#inventory-item-expiry-input").fill("2028-12-31");
-  await page.locator("#inventory-item-cost-input").fill("12.50");
-  await contained(page);
-  await page.locator("#inventory-item-save-button").click();
-  await expect.poll(() => calls.length).toBe(1);
-  expect(calls[0].data).toMatchObject({ name: "New stock", lotNumber: "BATCH-1", expiresOn: "2028-12-31", cost: "12.50" });
+  await expect(page.locator("#inventory-item-create-form")).toHaveCount(0);
+  await expect(page.locator("#inventory-manage-products")).toHaveAttribute("href", "/dashboard/products");
 });
 
 test("stock and dialogs fit tablet and desktop content beside a sidebar", async ({ page }) => {
@@ -175,7 +159,7 @@ test("stock and dialogs fit tablet and desktop content beside a sidebar", async 
     await page.goto("https://forms.test/dashboard/inventory");
     if (width >= 1024) await page.locator("#root").evaluate(element => { element.style.marginLeft = "260px"; });
     await contained(page);
-    await page.locator("#inventory-item-add-button").click();
+    await page.getByRole("link", { name: "Record movement", exact: true }).filter({ visible: true }).first().click();
     await contained(page);
   }
 });
@@ -193,9 +177,4 @@ test("stock items open read-only details from their name and row/card content", 
   expect(calls).toEqual([]);
   await expect(page.locator("#inventory-details-dialog").getByRole("link", { name: "Record movement", exact: true })).toHaveCount(0);
   await contained(page);
-});
-
-test("product categories are searchable and adding a new value requires confirmation",async({page})=>{
- await page.goto("https://forms.test/dashboard/inventory?dialog=create");await page.locator("#inventory-item-name-input").fill("Category product");await selectRecord(page,"inventory-item-category-input",{name:"Supplies"});await page.locator("#inventory-item-category-input").fill("New Supplies");await page.locator("#inventory-item-category-input-create").click();await page.locator("#inventory-item-category-input-new-actions-cancel-button").click();await expect(page.locator("#inventory-item-category-input")).toHaveValue("Supplies");await expect(page.locator("#inventory-item-name-input")).toHaveValue("Category product");expect(calls).toEqual([]);
- await page.locator("#inventory-item-category-input").fill("New Supplies");await page.locator("#inventory-item-category-input-create").click();await page.locator("#inventory-item-category-input-new-save").click();await page.locator("#inventory-item-save-button").click();await expect.poll(()=>calls.length).toBe(1);expect(calls[0].data.category).toBe("New Supplies");
 });

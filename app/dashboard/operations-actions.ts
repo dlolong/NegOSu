@@ -1,4 +1,5 @@
 "use server";
+import { readAppointmentPromos } from "@/modules/core/commerce/appointment-promos";
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
@@ -111,7 +112,7 @@ export async function saveAppointment(data:FormData) {
   const automotive=activeMembership.industry==="automotive",resolved=await resolveVisitEntities(data,activeMembership.organizationId,back,automotive);
   let saved:string,customerLink="",linkMessage="";
   try {
-    const coreInput={appointmentId:appointmentId||null,organizationId:activeMembership.organizationId,branchId,customerId:resolved.customerId,serviceIds:selectedValues(data,"serviceIds"),staffAssignments:selectedValues(data,"staffIds").map(staffId=>({staffId})),resourceAssignments:selectedValues(data,"resourceIds").map(resourceId=>({resourceId})),scheduledStart:utc.toISOString(),allowAppointmentConflict:data.get("acceptConflict")==="on",customerNote:formValue(data,"customerNote")||null,internalNote:formValue(data,"internalNote")||null};
+    const coreInput={promoSelections:readAppointmentPromos(data),requestId:formValue(data,"requestId")||undefined,appointmentId:appointmentId||null,organizationId:activeMembership.organizationId,branchId,customerId:resolved.customerId,serviceIds:selectedValues(data,"serviceIds"),staffAssignments:selectedValues(data,"staffIds").map(staffId=>({staffId})),resourceAssignments:selectedValues(data,"resourceIds").map(resourceId=>({resourceId})),scheduledStart:utc.toISOString(),allowAppointmentConflict:data.get("acceptConflict")==="on",customerNote:formValue(data,"customerNote")||null,internalNote:formValue(data,"internalNote")||null};
     if(automotive){const{saveAutomotiveAppointment}=await import("@/modules/automotive/scheduling/automotive-scheduling.service");saved=await saveAutomotiveAppointment({...coreInput,maintenanceDueId:maintenanceDueId||null,vehicleId:resolved.vehicleId});}
     else{const{saveAppointment:saveCoreAppointment}=await import("@/modules/core/scheduling/scheduling.service");saved=await saveCoreAppointment(coreInput);if(!appointmentId){try{const{createAppointmentSelfServiceLink}=await import("@/modules/core/scheduling/appointment-self-service.runtime");const link=await createAppointmentSelfServiceLink({appointmentId:saved,expiresAt:new Date(Date.now()+30*86_400_000).toISOString()});customerLink=`/appointment/${link.token}`;linkMessage=link.deliveryEnabled?" Customer self-service and reminders are enabled.":" Customer link created; delivery encryption is not configured.";}catch{linkMessage=" The appointment was saved, but its customer link could not be created.";}}}
   } catch(error) {

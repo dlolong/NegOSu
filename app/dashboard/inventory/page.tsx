@@ -1,3 +1,4 @@
+import { redirect } from "next/navigation";
 import { InventoryWorkspace } from "@/components/inventory-workspace";
 import { getDashboardContext } from "@/lib/auth/context";
 import { createClient } from "@/lib/supabase/server";
@@ -5,6 +6,7 @@ import type { InventoryQuery } from "@/lib/inventory-workspace";
 
 export default async function Page({ searchParams }: { searchParams: Promise<InventoryQuery> }) {
   const [query, { activeMembership }, supabase] = await Promise.all([searchParams, getDashboardContext(), createClient()]);
+  if (query.dialog === "create") redirect("/dashboard/products?dialog=edit");
   const salon = activeMembership.industry !== "automotive";
   const canManage = ["owner", "manager"].includes(activeMembership.role);
   const [stock, movements, branches, services] = await Promise.all([

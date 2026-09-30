@@ -21,8 +21,12 @@ test("public grooming request becomes a staffed visit with private notes and pay
  for(const width of [320,1440]){await page.setViewportSize({width,height:900});await page.goto("/shop/negosu-pet-qa-1");await expect(page.locator("#public-pet-care-shop-page")).toBeVisible();await expect(page.locator("#public-shop-header")).toContainText("Milo Grooming QA");await expect(page.locator('a[href*="/queue"]')).toHaveCount(0);await checkLayout(page);}
  await page.setViewportSize({width:390,height:844});
  await page.goto(`/shop/negosu-pet-qa-1/book?branch=7e130000-0000-4000-8000-000000000001&service=7e170000-0000-4000-8000-000000000001&date=${date}`);
+ await page.locator("#public-booking-show-availability-button").click();
+ await page.locator("#public-booking-calendar a").first().click();
+ await page.locator("#public-booking-time-option-0").click();await page.locator("#public-booking-next-step").click();
  await expect(page.locator("#public-booking-pet-section")).toBeVisible();await expect(page.locator("#public-booking-vehicle-section")).toHaveCount(0);await checkLayout(page);
  await page.locator("#public-booking-name-input").fill("Release Owner QA");await page.locator("#public-booking-phone-input").fill("09171234567");await page.locator("#public-booking-pet-name").fill(name);await page.locator("#public-booking-pet-species").selectOption("dog");
+ await page.locator("#public-booking-next-step").click();
  await page.locator("#public-booking-submit-button").click();await expect(page).toHaveURL(/\/booking\/[a-f0-9]{64}$/);const statusUrl=page.url();await checkLayout(page);
  const ownerContext=await browser.newContext({baseURL:process.env.E2E_BASE_URL,viewport:{width:390,height:844}});const owner=await ownerContext.newPage();await login(owner);await expect(owner.locator("#pet-care-dashboard")).toBeVisible();
  await owner.goto("/dashboard/bookings");const card=owner.locator('[id^="booking-request-card-"]').filter({hasText:name});await expect(card).toBeVisible();await checkLayout(owner);

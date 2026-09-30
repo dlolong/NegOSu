@@ -4,6 +4,8 @@ import { createClient } from "@/lib/supabase/server";
 import { appointmentPersistenceError } from "@/lib/supabase/appointment-persistence-errors";
 
 export type AppointmentPersistenceInput = {
+  promoSelections?: Array<{id:string;version:number}>;
+  requestId?: string;
   appointmentId: string | null;
   organizationId: string;
   branchId: string;
@@ -28,6 +30,10 @@ export async function persistAppointment(input: AppointmentPersistenceInput) {
 
 /** Storage-only extension used to preserve the existing atomic RPC transaction. */
 export async function persistAppointmentWithExtension(input: AppointmentPersistenceInput, extension: AppointmentStorageExtension) {
+  if (input.promoSelections?.length) {
+    const { persistPromoAppointment } = await import("@/modules/core/commerce/appointment-promos.runtime");
+    return persistPromoAppointment(input, extension);
+  }
   const supabase = await createClient();
   const rpcName=extension.maintenanceDueId?"save_maintenance_appointment_with_staff":"save_appointment_with_staff";
   const commonPayload={

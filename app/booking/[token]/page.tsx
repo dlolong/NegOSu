@@ -1,3 +1,5 @@
+import { BookingAlternativeResponse, type BookingAlternative } from "@/components/booking-alternative-response";
+import { formatMoney } from "@/lib/operations";
 import { ArrowRight as ArrowRightIcon, Plus as PlusIcon, CalendarDays, Check, Clock3, MapPin, Scissors, ShieldCheck, X } from "lucide-react";
 
 import { cache } from "react";
@@ -16,6 +18,8 @@ import { Card } from "@/components/ui/card";
 import { createClient } from "@/lib/supabase/server";
 
 type Status = {
+  alternative?: BookingAlternative | null;
+  currency?:string;requestedTotalCentavos?:number;promos?:Array<{name:string;priceCentavos:number;currency:string;inclusions:Array<{name:string;quantity:string;unit:string}>}>;
   industry?: "automotive" | "salon" | "pet_care";
   timezone?: string;
   reference: string;
@@ -49,6 +53,8 @@ function customerState(status: Status): CustomerState {
   if (appointment === "completed") return { label: "Completed", heading: "Your appointment is complete", message: "Thank you for choosing this business.", variant: "success", stage: 3, terminal: true };
   if (["checked_in", "queued", "in_service"].includes(appointment ?? "")) return { label: "In progress", heading: "Your visit is now in progress", message: "The business has checked in your appointment and is handling your selected services.", variant: "info", stage: 3, terminal: false };
   if (status.status === "confirmed") return { label: "Confirmed", heading: "Your booking is confirmed", message: "Your schedule is reserved. Please arrive at the location shown below.", variant: "success", stage: 2, terminal: false };
+  if(status.status==="requested" && status.alternative?.status==="pending")return {label:"Your response needed",heading:"The business suggested an alternative",message:"Review the proposed time and staff below, then accept or cancel your request.",variant:"info",stage:2,terminal:false};
+  if(status.status==="requested" && status.alternative?.status==="accepted")return {label:"Awaiting final confirmation",heading:"You accepted the alternative",message:"The business will review your agreement and confirm availability. Your appointment is not confirmed yet.",variant:"warning",stage:2,terminal:false};
   return { label: "Awaiting confirmation", heading: "Your booking request was received", message: "The business is reviewing your preferred schedule. This page will update when they respond.", variant: "warning", stage: 1, terminal: false };
 }
 
@@ -111,6 +117,8 @@ export default async function Page({ params }: { params: Promise<{ token: string
                 <div className="flex gap-3"><MapPin aria-hidden="true" className="mt-0.5 shrink-0 text-brand-primary" size={18}/><div><dt className="text-admin-text-muted">Location</dt><dd className="mt-0.5 font-medium">{status.shopName} · {status.branchName}</dd></div></div>
                 <div className="flex gap-3"><Scissors aria-hidden="true" className="mt-0.5 shrink-0 text-brand-primary" size={18}/><div><dt className="text-admin-text-muted">{serviceLabel}</dt><dd className="mt-1"><ul id="public-booking-status-services" className="space-y-1 font-medium">{status.services.map((service, index) => <li key={`${index}-${service}`}>{service}</li>)}</ul></dd></div></div>
               </dl>
+              {status.promos?.length?<section id="public-booking-status-promos" className="mt-5 rounded-ui-md border border-admin-border p-4"><h3 className="font-medium">Requested promos</h3>{status.promos.map((promo,index)=><div key={index} className="mt-3 text-sm"><p className="font-medium">{promo.name} · {formatMoney(promo.priceCentavos,promo.currency)}</p><ul className="mt-1 list-inside list-disc">{promo.inclusions.map((item,i)=><li key={i}>{item.name} · {item.quantity} {item.unit}</li>)}</ul></div>)}{status.requestedTotalCentavos!==undefined?<p className="mt-3 border-t border-admin-border pt-3 text-sm font-medium">Requested total: {formatMoney(status.requestedTotalCentavos,status.currency)}</p>:null}</section>:null}
+              {status.alternative?<BookingAlternativeResponse key={`${status.alternative.version}-${status.alternative.status}`} token={token} offer={status.alternative} timezone={timezone}/>:null}
               {status.declineReason ? <div id="public-booking-status-response" className="mt-5 rounded-ui-md border border-status-danger/20 bg-status-danger-tint p-4"><p className="text-xs font-medium normal-case tracking-wide text-status-danger">Business response</p><p className="mt-1 text-sm">{status.declineReason}</p></div> : null}
             </section>
 
@@ -118,7 +126,7 @@ export default async function Page({ params }: { params: Promise<{ token: string
               <h2 id="public-booking-progress-title" className="font-medium">Progress</h2>
               <ol className="mt-4">
                 <TimelineStep complete={state.stage > 1} current={state.stage === 1} label="Request received" description="Your selected schedule and details were sent securely."/>
-                <TimelineStep complete={state.stage > 2 || status.status === "confirmed"} current={state.stage === 2} label="Business confirmation" description={status.status === "declined" ? "The request was reviewed but could not be accepted." : status.status === "confirmed" ? "The business confirmed your appointment." : "Waiting for the business to review your request."}/>
+                <TimelineStep complete={state.stage > 2 || status.status === "confirmed"} current={state.stage === 2} label="Business confirmation" description={status.alternative?.status==="pending" && status.status==="requested" ? "Review the alternative and send your response." : status.alternative?.status==="accepted" && status.status==="requested" ? "Your acceptance was sent to the business for final confirmation." : status.status === "declined" ? "The request was reviewed but could not be accepted." : status.status === "confirmed" ? "The business confirmed your appointment." : "Waiting for the business to review your request."}/>
                 <TimelineStep complete={state.stage === 3 && status.appointmentStatus === "completed"} current={state.stage === 3 && !state.terminal} label="Appointment" description={status.appointmentStatus === "completed" ? "Your appointment was completed." : ["checked_in", "queued", "in_service"].includes(status.appointmentStatus ?? "") ? "Your visit is in progress." : "This step begins when you arrive for your confirmed visit."}/>
               </ol>
             </section>
@@ -128,7 +136,7 @@ export default async function Page({ params }: { params: Promise<{ token: string
         </Card>
 
         <aside className="space-y-4">
-          <Card elevation="none" className="p-5"><ShieldCheck aria-hidden="true" className="text-brand-primary" size={22}/><h2 className="mt-3 font-medium">Keep this link private</h2><p className="mt-2 text-sm leading-6 text-admin-text-muted">Anyone with this secure link can see this booking’s progress. Your contact details are not displayed.</p></Card>
+          <Card elevation="none" className="p-5"><ShieldCheck aria-hidden="true" className="text-brand-primary" size={22}/><h2 className="mt-3 font-medium">Keep this link private</h2><p className="mt-2 text-sm leading-6 text-admin-text-muted">Anyone with this secure link can see progress, respond to an alternative, or cancel a pending alternative request. Your contact details are not displayed.</p></Card>
           {queueAvailable ? <Button id="booking-reservation-queue-link" asChild className="w-full"><Link href={`/booking/${encodeURIComponent(token)}/queue`}><ArrowRightIcon aria-hidden="true" size={16} className="shrink-0"/>View your branch’s queue</Link></Button> : null}
           {safeShopSlug ? <Button id="public-booking-status-new-request-button" asChild variant="secondary" className="w-full"><Link href={`/shop/${encodeURIComponent(safeShopSlug)}/book`}><PlusIcon aria-hidden="true" size={16} className="shrink-0"/>Create another booking</Link></Button> : null}
         </aside>

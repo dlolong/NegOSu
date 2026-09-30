@@ -35,8 +35,8 @@ test("booking presents actual availability dates before customer details", () =>
   assert.ok(calendarIndex > 0 && detailsIndex > calendarIndex);
   assert.match(page, /get_public_availability_dates_for_services/);
   assert.match(page, /get_public_availability_for_services/);
-  assert.match(page, /type="checkbox" name="services"/);
-  assert.match(page, /services=\{selectedServices\}/);
+  assert.match(source("app/shop/[slug]/book/booking-selection.tsx"), /type="hidden" name="services"/);
+  assert.match(page, /services=\{selected.services\}/);
   assert.match(page, /public-booking-previous-month/);
   assert.match(page, /public-booking-next-month/);
   assert.doesNotMatch(page, /type="date"/);
@@ -81,6 +81,6 @@ test("public shop exposes a complete responsive customer journey", () => {
     assert.match(shop, new RegExp(id));
   }
   assert.match(shop, /View available dates/);
-  assert.match(shop, /Book this \{serviceLabel\}/);
+  assert.match(source("components/public-service-categories.tsx"), /Book this \{serviceLabel\}/);
   assert.doesNotMatch(shop, /font-black|sm:text-6xl/);
 });

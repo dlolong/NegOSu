@@ -93,7 +93,8 @@ for(const industry of ["automotive","salon","pet_care"] as const) {
    await page.setViewportSize({width:320,height:900});await page.goto(website);
    await page.locator("#public-mobile-book-button").click();await expect(page.locator("#public-booking-page")).toBeVisible();
    await expect(page.locator("#public-booking-availability-error")).toHaveCount(0);
-   await expect(page.locator("#public-booking-location-map-frame")).toHaveAttribute("src",mapEmbedUrl(embed)!);
+   await expect(page.locator("#public-booking-progress")).toContainText("Step 1 of 5");
+   await expect(page.locator("#public-booking-calendar-section")).toHaveCount(0);
    expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);
   } finally {
    const old=branch.data!;await admin.from("branches").update({map_url:old.map_url,opening_hours:old.opening_hours,public_description:old.public_description,accepts_public_bookings:old.accepts_public_bookings,phone:old.phone,email:old.email}).eq("id",id);

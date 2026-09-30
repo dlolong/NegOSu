@@ -92,6 +92,10 @@ for (const industry of ["automotive", "salon", "pet_care"] as const) {
       await staff.screenshot({ path: `/private/tmp/negosu-chat-inbox-${industry}-mobile.png` });
       await page.locator("#public-chat-book").click();
       await expect(page).toHaveURL(new RegExp(`branch=${branch.data!.id}.*service=${service.data!.id}`));
+      await page.locator("#public-booking-show-availability-button").click();
+      await page.locator("#public-booking-calendar a").first().click();
+      await page.locator("#public-booking-time-option-0").click();
+      await page.locator("#public-booking-next-step").click();
       await expect(page.locator("#public-booking-request-form")).toBeVisible();
       await expect(page.locator('input[name="customerName"]')).toHaveValue("Chat Browser Customer");
       await expect(page.locator("#public-booking-notes-input")).toContainText("Can I book this service?");

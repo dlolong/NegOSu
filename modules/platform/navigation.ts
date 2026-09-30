@@ -97,7 +97,12 @@ export const hospitalityNavigation: readonly NavigationItem[] = [
 
 export function navigationForIndustry(config: IndustryConfig, role?: OrganizationMembership["role"]): readonly NavigationItem[] {
   const navigation: readonly NavigationItem[] = config.key === "hospitality" ? hospitalityNavigation : config.key === "pet_care" ? petCareNavigation : config.key === "salon" ? salonNavigation : karkrNavigation;
-  return navigation.filter((item) =>
+  const commerce: readonly NavigationItem[] = [
+    { key: "products", label: "Products", href: "/dashboard/products", group: "business", industryFeature: "inventory", permission: "inventory.manage" },
+    { key: "promos", label: "Promos", href: "/dashboard/promos", group: "business", industryFeature: "inventory", permission: "inventory.manage" },
+  ];
+  const items = navigation.flatMap(item => item.key === "inventory" ? [...commerce, item] : [item]);
+  return items.filter((item) =>
     (!item.industryFeature || industrySupportsFeature(config, item.industryFeature))
     && (!role || !item.permission || roleHasPermission(role, item.permission)),
   );

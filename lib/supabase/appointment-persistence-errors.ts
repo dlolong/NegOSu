@@ -3,6 +3,9 @@ import type { DatabaseError } from "@/lib/supabase/schema-compatibility";
 
 // Only known database business-rule messages may reach the appointment form.
 const appointmentMessages = new Map([
+  ["Booked promo service duration changed", "The included service duration has changed. Keep this booking or cancel and book again with the updated service."],
+  ["Booked promos preserve branch and customer", "This booking has an agreed promo. Keep its branch, customer, and vehicle, or cancel and create a new booking."],
+  ["Booked promo services cannot be removed", "This booking has an agreed promo. Keep its included service, or cancel and create a new booking."],
   ["Appointment time is invalid", "Choose an appointment time within the last 24 hours or in the future."],
   ["Appointment time is too far in the past", "Choose an appointment time within the last 24 hours or in the future."],
   ["Select at least one service", "Select at least one service."],

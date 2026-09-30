@@ -13,7 +13,7 @@ test("hospitality enables applicable Core capabilities without appointments or r
   assert.equal(c.terminology.customer, "Guest");
   for (const key of ["inventory", "payments", "reports"] as const) assert.equal(c.features[key], true);
   for (const key of ["appointments", "vehicles", "job_orders", "reservations", "booking_requests", "queue", "resources"] as const) assert.equal(c.features[key], false);
-  assert.deepEqual(navigationForIndustry(c, "owner").slice(0, 7).map(n => n.label), ["Overview", "Rooms", "Guests", "Payments", "Inventory", "Reports", "Staff"]);
+  assert.deepEqual(navigationForIndustry(c, "owner").slice(0, 9).map(n => n.label), ["Overview", "Rooms", "Guests", "Payments", "Products", "Promos", "Inventory", "Reports", "Staff"]);
   const viewer = navigationForIndustry(c, "viewer");
   assert.equal(viewer.some(n => n.key === "payments" || n.key === "inventory"), false);
 });

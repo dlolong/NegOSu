@@ -206,3 +206,13 @@ for (const [scenario, errorMessage] of [
     );
   });
 }
+
+
+test("automotive adapter preserves promo version and booking retry key", async()=>{
+ const promoSelections=[{id:"13000000-0000-4000-8000-000000000009",version:3}];
+ const requestId="13000000-0000-4000-8000-000000000008";
+ await saveAutomotiveAppointment({...coreInput,vehicleId,promoSelections,requestId},{
+  validateVehicle:async()=>undefined,coreDependencies:coreDependencies(),
+  persist:async input=>{assert.deepEqual(input.promoSelections,promoSelections);assert.equal(input.requestId,requestId);return "saved";},
+ });
+});

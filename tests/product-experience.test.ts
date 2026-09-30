@@ -73,11 +73,12 @@ test("high-traffic schedules and catalog avoid tablet-width overflow traps", () 
 test("inventory and CRM forms expose visible labels and stable operational IDs", () => {
   const inventory = source("components/inventory-forms.tsx");
   const crm = source("components/crm-forms.tsx");
-  for (const label of ["Cost", "Sell price"]) assert.ok(inventory.includes(`label={\`${label} (\${currency})\`}`));
-  for (const label of ["Product name", "Reorder level", "Quantity used"]) assert.match(inventory, new RegExp(`label=\\"${label.replace(/[()]/g, "\\$&")}\\"`));
+  const products = source("components/commerce-catalog-forms.tsx");
+  assert.match(products, /How do you count this product/);
+  assert.match(products, /product-save/);
+  assert.match(inventory, /Quantity used/);
   assert.match(inventory, /const productPrefix=salon\?"salon-product":"inventory-item",inventoryPrefix=salon\?"salon-inventory":"inventory"/);
   for (const idTemplate of [
-    "`${productPrefix}-create-form`",
     "`${inventoryPrefix}-transfer-form`",
   ]) assert.ok(inventory.includes(idTemplate), `Missing deterministic inventory ID template: ${idTemplate}`);
   for (const id of ["inventory-recipe-form", "inventory-recipe-quantity-input"]) assert.match(inventory, new RegExp(id));
@@ -86,7 +87,7 @@ test("inventory and CRM forms expose visible labels and stable operational IDs",
 
 test("public booking and neutral fallback surfaces expose semantic roots and brand copy", () => {
   const shop = source("app/shop/[slug]/page.tsx");
-  const booking = source("app/shop/[slug]/book/page.tsx") + source("app/shop/[slug]/book/booking-form.tsx");
+  const booking = source("app/shop/[slug]/book/page.tsx") + source("app/shop/[slug]/book/booking-form.tsx") + source("app/shop/[slug]/book/booking-selection.tsx");
   const status = source("app/booking/[token]/page.tsx");
   const notFound = source("app/not-found.tsx");
   for (const id of ["public-automotive-shop-page", "public-automotive-shop-book-button"]) assert.match(shop, new RegExp(id));
@@ -125,10 +126,10 @@ test("public page settings use labelled controls and deterministic management ID
 });
 
 test("public booking handles an empty published-service catalog without rendering a broken request form", () => {
-  const booking = source("app/shop/[slug]/book/page.tsx") + source("app/shop/[slug]/book/booking-form.tsx");
-  assert.match(booking, /const hasPublicServices = shop\.services\.length > 0/);
+  const booking = source("app/shop/[slug]/book/page.tsx") + source("app/shop/[slug]/book/booking-form.tsx") + source("app/shop/[slug]/book/booking-selection.tsx");
+  assert.match(booking, /!shop\.services\.length\|\|!branch/);
   assert.match(booking, /public-booking-no-services/);
-  assert.match(booking, /No services are currently published for online booking/);
-  assert.match(booking, /public-booking-request-unavailable/);
-  assert.match(booking, /!hasPublicServices \?/);
+  assert.match(booking, /Online booking is unavailable/);
+  assert.match(booking, /if\(!branch\|\|!serviceIds\.length/);
+
 });

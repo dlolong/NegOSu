@@ -37,6 +37,8 @@ const navigationIcons: Record<string, LucideIcon> = {
   bookings: CalendarCheck,
   services: Wrench,
   inventory: Package,
+  products: Package,
+  promos: Package,
   reminders: Bell,
   reports: BarChart3,
   settings: Settings,

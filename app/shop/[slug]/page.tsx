@@ -1,8 +1,11 @@
-import { ServiceThumbnail } from "@/components/service-thumbnail";
+import { Tag } from "lucide-react";
+import { loadPublicPromos } from "@/lib/public-promos.runtime";
+import { PublicPromoCards } from "@/components/public-promo-cards";
+import { PublicServiceCategories } from "@/components/public-service-categories";
 import { PublicChat } from "@/components/public-chat";
 import { PublicContact } from "@/components/public-contact";
 import { LocationMap } from "@/components/location-map";
-import { ArrowRight as ArrowRightIcon, Plus as PlusIcon, ArrowRight, CalendarDays, Clock3, MapPin, Phone, Mail, Images, List } from "lucide-react";
+import { ArrowRight as ArrowRightIcon, Plus as PlusIcon, ArrowRight, CalendarDays, MapPin, Phone, Mail, Images, List } from "lucide-react";
 
 import type { Metadata } from "next";
 import Image from "next/image";
@@ -14,7 +17,6 @@ import { PoweredBy } from "@/components/powered-by";
 import { businessMetadata } from "@/modules/platform/business-branding";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { formatMoney } from "@/lib/operations";
 import { publicOpeningDayKeys } from "@/lib/public-booking";
 import type { PublicShop } from "@/lib/public-booking";
 import { loadPublicBusiness } from "@/lib/public-business";
@@ -40,6 +42,7 @@ export default async function Page({ params }: { params: Promise<{ slug: string 
   const serviceLabel = industry === "salon" ? "treatment" : "service";
   const primaryBranch = publicShop.branches.find(branch => branch.acceptsBookings) ?? publicShop.branches[0];
   const bookingAvailable = publicShop.services.length > 0 && publicShop.branches.some(branch=>branch.acceptsBookings);
+  const {promos}=await loadPublicPromos(slug);
   const bookingHref = `/shop/${encodeURIComponent(slug)}/book`;
   const jsonLd = {
     "@context": "https://schema.org",
@@ -63,7 +66,7 @@ export default async function Page({ params }: { params: Promise<{ slug: string 
         </Link>
         <div className="hidden shrink-0 sm:block"><Button id="public-shop-header-book-button" asChild size="sm"><Link href={bookingAvailable?bookingHref:"#public-automotive-shop-branches"}><CalendarDays aria-hidden="true" size={16} className="shrink-0"/>{bookingAvailable?"Book now":"Visit us"}</Link></Button></div>
       </div>
-      <nav id="public-shop-section-navigation" aria-label="Website sections" className="mx-auto hidden max-w-6xl flex-wrap sm:flex gap-x-5 border-t border-admin-border px-4 text-sm font-medium sm:px-6"><a className="inline-flex min-h-11 items-center hover:text-brand-primary" href="#public-automotive-shop-services">{industry==="salon"?"Treatments":"Services"}</a><a className="inline-flex min-h-11 items-center hover:text-brand-primary" href="#public-automotive-shop-branches">Locations</a>{publicShop.gallery.length?<a className="inline-flex min-h-11 items-center hover:text-brand-primary" href="#public-automotive-shop-gallery">Gallery</a>:null}<a className="inline-flex min-h-11 items-center hover:text-brand-primary" href="#public-shop-contact">Contact</a></nav>
+      <nav id="public-shop-section-navigation" aria-label="Website sections" className="mx-auto hidden max-w-6xl flex-wrap sm:flex gap-x-5 border-t border-admin-border px-4 text-sm font-medium sm:px-6"><a className="inline-flex min-h-11 items-center hover:text-brand-primary" href="#public-automotive-shop-services">{industry==="salon"?"Treatments":"Services"}</a>{promos.length?<a id="public-shop-promos-nav" className="inline-flex min-h-11 items-center hover:text-brand-primary" href="#public-shop-promos">Promos</a>:null}<a className="inline-flex min-h-11 items-center hover:text-brand-primary" href="#public-automotive-shop-branches">Locations</a>{publicShop.gallery.length?<a className="inline-flex min-h-11 items-center hover:text-brand-primary" href="#public-automotive-shop-gallery">Gallery</a>:null}<a className="inline-flex min-h-11 items-center hover:text-brand-primary" href="#public-shop-contact">Contact</a></nav>
     </header>
 
     <section id="public-automotive-shop-hero" className="overflow-hidden bg-white">
@@ -82,9 +85,10 @@ export default async function Page({ params }: { params: Promise<{ slug: string 
     </section>
 
     <div className="mx-auto min-w-0 max-w-6xl space-y-10 px-4 py-9 sm:space-y-14 sm:px-6 sm:py-14">
+      <PublicPromoCards slug={slug} promos={promos} branches={publicShop.branches} services={publicShop.services}/>
       <section id="public-automotive-shop-services" className="scroll-mt-[calc(6rem+env(safe-area-inset-top))] sm:scroll-mt-5" aria-labelledby="public-shop-services-title">
         <div className="flex flex-wrap items-center justify-between gap-4 min-w-0 [&>a]:ml-auto [&>button]:ml-auto [&>form]:ml-auto"><div className="min-w-0 flex-1 basis-full sm:basis-64 [overflow-wrap:anywhere]"><p className="text-sm font-medium text-brand-primary-strong">What we offer</p><h2 id="public-shop-services-title" className="mt-1 text-3xl font-medium tracking-tight text-brand-ink">{industry === "salon" ? "Treatments" : "Services"}</h2></div>{publicShop.services.length ? <Button id="public-shop-services-book-button" className="ml-auto" asChild variant="secondary"><Link href={bookingHref}><ArrowRightIcon aria-hidden="true" size={16} className="shrink-0"/>Check availability</Link></Button> : null}</div>
-        {publicShop.services.length ? <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">{publicShop.services.map(service => <Card id={`public-automotive-shop-service-${service.id}`} elevation="none" interactive className="flex min-w-0 flex-col p-4 sm:p-5" key={service.id}><div className="mb-4"><ServiceThumbnail id={`public-service-thumbnail-${service.id}`} url={service.thumbnailUrl} name={service.name}/></div><p className="text-xs font-medium normal-case tracking-wide text-brand-primary-strong">{service.category || (industry === "salon" ? "Treatment" : "Service")}</p><h3 className="mt-2 text-xl font-medium text-brand-ink">{service.name}</h3><p className="mt-2 grow text-sm leading-6 text-admin-text-secondary">{service.description || `Professional ${service.name.toLowerCase()} from ${publicShop.name}.`}</p><div className="mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-admin-border pt-4 text-sm"><span className="inline-flex items-center gap-1.5 text-admin-text-muted"><Clock3 aria-hidden="true" size={16}/>{service.durationMinutes} min</span><strong className="text-brand-ink">From {formatMoney(service.priceCentavos, service.currency ?? publicShop.currency)}</strong></div><Link id={`public-shop-service-book-${service.id}`} href={`${bookingHref}?service=${encodeURIComponent(service.id)}`} className="mt-4 inline-flex min-h-11 items-center gap-1 text-sm font-medium text-brand-primary-strong hover:text-brand-primary">Book this {serviceLabel}<ArrowRight aria-hidden="true" size={15}/></Link></Card>)}</div> : <Card id="public-shop-services-empty-state" elevation="none" className="mt-6 p-6 text-center"><h3 className="font-medium">Services will be available soon</h3><p className="mt-2 text-sm text-admin-text-secondary">Contact {publicShop.name} directly for current offerings.</p></Card>}
+        {publicShop.services.length ? <PublicServiceCategories services={publicShop.services} shopName={publicShop.name} currency={publicShop.currency} bookingHref={bookingHref} serviceLabel={serviceLabel}/> : <Card id="public-shop-services-empty-state" elevation="none" className="mt-6 p-6 text-center"><h3 className="font-medium">Services will be available soon</h3><p className="mt-2 text-sm text-admin-text-secondary">Contact {publicShop.name} directly for current offerings.</p></Card>}
       </section>
 
       <section id="public-automotive-shop-branches" className="scroll-mt-[calc(6rem+env(safe-area-inset-top))] sm:scroll-mt-5" aria-labelledby="public-shop-locations-title">
@@ -113,6 +117,7 @@ export default async function Page({ params }: { params: Promise<{ slug: string 
       <a id="public-mobile-services-button" href="#public-automotive-shop-services" className="flex min-h-14 min-w-0 flex-1 flex-col items-center justify-center gap-1 rounded-ui-md px-1 text-[10px] font-medium text-admin-text-secondary focus-visible:ring-2 focus-visible:ring-brand-primary"><List size={20} aria-hidden="true"/>{industry==="salon"?"Treatments":"Services"}</a>
       <a id="public-mobile-location-button" href="#public-automotive-shop-branches" className="flex min-h-14 min-w-0 flex-1 flex-col items-center justify-center gap-1 rounded-ui-md px-1 text-[10px] font-medium text-admin-text-secondary focus-visible:ring-2 focus-visible:ring-brand-primary"><MapPin size={20} aria-hidden="true"/>Locations</a>
       {publicShop.gallery.length?<a id="public-mobile-gallery-button" href="#public-automotive-shop-gallery" className="flex min-h-14 min-w-0 flex-1 flex-col items-center justify-center gap-1 rounded-ui-md px-1 text-[10px] font-medium text-admin-text-secondary focus-visible:ring-2 focus-visible:ring-brand-primary"><Images size={20} aria-hidden="true"/>Gallery</a>:null}
+      {promos.length?<a id="public-mobile-promos-button" href="#public-shop-promos" className="flex min-h-14 min-w-0 flex-1 flex-col items-center justify-center gap-1 rounded-ui-md px-1 text-[10px] font-medium text-admin-text-secondary"><Tag size={20} aria-hidden="true"/>Promos</a>:null}
       <a id="public-mobile-contact-button" href="#public-shop-contact" className="flex min-h-14 min-w-0 flex-1 flex-col items-center justify-center gap-1 rounded-ui-md px-1 text-[10px] font-medium text-admin-text-secondary focus-visible:ring-2 focus-visible:ring-brand-primary"><Phone size={20} aria-hidden="true"/>Contact</a>
       {bookingAvailable?<Link id="public-mobile-book-button" href={bookingHref} className="flex min-h-14 min-w-0 flex-1 flex-col items-center justify-center gap-1 rounded-ui-md bg-brand-tint px-1 text-[10px] font-medium text-brand-primary-strong focus-visible:ring-2 focus-visible:ring-brand-primary"><CalendarDays size={20} aria-hidden="true"/>Book now</Link>:null}
     </nav>

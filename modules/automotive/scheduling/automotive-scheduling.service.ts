@@ -57,6 +57,7 @@ export async function saveAutomotiveAppointment(
 
   await dependencies.validateVehicle(input.organizationId, input.customerId, vehicleResult.data.vehicleId);
   const maintenanceDueId=vehicleResult.data.maintenanceDueId??null;
+  if(maintenanceDueId&&input.promoSelections?.length)throw new AutomotiveSchedulingError("Book promos from a new appointment rather than a maintenance reminder.");
   if(maintenanceDueId&&input.appointmentId)throw new AutomotiveSchedulingError("Maintenance linkage is only available when creating an appointment.");
   if(maintenanceDueId&&dependencies.getActiveMaintenanceAppointment){
     const existingAppointmentId=await dependencies.getActiveMaintenanceAppointment({
@@ -66,6 +67,8 @@ export async function saveAutomotiveAppointment(
     if(existingAppointmentId)return existingAppointmentId;
   }
   const coreInput: SaveAppointmentInput = {
+    promoSelections: input.promoSelections,
+    requestId: input.requestId,
     appointmentId: input.appointmentId,
     organizationId: input.organizationId,
     branchId: input.branchId,

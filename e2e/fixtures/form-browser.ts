@@ -21,7 +21,7 @@ export async function renderFormFixture(entryPoint: string) {
         else {
           const source = readFileSync(path.join(process.cwd(), args.path.replace("@/", "") + ".ts"), "utf8");
           const names = [...source.matchAll(/export async function (\w+)/g)].map(match => match[1]);
-          contents = names.map(name => `export async function ${name}(data) { return await window.recordFormAction(${JSON.stringify(name)}, data instanceof FormData ? [...data] : []) ?? {}; }`).join("\n");
+          contents = names.map(name => `export async function ${name}(...args) { const data = args.find(value => value instanceof FormData) ?? args[0]; return await window.recordFormAction(${JSON.stringify(name)}, data instanceof FormData ? [...data] : []) ?? {}; }`).join("\n");
         }
         return { contents, loader: "jsx", resolveDir: process.cwd() };
       });

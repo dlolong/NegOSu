@@ -1,0 +1,22 @@
+import {expect,test} from "@playwright/test";
+import {renderFormFixture} from "./fixtures/form-browser";
+let html:string;
+test.beforeAll(async()=>{html=await renderFormFixture("e2e/fixtures/public-catalog-rows.tsx");});
+test("catalog groups services and scrolls each row without widening the page",async({page})=>{
+ await page.route("https://forms.test/**",route=>route.fulfill({contentType:"text/html",body:html}));
+ await page.goto("https://forms.test/catalog");
+ await expect(page.getByRole("heading",{name:"Hair care (5)"})).toBeVisible();
+ await expect(page.getByRole("heading",{name:"Nails (2)"})).toBeVisible();
+ await expect(page.getByRole("heading",{name:"Other services (1)"})).toBeVisible();
+ const promos=page.getByRole("region",{name:"promos",exact:true});
+ const hair=page.getByRole("region",{name:"Hair care",exact:true});
+ await expect(page.getByRole("button",{name:/^(Next|Previous) /})).toHaveCount(0);
+ await promos.focus();await page.keyboard.press("ArrowRight");
+ await expect.poll(()=>promos.evaluate(el=>el.scrollLeft)).toBeGreaterThan(0);
+ expect(await hair.evaluate(el=>el.scrollLeft)).toBe(0);
+ await hair.focus();await page.keyboard.press("ArrowRight");
+ await expect.poll(()=>hair.evaluate(el=>el.scrollLeft)).toBeGreaterThan(0);
+ await hair.focus();await page.keyboard.press("Home");
+ await expect(hair.locator('a[href="/shop/salon/book?service=service-0"]')).toHaveCount(1);
+ expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+});

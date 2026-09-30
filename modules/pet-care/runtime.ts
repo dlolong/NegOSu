@@ -17,6 +17,10 @@ export async function petContext(write = false) {
 export async function schedulePet(petId: string, input: SaveAppointmentInput) {
   const { db } = await petContext(true);
   return saveAppointmentWithPersistence({ ...input, allowAppointmentConflict: false }, async validated => {
+    if (validated.promoSelections.length) {
+      const { persistPromoAppointment } = await import("@/modules/core/commerce/appointment-promos.runtime");
+      return persistPromoAppointment(validated, { petId });
+    }
     const { data, error } = await db.rpc("save_pet_appointment", { p_pet_id: petId, p_appointment_id: validated.appointmentId, p_branch_id: validated.branchId, p_service_ids: validated.serviceIds, p_starts_at: validated.scheduledStart, p_staff_ids: validated.staffAssignments.map(row => row.staffId).sort(), p_resource_ids: validated.resourceAssignments.map(row => row.resourceId).sort(), p_customer_note: validated.customerNote, p_internal_note: validated.internalNote });
     if (error || !data) throw petAppointmentPersistenceError(error);
     return data as string;

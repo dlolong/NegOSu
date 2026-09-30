@@ -4,9 +4,8 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getDashboardContext } from "@/lib/auth/context";
 import { firstError, formValue } from "@/lib/crm";
-import { inventoryItemSchema, movementSchema, recipeSchema, transferSchema } from "@/lib/inventory";
+import { movementSchema, recipeSchema, transferSchema } from "@/lib/inventory";
 import { inventoryReturnHref, type InventoryActionState } from "@/lib/inventory-workspace";
-import { parseMoneyToCentavos } from "@/lib/operations";
 import { createClient } from "@/lib/supabase/server";
 
 function saved(data: FormData, message: string): never {
@@ -14,18 +13,6 @@ function saved(data: FormData, message: string): never {
   let href = "/dashboard/inventory";
   try { href = inventoryReturnHref(formValue(data, "returnTo")); } catch { /* Invalid return URLs fall back to inventory. */ }
   redirect(`${href}${href.includes("?") ? "&" : "?"}message=${encodeURIComponent(message)}`);
-}
-export async function createInventoryItem(data: FormData): Promise<InventoryActionState> {
-  const parsed = inventoryItemSchema.safeParse(Object.fromEntries(["name", "sku", "category", "description", "unit", "cost", "sellPrice", "reorderLevel", "lotNumber", "expiresOn"].map(key => [key, formValue(data, key)])));
-  if (!parsed.success) return { error: firstError(parsed.error) };
-  const { activeMembership } = await getDashboardContext();
-  if (!["owner", "manager"].includes(activeMembership.role)) return { error: "Inventory management access required." };
-  const cost = parseMoneyToCentavos(parsed.data.cost), sell = parseMoneyToCentavos(parsed.data.sellPrice);
-  if (cost === null || sell === null) return { error: "Invalid inventory price." };
-  const supabase = await createClient();
-  const { error } = await supabase.from("inventory_items").insert({ organization_id: activeMembership.organizationId, branch_id: activeMembership.branchId, name: parsed.data.name, sku: parsed.data.sku || null, category: parsed.data.category || null, description: parsed.data.description || null, unit: parsed.data.unit, cost_centavos: cost, sell_price_centavos: sell, reorder_level: parsed.data.reorderLevel, lot_number: parsed.data.lotNumber || null, expires_on: parsed.data.expiresOn || null });
-  if (error) return { error: error.code === "23505" ? "This SKU already exists in the selected branch. Use a different SKU." : "Unable to create inventory item. Please try again." };
-  saved(data, "Product created. Record its opening stock to update the balance.");
 }
 export async function recordMovement(data: FormData): Promise<InventoryActionState> {
   const parsed = movementSchema.safeParse({ itemId: formValue(data, "itemId"), type: formValue(data, "type"), quantity: formValue(data, "quantity"), note: formValue(data, "note"), idempotencyKey: formValue(data, "idempotencyKey") });

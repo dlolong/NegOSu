@@ -1,3 +1,4 @@
+import { AppointmentPromosSummary } from "@/components/appointment-promos-summary";
 
 import { ArrowRight as ArrowRightIcon, Pencil as PencilIcon, Plus as PlusIcon, Save as SaveIcon } from "lucide-react";
 
@@ -57,6 +58,7 @@ export default async function Page({ params, searchParams }: { params: Promise<{
       <div className="min-w-0 flex-1 basis-full sm:basis-64 [overflow-wrap:anywhere]"><p className="text-sm font-medium capitalize text-brand-primary">{appointment.source.replaceAll("_", " ")} · {appointment.status.replaceAll("_", " ")}</p><h1 id={salon?"salon-appointment-client":"appointment-vehicle-value"} className="mt-1 text-3xl font-medium">{salon?customer?.full_name:vehicleName}</h1><p className="mt-2 text-zinc-600">{salon?appointment.appointment_services.map(item=>item.service_name_snapshot).join(", "):`${customer?.full_name} · ${branch?.name}`}</p></div>
       {canWrite && editable && <Button className="ml-auto" asChild variant="secondary"><Link id={salon?"salon-appointment-edit-button":"appointment-edit-button"} href={`/dashboard/appointments/${appointment.id}/edit`}><PencilIcon aria-hidden="true" size={16} className="shrink-0"/>Edit</Link></Button>}
     </div>
+    <AppointmentPromosSummary appointmentId={appointmentId}/>
     <FormMessage {...query}/>
     <Card id="appointment-scheduling-assignment-context" className="mt-6 p-5"><h2 className="font-medium">Scheduling assignments</h2><dl className="mt-3 grid gap-3 text-sm sm:grid-cols-2"><div><dt className="text-zinc-500">Scheduled Staff</dt><dd className="font-medium">{assignmentLabels.staff}</dd></div><div><dt className="text-zinc-500">{config.terminology.resource}</dt><dd className="font-medium">{assignmentLabels.resources}</dd></div></dl></Card>
     <div className="mt-6 grid gap-5 lg:grid-cols-[1.3fr_1fr]">

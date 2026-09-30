@@ -1,9 +1,12 @@
+import { appointmentPromoSelectionsSchema } from "@/modules/core/commerce/appointment-promos";
 import { z } from "zod";
 import { evaluateAppointmentAvailability,evaluateAppointmentAvailabilityInputSchema,type AvailabilityResult } from "@/modules/core/availability/availability.service";
 
 const nullableText = (maximumLength: number) => z.string().trim().max(maximumLength).nullable().optional().transform((value) => value || null);
 
 export const saveAppointmentInputSchema = z.object({
+  promoSelections: appointmentPromoSelectionsSchema.default([]),
+  requestId: z.uuid().optional(),
   appointmentId: z.uuid({ error: "Select a valid appointment to edit." }).nullable(),
   organizationId: z.uuid({ error: "Select an active organization." }),
   branchId: z.uuid({ error: "Select an active branch." }),

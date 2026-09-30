@@ -1,0 +1,13 @@
+import React from "react";
+import {createRoot} from "react-dom/client";
+import {BookingForm} from "@/app/shop/[slug]/book/booking-form";
+import {BookingSelection} from "@/app/shop/[slug]/book/booking-selection";
+import type {PublicShop} from "@/lib/public-booking";
+const a="10000000-0000-4000-8000-000000000001",b="10000000-0000-4000-8000-000000000002";
+const query=new URLSearchParams(location.search);
+const branch={id:b,name:"Main",timezone:"Asia/Manila",description:null,phone:null,email:null,address:[],mapUrl:null,hours:{},acceptsBookings:true};
+const services=[{id:a,name:"Haircut",description:null,priceCentavos:10000,currency:"PHP",durationMinutes:30,category:null}];
+if(query.has("multi"))services.push({...services[0],id:"10000000-0000-4000-8000-000000000004",name:"Color",durationMinutes:60});
+const promo={id:"10000000-0000-4000-8000-000000000003",name:"Haircut and shampoo",branchId:b,serviceId:a,serviceIds:services.map(s=>s.id),description:"A complete care package",imageUrl:null,version:2,priceCentavos:15000,currency:"PHP",durationMinutes:query.has("multi")?90:30,validFrom:null,validThrough:null,inclusions:[{name:"Shampoo",quantity:"1",unit:"bottle"}]};
+const shop:PublicShop={slug:"test",name:"Test Salon",industry:"salon",description:null,logoUrl:null,coverUrl:null,phone:null,email:null,website:null,facebook:null,instagram:null,gallery:[],branches:[branch,{...branch,id:"other",name:"Other"}],services};
+createRoot(document.getElementById("root")!).render(query.has("selection")?<BookingSelection shop={shop} promos={[promo]} branchId={b} serviceIds={[a]} promoIds={[]}/>:<BookingForm slug="test" industry={query.has("pet")?"pet_care":"salon"} branch={branch} services={services} promos={[promo]} selectedDate="2026-10-02" slots={[{slot_at:"2026-10-02T02:00:00Z"}]} backHref="/book?step=2"/>);

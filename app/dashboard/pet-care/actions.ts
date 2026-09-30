@@ -1,4 +1,5 @@
 "use server";
+import { readAppointmentPromos } from "@/modules/core/commerce/appointment-promos";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { petSchema, groomingNoteSchema } from "@/modules/pet-care/pets";
@@ -36,7 +37,7 @@ export async function savePetAppointment(data: FormData): Promise<{ error: strin
   if (!pet || !starts) return { error: "Select an active pet and a valid local time." };
   if (!selectedValues(data, "staffIds").length || !selectedValues(data, "resourceIds").length) return { error: "Select a groomer and grooming resource." };
   let id: string;
-  try { id = await schedulePet(petId.data, { organizationId: activeMembership.organizationId, appointmentId: text(data, "appointmentId") || null, branchId: activeMembership.branchId, customerId: pet.customer_id, serviceIds: selectedValues(data, "serviceIds"), staffAssignments: selectedValues(data, "staffIds").map(staffId => ({ staffId })), resourceAssignments: selectedValues(data, "resourceIds").map(resourceId => ({ resourceId })), scheduledStart: starts.toISOString(), customerNote: text(data, "customerNote"), internalNote: text(data, "internalNote") }); }
+  try { id = await schedulePet(petId.data, { promoSelections:readAppointmentPromos(data),requestId:text(data,"requestId")||undefined, organizationId: activeMembership.organizationId, appointmentId: text(data, "appointmentId") || null, branchId: activeMembership.branchId, customerId: pet.customer_id, serviceIds: selectedValues(data, "serviceIds"), staffAssignments: selectedValues(data, "staffIds").map(staffId => ({ staffId })), resourceAssignments: selectedValues(data, "resourceIds").map(resourceId => ({ resourceId })), scheduledStart: starts.toISOString(), customerNote: text(data, "customerNote"), internalNote: text(data, "internalNote") }); }
   catch (error) { return { error: reportActionError("pet.appointment.save", error, "Unable to save this grooming appointment. Your entries have been kept. Please try again.") }; }
   redirect(`${root}/appointments/${id}`);
 }

@@ -6,6 +6,7 @@ import { saveAppointmentWalkIn } from "@/app/dashboard/appointments/walk-in-acti
 import { savePet, savePetAppointment } from "@/app/dashboard/pet-care/actions";
 import { PetVisitFields } from "@/components/pet-visit-fields";
 import { SearchableSelect } from "@/components/searchable-select";
+import type { AppointmentPromoChoice } from "@/modules/core/commerce/appointment-promos";
 import { ServicePicker } from "@/components/catalog-fields";
 import { VisitEntityFields } from "@/components/visit-entity-fields";
 import { FormActions } from "@/components/form-actions";
@@ -28,14 +29,15 @@ export function PetForm({ pet, owners, ownerId }: { pet?: Pet; owners: Option[];
     <FormActions id="pet-form-actions" cancelHref="/dashboard/pet-care/pets"><SubmitButton id="pet-save-button" pendingText="Saving…"><Save size={16} aria-hidden="true"/>Save pet</SubmitButton></FormActions>
   </form>;
 }
-export function PetAppointmentForm({ pets, owners, services, staff, resources, timezone, openingHours = {}, canCreateCatalog = false, currency = "PHP", walkIn = false, requestId }: { walkIn?:boolean; requestId?:string; pets: Option[]; owners: Option[]; services: Option[]; staff: Option[]; resources: Option[]; timezone: string; openingHours?: Record<string, {open?:string;close?:string;closed?:boolean}>; canCreateCatalog?: boolean; currency?: string }) {
+export function PetAppointmentForm({ pets, owners, services, staff, resources, timezone, openingHours = {}, canCreateCatalog = false, currency = "PHP", walkIn = false, requestId, promos=[], branchId="" }: { promos?:AppointmentPromoChoice[];branchId?:string;walkIn?:boolean; requestId?:string; pets: Option[]; owners: Option[]; services: Option[]; staff: Option[]; resources: Option[]; timezone: string; openingHours?: Record<string, {open?:string;close?:string;closed?:boolean}>; canCreateCatalog?: boolean; currency?: string }) {
   const [error, setError] = useState<string>();
+  const [appointmentDate,setAppointmentDate] = useState("");
   return <div onResetCapture={event => { event.preventDefault(); event.stopPropagation(); }}><FormMessage id="pet-appointment-error" error={error}/><form id="pet-appointment-form" action={async data => { setError(undefined); const result = await (walkIn ? saveAppointmentWalkIn(data) : savePetAppointment(data)); setError(result.error); }} className="grid min-w-0 grid-cols-1 gap-4">
     {requestId?<input type="hidden" name="requestId" value={requestId}/>:null}
     <PetVisitFields pets={pets} owners={owners}/>
-    {walkIn?<p className="text-sm text-admin-text-secondary">Check in an arriving pet now. Grooming must fit within branch hours and the selected groomer and resource availability.</p>:<label className="text-sm">Appointment time ({timezone})<Input id="pet-appointment-time-input" name="startsAt" type="datetime-local" required className="mt-2"/></label>}
+    {walkIn?<p className="text-sm text-admin-text-secondary">Check in an arriving pet now. Grooming must fit within branch hours and the selected groomer and resource availability.</p>:<label className="text-sm">Appointment time ({timezone})<Input id="pet-appointment-time-input" onChange={event=>setAppointmentDate(event.target.value.slice(0,10))} name="startsAt" type="datetime-local" required className="mt-2"/></label>}
     <details id="pet-appointment-branch-hours" className="rounded-ui-md border border-admin-border p-3"><summary className="cursor-pointer text-sm font-medium">Branch hours ({timezone})</summary><p className="mt-2 text-xs text-admin-text-secondary">The complete service duration must fit within opening hours.</p><dl className="mt-2 grid gap-1 text-sm">{["monday","tuesday","wednesday","thursday","friday","saturday","sunday"].map(day => { const hours = openingHours[day]; return <div key={day} className="flex justify-between gap-3"><dt className="capitalize">{day}</dt><dd>{!hours || hours.closed || !hours.open || !hours.close ? "Closed / not configured" : `${hours.open}–${hours.close}`}</dd></div>; })}</dl></details>
-    <ServicePicker currency={currency} id="pet-appointment" services={services} canCreate={canCreateCatalog}/>
+    <ServicePicker promos={promos} branchId={branchId} appointmentDate={appointmentDate} currency={currency} id="pet-appointment" services={services} canCreate={canCreateCatalog}/>
     <label className="text-sm">Groomer<SearchableSelect id="pet-appointment-staff-select" name="staffIds" required options={staff} placeholder="Search assigned staff"/></label>
     <label className="text-sm">Grooming resource<SearchableSelect id="pet-appointment-resource-select" name="resourceIds" required options={resources} placeholder="Search grooming resources"/></label>
     <p className="text-xs text-admin-text-secondary">One pet per appointment. Staff and resources reserve the complete service duration.</p>
