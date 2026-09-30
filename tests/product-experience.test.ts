@@ -52,8 +52,8 @@ test("Command Center keeps compact hierarchy and names non-color status meaning"
 test("high-traffic schedules and catalog avoid tablet-width overflow traps", () => {
   const appointments = source("app/dashboard/appointments/page.tsx");
   const services = source("app/dashboard/services/page.tsx") + source("components/service-catalog.tsx");
-  assert.match(appointments, /sm:grid-cols-2 xl:grid-cols-/);
-  assert.match(appointments, />Search<input/);
+  assert.match(appointments, /<CompactFilters/);
+  assert.match(appointments, /searchLabel="Search appointments"/);
   assert.match(appointments, /appointment-range-tabs/);
   assert.match(appointments, /type="hidden" name="view"/);
   assert.match(appointments, />Status<select/);
