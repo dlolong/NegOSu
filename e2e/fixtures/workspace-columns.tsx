@@ -13,7 +13,7 @@ createRoot(document.getElementById("root")!).render(<div className="lg:pl-56">
   </div> : <CommandCenter
     snapshot={{ scope: { mode: "branch", organizationId: "test", branchIds: ["main"], selectedBranchId: "main", label: "Main branch", currency: "PHP" }, metrics: [{ key: "appointments_today", label: "Appointments today", value: 12, valueKind: "count" }], actions: [], operations: [], staff: [], branchPerformance: [] }}
     firstName="Alex" branches={[{ id: "main", name: "Main branch" }]} todayTitle="Today's appointments" todayDescription="Current branch schedule" todayVerticalId="test-appointments" staffDescription="Your team today"
-    quickActions={[{ id: "appointment", label: "New appointment", description: "Schedule a visit", href: "/dashboard/appointments/new" }]}
+    quickActions={[{ id: "appointment", primary: true, label: "New appointment", description: "Schedule a visit", href: "/dashboard/appointments/new" }]}
     discovery={<DashboardDiscoveryContent canManage website={publicWebsiteSummary("https://example.com", "long-business-name-for-mobile-url-wrapping-checks", { status: "active", public_page_enabled: true })} features={dashboardFeaturePreviews("salon", "owner")}/>}
   />}
 </div>);

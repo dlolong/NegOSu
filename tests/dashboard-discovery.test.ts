@@ -15,7 +15,7 @@ test("website address uses the configured origin and encodes the organization sl
 });
 
 test("feature previews follow existing role permissions", () => {
-  assert.deepEqual(dashboardFeaturePreviews("salon", "owner").map(item => item.key), ["bookings", "inbox", "reports"]);
+  assert.deepEqual(dashboardFeaturePreviews("salon", "owner").map(item => item.key), ["new-sale", "bookings", "inbox"]);
   assert.deepEqual(dashboardFeaturePreviews("salon", "advisor").map(item => item.key), ["bookings", "inbox"]);
   assert.deepEqual(dashboardFeaturePreviews("salon", "viewer").map(item => item.key), ["reports"]);
   assert.deepEqual(dashboardFeaturePreviews("salon", "technician"), []);
@@ -27,4 +27,11 @@ test("feature previews respect vertical capabilities and stay compact", () => {
   assert.ok(!hospitality.some(item => item.key === "bookings" || item.key === "inbox"));
   assert.ok(hospitality.some(item => item.key === "reports"));
   assert.ok(dashboardFeaturePreviews("pet_care", "owner").some(item => item.href === "/dashboard/bookings"));
+});
+
+test("product sale shortcut is available only to checkout roles across supported businesses", () => {
+ for (const industry of ["salon", "automotive", "pet_care", "hospitality"]) {
+  for (const role of ["owner", "manager", "cashier"] as const) assert.ok(dashboardFeaturePreviews(industry, role).some(item => item.href === "/dashboard/checkout/new"));
+  for (const role of ["advisor", "technician", "viewer"] as const) assert.ok(!dashboardFeaturePreviews(industry, role).some(item => item.key === "new-sale"));
+ }
 });

@@ -34,7 +34,7 @@ try:
     if restored.returncode: raise RuntimeError(restored.stderr.decode())
     version = run('select max(version) from supabase_migrations.schema_migrations')
     for path in sorted(pathlib.Path('supabase/migrations').glob('*.sql')):
-        if version < path.name[:4] <= '0111': run(path.read_text())
+        if version < path.name[:4] <= '0113': run(path.read_text())
     fixture = pathlib.Path('supabase/tests/shared_checkout.sql').read_text()
     fixture = fixture[fixture.index('create function pg_temp.cid'):fixture.index('select is((get_checkout')]
     fixture = fixture.replace('pg_temp.cid', 'public.checkout_test_id').replace('create temporary table ctx', 'create table public.ctx').replace("'opening',10", "'opening',1")

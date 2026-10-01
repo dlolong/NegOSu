@@ -3,7 +3,7 @@ import { DashboardDiscovery } from "@/components/dashboard-discovery";
 import { DashboardChart } from "@/components/dashboard-chart";
 import { statusChart } from "@/modules/platform/chart-data";
 
-import { ArrowRight as ArrowRightIcon, Plus as PlusIcon, Settings as SettingsIcon } from "lucide-react";
+import { ArrowRight as ArrowRightIcon, CalendarDays, Plus as PlusIcon, Settings as SettingsIcon } from "lucide-react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
@@ -86,7 +86,7 @@ async function StaffOperationalDashboard({ query, context }: { query: DashboardQ
 
   return <main id="negosu-staff-dashboard-page" className="mx-auto max-w-6xl pb-5">
     {query.error ? <div id="negosu-staff-dashboard-message" role="alert" className="mb-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">{query.error}</div> : null}
-    <header id="negosu-staff-dashboard-header" className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-admin-border bg-admin-surface px-4 py-4 shadow-sm min-w-0 [&>a]:ml-auto [&>button]:ml-auto [&>form]:ml-auto"><div className="min-w-0 flex-1 basis-full sm:basis-64 [overflow-wrap:anywhere]"><Badge>{activeMembership.branchName}</Badge><h1 className="mt-2 text-2xl font-medium text-admin-text">Welcome, {firstName(profile.fullName)}.</h1><p className="mt-1 text-sm text-slate-500">Your operational view for today.</p></div>{canCreate ? <Button className="ml-auto" asChild><Link id="negosu-staff-dashboard-new-appointment" href="/dashboard/appointments/new"><PlusIcon aria-hidden="true" size={16} className="shrink-0"/>New Appointment</Link></Button> : null}</header>
+    <header id="negosu-staff-dashboard-header" className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-admin-border bg-admin-surface px-4 py-4 shadow-sm min-w-0 [&>a]:ml-auto [&>button]:ml-auto [&>form]:ml-auto"><div className="min-w-0 flex-1 basis-full sm:basis-64 [overflow-wrap:anywhere]"><Badge>{activeMembership.branchName}</Badge><h1 className="mt-2 text-2xl font-medium text-admin-text">Welcome, {firstName(profile.fullName)}.</h1><p className="mt-1 text-sm text-slate-500">Your operational view for today.</p></div>{canCreate ? <div className="flex flex-wrap gap-2"><Button asChild variant="secondary"><Link id="negosu-staff-dashboard-walk-in" href={salon?"/dashboard/appointments/new?mode=walk-in":"/dashboard/queue/new"}><PlusIcon size={16} aria-hidden="true"/>Add walk-in</Link></Button><Button asChild><Link id="negosu-staff-dashboard-new-appointment" href="/dashboard/appointments/new"><CalendarDays aria-hidden="true" size={16} className="shrink-0"/>Book appointment</Link></Button></div> : null}</header>
     <WorkspaceColumns id="staff-dashboard-workspace" sidebar={<DashboardDiscovery/>}>
 
     <section id="negosu-staff-dashboard-today" className="mt-3 rounded-2xl border border-admin-border bg-admin-surface p-4 shadow-sm"><div className="flex justify-between gap-3 items-center flex-wrap min-w-0 [&>a]:ml-auto [&>button]:ml-auto [&>form]:ml-auto"><div className="min-w-0 flex-1 basis-full sm:basis-64 [overflow-wrap:anywhere]"><h2 className="font-medium text-admin-text">Today&apos;s Appointments</h2><p className="text-xs text-slate-500">A compact branch schedule with no financial or organization-wide metrics.</p></div><Link className="text-sm font-medium text-brand-primary-strong" href="/dashboard/appointments">View all</Link></div>
@@ -108,20 +108,20 @@ async function StaffOperationalDashboard({ query, context }: { query: DashboardQ
 
 function quickActions(industry: string, role: Parameters<typeof roleHasPermission>[0], scopeMode: "branch" | "all"): CommandCenterQuickAction[] {
   const candidates = industry === "salon" ? [
-    { id: "add-walk-in", label: "Add Walk-In", description: "Check in an arriving client", href: "/dashboard/appointments/new?mode=walk-in", permission: "appointments.manage" as const },
-    { id: "new-appointment", label: "New Appointment", description: "Book a Client visit", href: "/dashboard/appointments/new", permission: "appointments.manage" as const },
+    { id: "add-walk-in", label: "Add walk-in", primary: true, description: "Check in an arriving client", href: "/dashboard/appointments/new?mode=walk-in", permission: "appointments.manage" as const },
+    { id: "new-appointment", label: "Book appointment", primary: true, description: "Book a Client visit", href: "/dashboard/appointments/new", permission: "appointments.manage" as const },
     { id: "add-client", label: "Add Client", description: "Create a Client record", href: "/dashboard/customers/new", permission: "customers.write" as const },
     { id: "add-treatment", label: "Add Treatment", description: "Configure a Treatment", href: "/dashboard/services/new", permission: "services.manage" as const },
     { id: "manage-staff", label: "Manage Staff", description: "Staff access and job functions", href: "/dashboard/settings/staff", permission: "staff.manage" as const },
   ] : [
-    { id: "new-appointment", label: "New Appointment", description: "Schedule a vehicle visit", href: "/dashboard/appointments/new", permission: "appointments.manage" as const },
-    { id: "add-walk-in", label: "Add Walk-In", description: "Start a branch arrival", href: "/dashboard/queue/new", permission: "appointments.manage" as const },
+    { id: "new-appointment", label: "Book appointment", primary: true, description: "Schedule a vehicle visit", href: "/dashboard/appointments/new", permission: "appointments.manage" as const },
+    { id: "add-walk-in", label: "Add walk-in", primary: true, description: "Start a branch arrival", href: "/dashboard/queue/new", permission: "appointments.manage" as const },
     { id: "add-customer", label: "Add Customer", description: "Create a Customer record", href: "/dashboard/customers/new", permission: "customers.write" as const },
     { id: "add-vehicle", label: "Add Vehicle", description: "Register a Customer vehicle", href: "/dashboard/vehicles/new", permission: "vehicles.write" as const },
     { id: "inventory", label: "Inventory", description: "Review stock and movements", href: "/dashboard/inventory", permission: "inventory.manage" as const },
   ];
   if (scopeMode === "all") return [];
-  return candidates.filter(({ permission }) => roleHasPermission(role, permission)).map(({ id, label, description, href }) => ({ id, label, description, href }));
+  return candidates.filter(({ permission }) => roleHasPermission(role, permission)).map(({ id, label, description, href, primary }) => ({ id, label, description, href, primary }));
 }
 
 type StaffAppointment = { id: string; starts_at: string | null; status: string; customers: { full_name: string } | { full_name: string }[] | null; vehicles?: Vehicle | Vehicle[] | null; appointment_services: Array<{ service_name_snapshot: string }> };

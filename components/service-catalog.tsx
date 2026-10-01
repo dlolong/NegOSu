@@ -30,7 +30,7 @@ export function ServiceCatalogList({ services, salon, canManage = false, currenc
   ]} rows={services.map(service => ({id:`${prefix}-row-${service.id}`,cells:{
     service:<><RecordLink id={`${prefix}-link-${service.id}`} href={`/dashboard/services/${service.id}`}>{service.name}</RecordLink>{service.short_description && <p className="mt-1 line-clamp-2 text-xs text-admin-text-muted">{service.short_description}</p>}<p className="mt-1 text-xs text-admin-text-muted">{availabilityLabel(service)}</p></>,
     category:categoryName(service),price:<><strong>{formatMoney(service.base_price_centavos, service.currency ?? currency)}</strong><p className="mt-1 text-xs">{formatDuration(service.duration_minutes)}</p></>,status:<StatusPill active={service.is_active}/>,
-    actions:canManage?<Button asChild size="sm" variant="secondary"><Link id={`${prefix}-edit-${service.id}`} href={`/dashboard/services/${service.id}/edit`}><Pencil size={16} aria-hidden="true"/>Edit</Link></Button>:formatMoney(service.base_price_centavos, service.currency ?? currency),
+    actions:canManage?<div className="flex flex-wrap justify-end gap-2"><Button asChild size="sm" variant="secondary"><Link id={`${prefix}-edit-${service.id}`} href={`/dashboard/services/${service.id}/edit`}><Pencil size={16} aria-hidden="true"/>Edit</Link></Button></div>:formatMoney(service.base_price_centavos, service.currency ?? currency),
   },mobile:<><p>{categoryName(service)}{service.is_add_on?" · Add-on":""}</p><p>{formatMoney(service.base_price_centavos, service.currency ?? currency)} · {formatDuration(service.duration_minutes)}</p><StatusPill active={service.is_active}/></>}))}/>;
 }
 

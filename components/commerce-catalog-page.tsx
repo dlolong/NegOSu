@@ -1,3 +1,5 @@
+import {FormMessage} from "@/components/form-message";
+import {RemoveRecordButton} from "@/components/remove-record-button";
 import { randomUUID } from "node:crypto";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -12,7 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Tabs } from "@/components/ui/tabs";
 import { ProductCatalogForm, PromoCatalogForm, type CatalogProduct, type CatalogPromo } from "@/components/commerce-catalog-forms";
 
-export type CommerceCatalogQuery = { q?: string; page?: string; dialog?: string; id?: string };
+export type CommerceCatalogQuery = { message?: string; q?: string; page?: string; dialog?: string; id?: string };
 export async function CommerceCatalogPage({ kind, query }: { kind: "products" | "promos"; query: CommerceCatalogQuery }) {
   const { activeMembership: m } = await getDashboardContext();
   if (!["owner", "manager"].includes(m.role) || !["automotive", "salon", "pet_care", "hospitality"].includes(m.industry)) notFound();
@@ -45,6 +47,7 @@ export async function CommerceCatalogPage({ kind, query }: { kind: "products" | 
   }
   return <main id={`${kind}-catalog-page`} className="mx-auto min-w-0 max-w-6xl">
     <PageHeader id={`${kind}-catalog-header`} title={kind === "products" ? "Products" : "Promos"} description={`${m.branchName} · ${kind === "products" ? "Manage products and selling details. Stock movements stay in Inventory." : "Compose fixed-price offers from services and products."}`} action={!result.error ? <Button asChild><Link id={`${kind}-add`} href={`${href}?dialog=edit`}>Add {kind === "products" ? "product" : "promo"}</Link></Button> : undefined}/>
+    <FormMessage message={query.message}/>
     {kind === "promos" ? <p id="promo-integration-status" className="my-3 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm">Active service promos can be selected for new appointments. Enable “Show on public website” to let clients request them online. Booking includes the fixed promo price; product use or handover is recorded separately in Inventory. Walk-ins, maintenance bookings, job estimates, and stays do not yet support promo selection.</p> : null}
     <Tabs id="commerce-catalog-navigation" ariaLabel="Catalog and stock" items={[{ id: "commerce-products-tab", label: "Products", href: "/dashboard/products" }, { id: "commerce-promos-tab", label: "Promos", href: "/dashboard/promos" }, { id: "commerce-inventory-tab", label: "Inventory", href: "/dashboard/inventory" }]}/>
     {kind === "products" ? <Button asChild variant="secondary" className="my-3"><Link id="product-new-sale-button" href="/dashboard/checkout/new">New sale</Link></Button> : null}
@@ -55,7 +58,7 @@ export async function CommerceCatalogPage({ kind, query }: { kind: "products" | 
       {!rows.length ? <p className="py-8 text-center text-sm">No {kind} found in this branch.</p> : null}
       <nav aria-label="Catalog pages" className="mt-4 flex items-center justify-between gap-3">{page > 1 ? <Link id={`${kind}-previous`} href={`${href}?page=${page - 1}&q=${encodeURIComponent(query.q ?? "")}`}>Previous</Link> : <span/>}<span className="text-sm">Page {page}</span>{page * 30 < (result.count ?? 0) ? <Link id={`${kind}-next`} href={`${href}?page=${page + 1}&q=${encodeURIComponent(query.q ?? "")}`}>Next</Link> : <span/>}</nav>
     </>}
-    {open ? <FormDialog id={`${kind}-catalog-dialog`} title={`${row ? "Edit" : "Add"} ${kind === "products" ? "product" : "promo"}`} closeHref={href}>{choicesError ? <p role="alert">Unable to load components. Close and try again.</p> : kind === "products" ? <ProductCatalogForm requestKey={randomUUID()} product={row} currency={m.currency}/> : <PromoCatalogForm requestKey={randomUUID()} promo={row} products={products} services={services} hospitality={m.industry === "hospitality"} currency={m.currency}/>}</FormDialog> : null}
+    {open ? <FormDialog id={`${kind}-catalog-dialog`} title={`${row ? "Edit" : "Add"} ${kind === "products" ? "product" : "promo"}`} closeHref={href}>{choicesError ? <p role="alert">Unable to load components. Close and try again.</p> : kind === "products" ? <ProductCatalogForm requestKey={randomUUID()} product={row} currency={m.currency}/> : <PromoCatalogForm requestKey={randomUUID()} promo={row} products={products} services={services} hospitality={m.industry === "hospitality"} currency={m.currency}/>}{row?<RemoveRecordButton kind={kind === "products" ? "product" : "promo"} recordId={row.id} name={row.name}/>:null}</FormDialog> : null}
     {query.id && !row ? <p role="alert" className="mt-3">The selected record is unavailable in this branch.</p> : null}
   </main>;
 }

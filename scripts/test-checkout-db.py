@@ -15,7 +15,7 @@ version = version.stdout.strip()
 def body(source):
     return re.sub(r'^\s*(begin|commit|rollback);', '', source, flags=re.M|re.I)
 
-migrations='\n'.join(body(p.read_text()) for p in sorted(pathlib.Path('supabase/migrations').glob('*.sql')) if version<p.name[:4]<='0111')
+migrations='\n'.join(body(p.read_text()) for p in sorted(pathlib.Path('supabase/migrations').glob('*.sql')) if version<p.name[:4]<='0113')
 names=sys.argv[1:] or ['shared_checkout','parts_reservation_consumption','service_advisor_workflow','appointment_promos','multi_service_promos','hospitality_general_availability']
 failed=False
 for name in names:

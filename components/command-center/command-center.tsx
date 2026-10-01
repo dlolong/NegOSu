@@ -2,7 +2,7 @@ import { WorkspaceColumns } from "@/components/workspace-columns";
 import type { ReactNode } from "react";
 import { DashboardChart } from "@/components/dashboard-chart";
 import { RecordRow, RecordItem, RecordLink } from "@/components/record-item";
-import { Search as SearchIcon, AlertCircle, ArrowRight, CalendarDays, ChevronRight, UsersRound } from "lucide-react";
+import { Search as SearchIcon, AlertCircle, ArrowRight, CalendarDays, ChevronRight, UsersRound, Plus } from "lucide-react";
 import Link from "next/link";
 
 
@@ -17,6 +17,7 @@ export type CommandCenterQuickAction = {
   label: string;
   description: string;
   href: string;
+  primary?: boolean;
 };
 
 export function CommandCenter({
@@ -44,12 +45,14 @@ export function CommandCenter({
   quickActions: readonly CommandCenterQuickAction[];
   sectionErrors?: Partial<Record<"actions" | "operations" | "staff", string>>;
 }) {
+  const primaryActions = snapshot.scope.mode === "branch" ? quickActions.filter(action => action.primary) : [];
+  const secondaryActions = quickActions.filter(action => !action.primary);
   const branchNames = new Map(branches.map(({ id, name }) => [id, name]));
   const attentionCount = snapshot.metrics.find(({ key }) => key === "attention")?.value ?? snapshot.actions.length;
   return <main id="negosu-command-center-page" className="mx-auto min-w-0 max-w-7xl pb-5">
     <header id="negosu-command-center-header" className="flex flex-wrap items-center justify-between gap-3 border-b border-admin-border pb-4 min-w-0 [&>a]:ml-auto [&>button]:ml-auto [&>form]:ml-auto">
       <div className="min-w-0 flex-1 basis-full sm:basis-64 [overflow-wrap:anywhere]"><h1 className="mt-0.5 text-2xl font-medium tracking-tight text-admin-text sm:text-3xl">Command Center</h1><p id="negosu-command-center-operational-date" className="mt-0.5 text-xs font-medium text-slate-500">{operationalDate(snapshot)} · {snapshot.scope.label}</p><p className="mt-0.5 text-sm text-slate-600">Good day, {firstName}. Here&apos;s what needs attention today.</p></div>
-      <form id="negosu-command-center-branch-selector-form" action="/dashboard/branch-context" className="ml-auto flex w-full items-end gap-2 sm:w-auto" method="get"><input type="hidden" name="next" value="/dashboard"/>
+      {branches.length > 1 ? <form id="negosu-command-center-branch-selector-form" action="/dashboard/branch-context" className="ml-auto flex w-full items-end gap-2 sm:w-auto" method="get"><input type="hidden" name="next" value="/dashboard"/>
         <label className="min-w-0 flex-1 text-xs font-medium normal-case tracking-wide text-slate-500 sm:min-w-48">View
           <select id="negosu-command-center-branch-selector" name="branch" defaultValue={snapshot.scope.mode === "all" ? "all" : snapshot.scope.selectedBranchId ?? ""} className="mt-1 min-h-10 w-full rounded-xl border border-admin-border bg-white px-3 text-sm font-medium normal-case text-admin-text">
             {branches.length > 1 ? <option value="all">All Branches</option> : null}
@@ -57,18 +60,19 @@ export function CommandCenter({
           </select>
         </label>
         <Button id="negosu-command-center-branch-apply" type="submit" size="sm" variant="secondary"><SearchIcon aria-hidden="true" size={16} className="shrink-0"/>Apply</Button>
-      </form>
+      </form> : null}
+      {primaryActions.length ? <div id="dashboard-primary-actions" className="ml-auto flex w-full flex-wrap gap-2 sm:w-auto sm:justify-end">{primaryActions.map(action=><Button asChild key={action.id} variant={action.id === "add-walk-in" ? "secondary" : "primary"}><Link id={`negosu-command-center-quick-action-${action.id}`} href={action.href}>{action.id === "new-appointment" ? <CalendarDays size={16} aria-hidden="true"/> : <Plus size={16} aria-hidden="true"/>}{action.label}</Link></Button>)}</div> : null}
     </header>
 
     <WorkspaceColumns id="command-center-workspace" sidebar={<>
       {discovery}
-      <section id="negosu-command-center-quick-actions" className="min-w-0 rounded-xl border border-admin-border bg-admin-surface p-4">
+      {secondaryActions.length || snapshot.scope.mode === "all" ? <section id="negosu-command-center-quick-actions" className="min-w-0 rounded-xl border border-admin-border bg-admin-surface p-4">
         <h2 className="font-medium text-admin-text">Quick Actions</h2>
-        {quickActions.length ? <div className="mt-2 divide-y divide-admin-border">{quickActions.map((action) => <Link id={`negosu-command-center-quick-action-${action.id}`} key={action.id} href={action.href} className="group flex min-h-11 items-center justify-between gap-2 rounded-lg py-2 hover:bg-brand-tint/50">
+        {secondaryActions.length ? <div className="mt-2 divide-y divide-admin-border">{secondaryActions.map((action) => <Link id={`negosu-command-center-quick-action-${action.id}`} key={action.id} href={action.href} className="group flex min-h-11 items-center justify-between gap-2 rounded-lg py-2 hover:bg-brand-tint/50">
           <span className="min-w-0"><strong className="block text-sm text-admin-text">{action.label}</strong><span className="sr-only">{action.description}</span></span>
           <ArrowRight aria-hidden="true" className="shrink-0 text-brand-primary" size={16}/>
         </Link>)}</div> : <p id="negosu-command-center-quick-actions-branch-guidance" className="mt-3 rounded-xl bg-slate-50 px-4 py-4 text-sm text-slate-600">Select a branch before starting operational work.</p>}
-      </section>
+      </section> : null}
 
       <section id="negosu-staff-snapshot" className="min-w-0 rounded-xl border border-admin-border bg-admin-surface p-4"><div className="flex items-start justify-between gap-3"><div><h2 className="font-medium text-admin-text">Staff Snapshot</h2><p className="text-xs text-slate-500">{staffDescription}</p></div><UsersRound aria-hidden="true" className="text-brand-primary" size={19}/></div>
         {sectionErrors.staff ? <SectionError id="negosu-staff-snapshot-error" message={sectionErrors.staff}/> : null}

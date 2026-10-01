@@ -33,7 +33,9 @@ test("dashboard puts supporting information right on desktop and operational wor
   const chart = await page.locator("#command-center-activity-chart").boundingBox();
   expect(today!.y).toBeLessThan(chart!.y);
   expect(await page.locator("#root").evaluate(element => element.scrollWidth <= element.clientWidth)).toBe(true);
-  await expect(page.locator("#negosu-command-center-quick-action-appointment")).toHaveCount(1);
+  await expect(page.locator("#negosu-command-center-header #negosu-command-center-quick-action-appointment")).toBeVisible();
+  await expect(page.locator("#negosu-command-center-quick-actions #negosu-command-center-quick-action-appointment")).toHaveCount(0);
+  await expect(page.locator("#negosu-command-center-branch-selector-form")).toHaveCount(0);
 });
 
 test("settings navigation uses the left column on desktop without mobile overflow", async ({ page }) => {

@@ -13,10 +13,12 @@ const featureDescriptions: Record<string, string> = {
 
 export function dashboardFeaturePreviews(industry: string, role: OrganizationMembership["role"]) {
   const navigation = navigationForIndustry(resolveIndustryConfig(industry), role);
-  return Object.entries(featureDescriptions).flatMap(([key, description]) => {
+  const sales = ["owner", "manager", "cashier"].includes(role) && ["salon", "automotive", "pet_care", "hospitality"].includes(industry)
+    ? [{key: "new-sale", label: "New product sale", href: "/dashboard/checkout/new", description: "Sell products with or without customer details."}] : [];
+  return [...sales, ...Object.entries(featureDescriptions).flatMap(([key, description]) => {
     const item = navigation.find(item => item.key === key);
     return item ? [{ key, label: item.label, href: item.href, description }] : [];
-  }).slice(0, 3);
+  })].slice(0, 3);
 }
 
 export function publicWebsiteSummary(appUrl: string, slug: string, organization: { public_page_enabled: boolean; status: string } | null) {

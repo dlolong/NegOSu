@@ -14,7 +14,7 @@ async function checkoutContext(id:string){const {m,db}=await context();if(!z.uui
 function refresh(id:string){revalidatePath(`/dashboard/checkout/${id}`);revalidatePath("/dashboard/payments");revalidatePath("/dashboard/inventory");revalidatePath("/dashboard/reports");}
 export async function openCheckout(data:FormData){
  const {m,db}=await context();const parsed=z.object({appointmentId:z.uuid().nullable(),invoiceId:z.uuid().nullable(),customerId:z.uuid().nullable(),request:z.uuid()}).safeParse({appointmentId:str(data,"appointmentId")||null,invoiceId:str(data,"invoiceId")||null,customerId:str(data,"customerId")||null,request:str(data,"request")});
- if(!parsed.success)redirect("/dashboard/checkout/new?error=Choose+a+customer+or+transaction.");
+ if(!parsed.success)redirect("/dashboard/checkout/new?error=Invalid+sale+details.+Reload+and+try+again.");
  const p=parsed.data;const {data:id,error}=await db.rpc("open_checkout",{p_branch:m.branchId,p_appointment:p.appointmentId,p_invoice:p.invoiceId,p_customer:p.customerId,p_request:p.request});
  if(error||!id)redirect(`/dashboard/checkout/new?error=${encodeURIComponent(checkoutError(error))}`);
  redirect(`/dashboard/checkout/${id}`);

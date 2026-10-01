@@ -1,3 +1,4 @@
+import {RemoveRecordButton} from "@/components/remove-record-button";
 import { RecordTable } from "@/components/record-table";
 import { ListTabs } from "@/components/list-tabs";
 import { RecordLink } from "@/components/record-item";
@@ -107,7 +108,7 @@ export default async function StaffPage({ searchParams }: { searchParams: Promis
 
     {parameters.dialog === "view" && selected ? <FormDialog id={`${prefix}-details-dialog`} title={selected.fullName} closeHref="/dashboard/settings/staff" size="md"><dl className="space-y-4 text-sm">{[["Function", selected.jobFunction || "Not set"], ["Specializations", selected.specializations.join(", ") || "Not set"], ["Status", selected.isActive ? "Active" : "Inactive"]].map(([label,value])=><div key={label}><dt className="text-admin-text-muted">{label}</dt><dd className="[overflow-wrap:anywhere]">{value}</dd></div>)}</dl></FormDialog> : null}
     {profileManagementAvailable && parameters.dialog === "create" ? <FormDialog id={`${prefix}-create-dialog`} title="Add staff" description="Start with a name and work details. You can add contact information and invite them to sign in later." closeHref="/dashboard/settings/staff" size="lg"><StaffProfileForm branches={branches} industry={industry} prefix={`${prefix}-create`}/></FormDialog> : null}
-    {profileManagementAvailable && parameters.dialog === "edit" && selected ? <FormDialog id={`${prefix}-edit-dialog`} title={`Edit ${selected.fullName}`} description="Update contact details and where this person works. Login permissions are managed separately." closeHref="/dashboard/settings/staff" size="lg"><StaffProfileForm profile={selected} branches={branches} industry={industry} prefix={`${prefix}-edit`}/></FormDialog> : null}
+    {profileManagementAvailable && parameters.dialog === "edit" && selected ? <FormDialog id={`${prefix}-edit-dialog`} title={`Edit ${selected.fullName}`} description="Update contact details and where this person works. Login permissions are managed separately." closeHref="/dashboard/settings/staff" size="lg"><StaffProfileForm profile={selected} branches={branches} industry={industry} prefix={`${prefix}-edit`}/>{selected.role !== "owner"?<RemoveRecordButton kind="staff" recordId={selected.id} name={selected.fullName}/>:null}</FormDialog> : null}
     {profileManagementAvailable && parameters.dialog === "access" && selected && selected.role !== "owner" ? <FormDialog id={`${prefix}-access-dialog`} title={`${selected.membershipId ? "Manage" : "Grant"} system access`} description={`Choose what ${selected.fullName} can access when they sign in.`} closeHref="/dashboard/settings/staff" size="md"><StaffAccessForm profile={selected} branches={branches} industry={industry} prefix={`${prefix}-access`}/></FormDialog> : null}
   </main>;
 }
