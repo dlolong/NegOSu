@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import "driver.js/dist/driver.css";
 
 :root {
   --background: #f5f7fa;
@@ -302,3 +303,13 @@ dialog { overscroll-behavior: contain; }
   body:has(#hospitality-stay-statement, #checkout-receipt) :is(#dashboard-app-shell, #dashboard-content-frame, #dashboard-main-content) { display: block; height: auto; overflow: visible; padding: 0; background: white; }
   :is(#hospitality-stay-statement, #checkout-receipt) { max-width: none; border: 0; box-shadow: none; }
 }
+
+/* Accessible, compact tour controls; engine JavaScript loads only on demand. */
+.driver-popover.negosu-guide { max-width: calc(100vw - 2rem); border-radius: 12px; font-family: inherit; color: #172033; padding: 20px; }
+.driver-popover.negosu-guide .driver-popover-title { padding-right: 44px; font-size: 18px; }
+.driver-popover.negosu-guide .driver-popover-description { font-size: 15px; line-height: 1.6; }
+.driver-popover.negosu-guide button { min-height: 44px; font-size: 14px; text-shadow: none; border-radius: 8px; }
+.driver-popover.negosu-guide .driver-popover-close-btn { width: 48px; font-size: 13px; color: #475569; }
+.driver-popover.negosu-guide .driver-popover-next-btn { background: #0062dc; border-color: #0062dc; color: white; }
+.driver-popover.negosu-guide button:focus-visible { outline: 2px solid #0062dc; outline-offset: 3px; }
+@media print { .driver-popover, .driver-overlay { display: none !important; } }
