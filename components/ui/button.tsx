@@ -1,3 +1,5 @@
+import {PendingButton} from "./button-pending";
+import {LinkPending} from "./link-pending";
 import { cloneElement, isValidElement, type ButtonHTMLAttributes, type MouseEvent, type ReactElement, type ReactNode } from "react";
 
 import { cn } from "@/lib/utils";
@@ -26,7 +28,7 @@ export function Button({ asChild = false, children, className, size = "default",
     icon: "size-11 shrink-0 p-0",
   } as const;
   const styles = cn(
-    "inline-flex min-w-0 max-w-full items-center justify-center gap-2 whitespace-normal rounded-ui-md text-center text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:shadow-none aria-disabled:pointer-events-none aria-disabled:cursor-not-allowed aria-disabled:shadow-none",
+    "relative active:scale-[0.98] inline-flex min-w-0 max-w-full items-center justify-center gap-2 whitespace-normal rounded-ui-md text-center text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:shadow-none aria-disabled:pointer-events-none aria-disabled:cursor-not-allowed aria-disabled:shadow-none",
     sizes[size],
     variants[variant],
     className,
@@ -54,6 +56,7 @@ export function Button({ asChild = false, children, className, size = "default",
     return cloneElement(child, {
       ...safeChildProps,
       ...child.props,
+      children: child.props.href ? <>{child.props.children as ReactNode}<LinkPending/></> : child.props.children,
       "aria-disabled": disabled ? true : child.props["aria-disabled"] ?? safeChildProps["aria-disabled"],
       tabIndex: disabled ? -1 : child.props.tabIndex ?? safeChildProps.tabIndex,
       className: cn(styles, child.props.className),
@@ -61,5 +64,5 @@ export function Button({ asChild = false, children, className, size = "default",
     });
   }
 
-  return <button type="button" className={styles} {...props}>{children}</button>;
+  return <PendingButton type="button" className={styles} {...props}>{children}</PendingButton>;
 }

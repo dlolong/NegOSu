@@ -313,3 +313,10 @@ dialog { overscroll-behavior: contain; }
 .driver-popover.negosu-guide .driver-popover-next-btn { background: #0062dc; border-color: #0062dc; color: white; }
 .driver-popover.negosu-guide button:focus-visible { outline: 2px solid #0062dc; outline-offset: 3px; }
 @media print { .driver-popover, .driver-overlay { display: none !important; } }
+
+/* Keep navigation feedback anchored without changing button or page dimensions. */
+a:has([data-navigation-pending]) { position: relative; cursor: progress; }
+button:active:not(:disabled), a:active { opacity: .8; }
+@media (prefers-reduced-motion: reduce) {
+  [aria-busy="true"] .animate-spin, [data-navigation-pending] .animate-spin { animation: none; }
+}

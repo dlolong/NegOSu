@@ -51,7 +51,7 @@ test("promo image URL is available without upload entitlement and survives a rej
   const submissions:Array<Array<[string,string]>>=[];
   await page.exposeFunction("recordFormAction",(_name:string,fields:Array<[string,string]>)=>{submissions.push(fields);return {error:"Please review."};});
   await page.goto("https://forms.test/catalog?promo=1");
-  await expect(page.getByText("Direct image uploads are available on paid plans.")).toBeVisible();
+  await expect(page.getByText("Image uploads require a paid plan.")).toBeVisible();
   await page.locator("#promo-image-url").fill("https://images.example.test/promo.jpg");
   await page.locator("#promo-name").fill("Haircut bundle");await page.locator("#promo-price").fill("150.00");
   await page.locator("#promo-component-0-reference").selectOption("11111111-1111-4111-8111-111111111111");await page.locator("#promo-component-1-reference").selectOption("22222222-2222-4222-8222-222222222222");

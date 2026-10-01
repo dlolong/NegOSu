@@ -20,13 +20,13 @@ export function PlanUpgradeNotice({ id, capability, limitReached = false, compac
   const { state, industry, isOwner } = context;
   const upgrade = selectUpgrade(state, industry, capability, limitReached);
   if (!upgrade) return null;
-  return <aside id={id} aria-label="Plan upgrade" className={`flex min-w-0 flex-col gap-3 text-sm sm:flex-row sm:items-center sm:justify-between print:hidden col-span-full ${compact ? "w-full" : "rounded-xl border border-brand-border bg-brand-tint p-3"}`}>
+  return <aside id={id} aria-label="Plan upgrade" className={`flex min-w-0 flex-col gap-2 text-sm sm:flex-row sm:items-center sm:justify-between print:hidden col-span-full ${compact ? "w-full sm:w-auto sm:flex-1 sm:basis-80" : "rounded-xl border border-brand-border bg-brand-tint p-3"}`}>
     <div className="flex min-w-0 items-start gap-2">
       {!compact ? <Sparkles aria-hidden="true" size={17} className="mt-0.5 shrink-0 text-brand-primary"/> : null}
-      <div className="min-w-0 [overflow-wrap:anywhere]"><p className="font-medium text-admin-text">{upgrade.description}</p>
-        {!isOwner ? <p className="mt-1 text-xs text-admin-text-secondary">Ask the business owner to upgrade this workspace.</p> : null}
+      <div className="min-w-0 [overflow-wrap:anywhere]"><p className="font-medium leading-snug text-admin-text">{upgrade.description}</p>
+        {!isOwner ? <p className="mt-1 text-xs text-admin-text-secondary">Ask the owner to upgrade.</p> : null}
       </div>
     </div>
-    <Button id={`${id}-button`} asChild variant="secondary" size="sm" className="w-full shrink-0 sm:w-auto"><Link href={upgradeDestination(upgrade.plan.id, isOwner)}><ArrowUpRight aria-hidden="true" size={16}/>{isOwner ? "Upgrade plan" : "Compare plans"}</Link></Button>
+    <Button id={`${id}-button`} asChild variant="primary" size="lg" className="w-full shrink-0 sm:w-auto sm:min-w-40"><Link href={upgradeDestination(upgrade.plan.id, isOwner)}><ArrowUpRight aria-hidden="true" size={20}/>{isOwner ? "Upgrade plan" : "Compare plans"}</Link></Button>
   </aside>;
 }

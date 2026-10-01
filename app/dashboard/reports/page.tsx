@@ -88,22 +88,24 @@ export default async function Page({ searchParams }: { searchParams: Promise<Rec
 
   return (
     <main id="reports-page" className="mx-auto w-full max-w-7xl">
-      <Link id="reports-product-sales-link" className="inline-flex min-h-11 items-center underline" href="/dashboard/reports/products">Product sales & handover</Link>
       <header id="reports-page-header" className="flex flex-wrap items-center justify-between gap-4 min-w-0 [&>a]:ml-auto [&>button]:ml-auto [&>form]:ml-auto">
         <div className="min-w-0 flex-1 basis-full sm:basis-64 [overflow-wrap:anywhere]">
           <p className="text-sm font-medium text-brand-primary">Owner analytics</p>
           <h1 className="mt-1 text-2xl font-medium sm:text-3xl">Reports</h1>
           <p className="mt-2 text-sm text-zinc-600 sm:text-base">Revenue, customers, workload, and branch trends from operational records.</p>
         </div>
-        {advanced ? <Button id="reports-export-button" className="ml-auto" asChild variant="secondary">
+        <nav id="reports-header-actions" aria-label="Report actions" className="flex max-w-full flex-wrap items-center gap-2 sm:ml-auto sm:justify-end">
+        <Button asChild variant="secondary" size="sm"><Link id="reports-product-sales-link" href="/dashboard/reports/products">Product sales & handover</Link></Button>
+        {advanced ? <Button id="reports-export-button" asChild variant="secondary" size="sm">
           <Link href={`/dashboard/reports/export?${exportQuery}`}><DownloadIcon aria-hidden="true" size={16} className="shrink-0"/>Export CSV</Link>
         </Button> : null}
+        </nav>
       </header>
 
-      {!advanced ? <Card id="reports-free-plan-info" className="mt-5 flex min-w-0 flex-wrap items-center justify-between gap-3 p-4">
-        <div className="min-w-0 flex-1 basis-64">
+      {!advanced ? <Card id="reports-free-plan-info" className="mt-5 flex min-w-0 flex-wrap items-center justify-between gap-3 p-3">
+        <div className="min-w-0">
           <h2 className="text-sm font-medium">Free reports · Last 30 days</h2>
-          <p className="mt-1 text-sm text-admin-text-secondary">Summary totals, daily activity, and customer insights for {activeMembership.branchName}.</p>
+          <p className="mt-1 text-sm text-admin-text-secondary">{activeMembership.branchName} · Summary reports</p>
         </div>
         <PlanUpgradeNotice id="reports-plan-upgrade" capability="advanced_reports" compact/>
       </Card> : null}

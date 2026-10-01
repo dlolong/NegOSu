@@ -7,7 +7,7 @@ import { dashboardFeaturePreviews, publicWebsiteSummary } from "@/lib/dashboard-
 
 const settings = new URLSearchParams(location.search).has("settings");
 createRoot(document.getElementById("root")!).render(<div className="lg:pl-56">
-  {settings ? <div id="settings-workspace" className="grid min-w-0 items-start gap-4 xl:grid-cols-[14rem_minmax(0,1fr)]">
+  {settings ? <div id="settings-workspace" className="min-w-0 space-y-6">
     <SettingsNavigation industry="salon"/>
     <section id="settings-workspace-content" className="min-w-0 rounded-xl border p-4"><h1>Profile & workspace</h1><p>Business details and workspace preferences</p></section>
   </div> : <CommandCenter

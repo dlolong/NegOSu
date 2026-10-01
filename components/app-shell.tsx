@@ -8,6 +8,7 @@ import { MessageCircle } from "lucide-react";
 import { ArrowRightLeft as ArrowRightLeftIcon, LogOut as LogOutIcon, Armchair, BarChart3, Bell, Building2, CalendarCheck, CalendarDays, CarFront, ChevronDown, ClipboardList, CreditCard, Gauge, ListOrdered, MoreHorizontal, PawPrint, Package, Settings, Timer, Users, Wrench, type LucideIcon } from "lucide-react";
 
 import Link from "next/link";
+import {LinkPending} from "@/components/ui/link-pending";
 import { usePathname } from "next/navigation";
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
@@ -126,7 +127,7 @@ function SidebarNavigationGroup({ group, activeHref }: { group: NavigationGroup;
           className={`relative flex min-h-9 items-center gap-2.5 rounded-ui-sm px-2.5 py-1.5 text-sm transition-colors ${active ? `${navigationStyles.sidebarActive} font-medium` : `${navigationStyles.sidebarInactive} font-normal`}`}
         >
           <Icon aria-hidden="true" className={active ? "text-current" : navigationStyles.sidebarIcon} size={16}/>{item.label}
-        </Link>;
+        <LinkPending/></Link>;
       })}
     </div>
   </details>;
@@ -161,7 +162,7 @@ function MobileMoreMenu({ groups, activeHref }: { groups: NavigationGroup[]; act
               href={item.href}
               aria-current={active ? "page" : undefined}
               className={`flex min-h-11 items-center gap-3 rounded-ui-md px-3 py-2 text-sm ${active ? `${navigationStyles.lightActive} font-medium` : `${navigationStyles.lightInactive} font-normal`}`}
-            ><Icon aria-hidden="true" className={active ? "text-current" : navigationStyles.lightIcon} size={18}/>{item.label}</Link>;
+            ><Icon aria-hidden="true" className={active ? "text-current" : navigationStyles.lightIcon} size={18}/>{item.label}<LinkPending/></Link>;
           })}</div>
         </section>)}
       </div>
@@ -190,7 +191,7 @@ export function AppShell({ children, activeMembership, memberships, profileName,
     <div id="dashboard-app-shell" data-dashboard-theme={dashboardTheme} className="flex h-dvh min-h-0 overflow-hidden bg-admin-canvas lg:grid lg:grid-cols-[224px_minmax(0,1fr)]">
       <aside id="negosu-sidebar" className="hidden overflow-y-auto overscroll-y-contain border-r border-white/10 bg-brand-ink text-white lg:block">
         <div className="px-3 py-4">
-          <Link id="negosu-dashboard-home-link" href="/dashboard" className="block" aria-label={`${activeMembership.organizationName} dashboard`}><BusinessIdentity key={activeMembership.organizationId} name={activeMembership.organizationName} logoUrl={activeMembership.organizationLogoUrl} inverse /></Link>
+          <Link id="negosu-dashboard-home-link" href="/dashboard" className="block" aria-label={`${activeMembership.organizationName} dashboard`}><BusinessIdentity key={activeMembership.organizationId} name={activeMembership.organizationName} logoUrl={activeMembership.organizationLogoUrl} inverse /><LinkPending/></Link>
           <PoweredBy id="dashboard-powered-by" inverse className="mt-2"/>
           <div className="mt-0.5 truncate text-xs font-normal text-slate-400">{activeMembership.branchName} · {activeMembership.role}</div>
           <nav id="dashboard-desktop-navigation" className="mt-4 space-y-1" aria-label="Main navigation">
@@ -202,7 +203,7 @@ export function AppShell({ children, activeMembership, memberships, profileName,
                 href={dashboardNavigation.href}
                 aria-current={active ? "page" : undefined}
                 className={`relative flex min-h-9 items-center gap-2.5 rounded-ui-sm px-2.5 py-1.5 text-sm transition-colors ${active ? `${navigationStyles.sidebarActive} font-medium` : `${navigationStyles.sidebarInactive} font-normal`}`}
-              ><DashboardIcon aria-hidden="true" className={active ? "text-current" : navigationStyles.sidebarIcon} size={16}/>{dashboardNavigation.label}</Link>;
+              ><DashboardIcon aria-hidden="true" className={active ? "text-current" : navigationStyles.sidebarIcon} size={16}/>{dashboardNavigation.label}<LinkPending/></Link>;
             })() : null}
             <div className="space-y-1 pt-1">
               {sidebarGroups.map((group) => <SidebarNavigationGroup key={`${group.key}-${group.items.some((item) => item.href === activeHref)}`} group={group} activeHref={activeHref}/>) }
@@ -212,7 +213,7 @@ export function AppShell({ children, activeMembership, memberships, profileName,
       </aside>
       <div id="dashboard-content-frame" className="flex min-h-0 min-w-0 flex-1 flex-col">
         <header id="dashboard-header" className="z-20 flex shrink-0 items-center justify-between gap-2 border-b border-admin-border bg-admin-surface px-3 py-2.5 shadow-ui-sm sm:px-4 lg:px-6">
-          <div className="min-w-0 flex-1"><Link id="negosu-dashboard-mobile-home-link" href="/dashboard" className="block lg:hidden" aria-label={`${activeMembership.organizationName} dashboard`}><BusinessIdentity key={activeMembership.organizationId} name={activeMembership.organizationName} logoUrl={activeMembership.organizationLogoUrl}/></Link><PoweredBy id="dashboard-mobile-powered-by" className="mt-1 lg:hidden"/></div>
+          <div className="min-w-0 flex-1"><Link id="negosu-dashboard-mobile-home-link" href="/dashboard" className="block lg:hidden" aria-label={`${activeMembership.organizationName} dashboard`}><BusinessIdentity key={activeMembership.organizationId} name={activeMembership.organizationName} logoUrl={activeMembership.organizationLogoUrl}/><LinkPending/></Link><PoweredBy id="dashboard-mobile-powered-by" className="mt-1 lg:hidden"/></div>
           <div className="flex shrink-0 items-center gap-2 sm:gap-3">
             {activeMembership.branches.length > 1 ? <form id="dashboard-branch-switcher" action={switchBranch} className="flex items-center gap-2 max-sm:hidden"><label className="sr-only" htmlFor="branchId">Current branch</label><select id="branchId" name="branchId" defaultValue={activeMembership.branchId} className="min-h-11 max-w-28 rounded-ui-md border border-admin-border-strong bg-white px-2 text-sm font-medium text-admin-text shadow-ui-sm sm:max-w-40 sm:px-3">{activeMembership.branches.map((branch) => <option key={branch.id} value={branch.id}>{branch.name}</option>)}</select><SubmitButton pendingText="Switching…" variant="secondary" className="hidden sm:inline-flex"><ArrowRightLeftIcon aria-hidden="true" size={16} className="shrink-0"/>Switch</SubmitButton></form> : <span title={activeMembership.branchName} className="hidden max-w-36 truncate text-sm font-medium text-admin-text-secondary sm:block">{activeMembership.branchName}</span>}
             {memberships.length > 1 ? <form id="negosu-business-switcher" action={switchOrganization} className="hidden items-center gap-2 xl:flex"><label className="sr-only" htmlFor="negosu-business-switcher-select">Active business</label><select id="negosu-business-switcher-select" name="organizationId" defaultValue={activeMembership.organizationId} className="min-h-11 max-w-56 rounded-ui-md border border-admin-border-strong bg-admin-surface px-3 text-sm font-medium text-admin-text shadow-ui-sm">{memberships.map((membership) => <option key={membership.organizationId} value={membership.organizationId}>{membership.organizationName}</option>)}</select><SubmitButton id="negosu-business-switcher-submit-button" pendingText="Switching…" variant="secondary"><ArrowRightLeftIcon aria-hidden="true" size={16} className="shrink-0"/>Switch</SubmitButton></form> : null}
@@ -224,9 +225,9 @@ export function AppShell({ children, activeMembership, memberships, profileName,
                 <p className="truncate px-2 text-sm font-medium text-admin-text">{profileName}</p><p className="truncate px-2 text-xs font-normal text-admin-text-muted">{activeMembership.role} · {activeMembership.organizationName}</p>
                 {activeMembership.branches.length > 1 ? <form id="dashboard-mobile-branch-switcher" action={switchBranch} className="mt-3 border-t border-admin-border pt-3 sm:hidden"><label htmlFor="dashboard-mobile-branch-select" className="text-xs font-medium">Current branch</label><select id="dashboard-mobile-branch-select" name="branchId" defaultValue={activeMembership.branchId} className="mt-1 min-h-11 w-full rounded-ui-md border border-admin-border-strong bg-admin-surface px-3 text-sm">{activeMembership.branches.map(branch => <option key={branch.id} value={branch.id}>{branch.name}</option>)}</select><SubmitButton id="dashboard-mobile-branch-submit-button" className="mt-2 w-full" pendingText="Switching…" variant="secondary"><ArrowRightLeftIcon aria-hidden="true" size={16} className="shrink-0"/>Switch branch</SubmitButton></form> : null}
                 {memberships.length > 1 ? <form id="negosu-mobile-business-switcher" action={switchOrganization} className="mt-3 border-t border-admin-border pt-3 xl:hidden"><label className="text-xs font-medium" htmlFor="negosu-mobile-business-switcher-select">Business</label><select id="negosu-mobile-business-switcher-select" name="organizationId" defaultValue={activeMembership.organizationId} className="mt-1 min-h-11 w-full rounded-ui-md border border-admin-border-strong bg-admin-surface px-3 text-sm">{memberships.map((membership) => <option key={membership.organizationId} value={membership.organizationId}>{membership.organizationName}</option>)}</select><SubmitButton id="negosu-mobile-business-switcher-submit-button" className="mt-2 w-full" pendingText="Switching…" variant="secondary"><ArrowRightLeftIcon aria-hidden="true" size={16} className="shrink-0"/>Switch business</SubmitButton></form> : null}
-                <Link id="negosu-user-menu-continue-setup-link" href="/onboarding/setup" className="mt-3 block rounded-ui-md px-2 py-2 text-sm font-medium text-admin-text hover:bg-admin-surface-muted">Continue setup</Link>
-                <Link id="user-menu-profile-settings-link" href="/dashboard/settings" className="mt-1 block rounded-ui-md px-2 py-2 text-sm font-medium text-admin-text hover:bg-admin-surface-muted">Profile settings</Link>
-                {platformAdmin ? <Link id="user-menu-platform-admin" href="/admin" className="block rounded-ui-md px-2 py-2 text-sm font-medium text-admin-text hover:bg-admin-surface-muted">Platform admin</Link> : null}
+                <Link id="negosu-user-menu-continue-setup-link" href="/onboarding/setup" className="mt-3 block rounded-ui-md px-2 py-2 text-sm font-medium text-admin-text hover:bg-admin-surface-muted">Continue setup<LinkPending/></Link>
+                <Link id="user-menu-profile-settings-link" href="/dashboard/settings" className="mt-1 block rounded-ui-md px-2 py-2 text-sm font-medium text-admin-text hover:bg-admin-surface-muted">Profile settings<LinkPending/></Link>
+                {platformAdmin ? <Link id="user-menu-platform-admin" href="/admin" className="block rounded-ui-md px-2 py-2 text-sm font-medium text-admin-text hover:bg-admin-surface-muted">Platform admin<LinkPending/></Link> : null}
                 <form id="user-menu-sign-out-form" action={signOut}><SubmitButton id="user-menu-sign-out-button" className="w-full justify-start px-2" pendingText="Signing out…" variant="destructive"><LogOutIcon aria-hidden="true" size={16} className="shrink-0"/>Sign out</SubmitButton></form>
               </div>
             </DismissibleDetails>
@@ -244,7 +245,7 @@ export function AppShell({ children, activeMembership, memberships, profileName,
             href={item.href}
             aria-current={active ? "page" : undefined}
             className={`mx-0.5 flex min-h-14 flex-col items-center justify-center gap-1 rounded-ui-sm px-1 py-1 text-[10px] ${active ? `${navigationStyles.lightActive} font-medium` : `${navigationStyles.lightInactive} font-normal`}`}
-          ><Icon aria-hidden="true" size={20}/><span>{item.mobileLabel ?? item.label}</span></Link>;
+          ><Icon aria-hidden="true" size={20}/><span>{item.mobileLabel ?? item.label}</span><LinkPending/></Link>;
         })}<MobileMoreMenu groups={overflowNavigationGroups} activeHref={activeHref}/>
       </nav>
     </div>

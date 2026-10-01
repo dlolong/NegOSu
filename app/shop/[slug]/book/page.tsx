@@ -1,7 +1,7 @@
 import { promoServiceIds } from "@/modules/core/commerce/appointment-promos";
 import Link from "next/link";
 import {notFound} from "next/navigation";
-import {ChevronLeft,ChevronRight} from "lucide-react";
+import {ChevronLeft,ChevronRight,X} from "lucide-react";
 import {BusinessIdentity} from "@/components/business-identity";
 import {PoweredBy} from "@/components/powered-by";
 import {Button} from "@/components/ui/button";
@@ -113,7 +113,7 @@ export default async function Page({params,searchParams}:{params:Promise<{slug:s
  if(step===3&&(!selectedDate||!slots.length||availabilityError))step=2;
  const href=(values:{step?:number;month?:string;date?:string})=>publicBookingHref(slug,branch?.id??"",serviceIds,promoIds,values);
  const dates=new Intl.DateTimeFormat("en-PH",{dateStyle:"full",timeZone:"UTC"});
- return <main id="public-booking-page" className="min-h-dvh min-w-0 bg-admin-canvas text-admin-text [overflow-wrap:anywhere]"><header className="border-b border-admin-border bg-white"><div className="mx-auto max-w-3xl px-4 py-4"><Link id="public-booking-back-link" href={`/shop/${encodeURIComponent(slug)}`} className="inline-flex min-h-11 items-center gap-2"><span aria-hidden="true">←</span><BusinessIdentity name={shop.name} logoUrl={shop.logoUrl}/></Link></div></header><div className="mx-auto max-w-3xl px-4 py-6 sm:px-6">
+ return <main id="public-booking-page" className="min-h-dvh min-w-0 bg-admin-canvas text-admin-text [overflow-wrap:anywhere]"><header className="border-b border-admin-border bg-white"><div className="mx-auto flex max-w-3xl items-center justify-between gap-4 px-4 py-4"><div className="min-w-0"><BusinessIdentity name={shop.name} logoUrl={shop.logoUrl}/></div><Button asChild variant="ghost" size="icon" className="shrink-0 rounded-full"><Link id="public-booking-close" href={`/shop/${encodeURIComponent(slug)}`} aria-label="Close booking" title="Close booking"><X size={20} aria-hidden="true"/></Link></Button></div></header><div className="mx-auto max-w-3xl px-4 py-6 sm:px-6">
  <h1 className="mb-5 text-2xl font-medium">Book with {shop.name}</h1>
  {step<3?<PublicBookingProgress step={step}/>:null}
  {step===1?<Card id="public-booking-service-section" elevation="none" className="p-4 sm:p-6"><h2 className="text-xl font-medium">Choose your location and services</h2>{invalidPromo?<p role="alert" className="mt-3 text-sm text-status-danger">The selected promo is no longer available here. Choose another offer or service.</p>:null}{promoResult.unavailable?<p role="status" className="mt-3 text-sm text-admin-text-secondary">Promos are temporarily unavailable. You can still request a regular service.</p>:null}{!shop.services.length||!branch?<p id="public-booking-no-services" className="mt-4 text-sm">Online booking is unavailable. Please contact the business directly.</p>:<BookingSelection shop={shop} promos={promoResult.promos} branchId={branch.id} serviceIds={serviceIds.filter(id=>!selected.promos.some(p=>promoServiceIds(p).includes(id)))} promoIds={promoIds}/>}</Card>:null}

@@ -15,12 +15,15 @@ test("all settings sections fit the viewport and keep the active section on nest
   await expect(page.locator("#settings-tab-branches")).toHaveAttribute("aria-current", "page");
   await expect(page.locator("#settings-tab-profile")).not.toHaveAttribute("aria-current");
   for (const link of await nav.getByRole("link").all()) {
+    await link.scrollIntoViewIfNeeded();
     const box = await link.boundingBox();
     expect(box).not.toBeNull();
     expect(box!.x).toBeGreaterThanOrEqual(0);
     expect(box!.x + box!.width).toBeLessThanOrEqual(page.viewportSize()!.width);
     expect(box!.height).toBeGreaterThanOrEqual(44);
   }
+  await expect(nav).not.toContainText("Locations and contact details");
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   await page.locator("#settings-tab-billing").click();
   await expect(page).toHaveURL("https://settings.test/dashboard/settings/billing");
   await expect(page.locator("#settings-tab-billing")).toHaveAttribute("aria-current", "page");

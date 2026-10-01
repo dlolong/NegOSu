@@ -46,3 +46,13 @@ Tests use guarded local synthetic fixtures only. Next occasionally logs the exis
 Apply reviewed migrations 0093–0095 before deploying this UI, then configure real monthly and hourly extension prices in Rooms. Existing rate snapshots remain unchanged. Hosted rollout requires the normal authorized operator process. An older UI cannot check out a stay with a held deposit; retain refund-capable UI or use a forward fix.
 
 Full deposit return only. Partial deposit deductions, prorated/fractional-hour extensions, automatic discount percentages/tax calculations and online guest payment processing are outside this request. Final prices range from zero to the quoted base price. Extension hours are added to the prior paid end, including any overdue time; occupancy never ends automatically.
+
+## Percentage discount and pending feedback update
+
+Check-in and extension payment forms now show an editable discount percentage when a discount type is selected. It starts at 20%, accepts 0–100% with up to two decimal places, and calculates the final room charge with integer minor-unit rounding. Selecting No discount restores the full rate. The refundable deposit is added after the discounted room charge; cash change and noncash tender update from that total. Card-number requirements remain unchanged. The final-price field is now calculated rather than directly edited.
+
+This is a UI calculator over the existing final-price contract. Existing cashier RPCs still resolve the authoritative rate and validate the discount, amount collected, permissions and branch. No migration or RLS change is needed.
+
+Shared buttons show pending feedback for React form actions and returned asynchronous click-handler promises, and disable repeat clicks while pending. Existing custom pending labels remain. Link buttons, dashboard navigation and tabs use Next.js link status; instantly prefetched navigation may not display a spinner. Synchronous interactions receive pressed feedback. Custom handlers that start background work without returning it must retain their existing explicit loading state.
+
+Verification: discount arithmetic tests, lint and TypeScript checks passed. Added fixture browser coverage for defaults, custom percentages, invalid input, clearing discounts, deposits, noncash payments and pending button recovery; updated the existing hospitality workflow expectations. Browser execution and production build were blocked by sandbox restrictions, and elevated runs were declined. The full npm test command was also blocked by its runner IPC requirement and elevation was declined.

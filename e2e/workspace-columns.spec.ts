@@ -38,12 +38,11 @@ test("dashboard puts supporting information right on desktop and operational wor
   await expect(page.locator("#negosu-command-center-branch-selector-form")).toHaveCount(0);
 });
 
-test("settings navigation uses the left column on desktop without mobile overflow", async ({ page }) => {
+test("settings tabs sit above content without mobile overflow", async ({ page }) => {
   await page.goto("https://forms.test/workspace?settings=1&pathname=/dashboard/settings");
   await expect(page.locator("#salon-settings-tab-profile")).toHaveAttribute("aria-current", "page");
   const navigation = await page.locator("#salon-settings-navigation").boundingBox();
   const content = await page.locator("#settings-workspace-content").boundingBox();
-  if (page.viewportSize()!.width >= 1280) expect(navigation!.x + navigation!.width).toBeLessThan(content!.x);
-  else expect(navigation!.y + navigation!.height).toBeLessThanOrEqual(content!.y);
+  expect(navigation!.y + navigation!.height).toBeLessThanOrEqual(content!.y);
   expect(await page.locator("#root").evaluate(element => element.scrollWidth <= element.clientWidth)).toBe(true);
 });

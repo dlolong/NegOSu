@@ -1,5 +1,5 @@
 import Link from "next/link";
-import {ShoppingBag, ArrowRight, Clock3, UserRound} from "lucide-react";
+import {ShoppingBag, ArrowLeft, ArrowRight, Clock3, UserRound} from "lucide-react";
 import {createClient} from "@/lib/supabase/server";
 import {randomUUID} from "node:crypto";
 import {notFound} from "next/navigation";
@@ -7,6 +7,7 @@ import {getDashboardContext} from "@/lib/auth/context";
 import {checkoutRoles} from "@/modules/core/checkout/contracts";
 import {openCheckout} from "../actions";
 import {SearchableSelect} from "@/components/searchable-select";
+import {Button} from "@/components/ui/button";
 import {SubmitButton} from "@/components/submit-button";
 import {FormMessage} from "@/components/form-message";
 
@@ -16,7 +17,7 @@ export default async function Page({searchParams}:{searchParams:Promise<{error?:
  const db=await createClient();
  const recent=await db.from("checkouts").select("id,customer_name,created_at").eq("organization_id",m.organizationId).eq("branch_id",m.branchId).order("created_at",{ascending:false}).limit(20);
  return <main id="product-new-sale-page" className="mx-auto max-w-5xl space-y-5">
-  <header><p className="text-sm text-admin-text-secondary">{m.branchName} · Product sales</p><h1 className="mt-1 text-2xl font-semibold">New product sale</h1><p className="mt-2 text-sm text-admin-text-secondary">Choose products, review the order, and collect payment.</p></header>
+  <header className="flex items-start justify-between gap-4"><div className="min-w-0"><p className="text-sm text-admin-text-secondary">{m.branchName} · Product sales</p><h1 className="mt-1 text-2xl font-semibold">New product sale</h1><p className="mt-2 text-sm text-admin-text-secondary">Choose products, review the order, and collect payment.</p></div><Button asChild variant="secondary" className="shrink-0"><Link id="product-new-sale-back" href="/dashboard"><ArrowLeft size={16} aria-hidden="true"/>Back</Link></Button></header>
   <FormMessage {...await searchParams}/>
   <div className="grid items-start gap-5 lg:grid-cols-2">
    <section className="rounded-xl border border-admin-border bg-admin-surface p-5 sm:p-6">

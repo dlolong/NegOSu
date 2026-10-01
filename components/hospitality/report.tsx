@@ -1,6 +1,6 @@
 import { PlanUpgradeNotice } from "@/components/plan-upgrade";
 import Link from "next/link";
-import { Download, BedDouble } from "lucide-react";
+import { Download } from "lucide-react";
 import { reportAccessSchema, reportQuerySchema, resolveReportRange, resolveReportScope } from "@/lib/reporting";
 import { roleHasPermission } from "@/lib/rbac";
 import { formatMoney } from "@/lib/operations";
@@ -8,6 +8,7 @@ import { hospitalityContext, loadHospitalityWorkspace } from "@/modules/hospital
 import { canHospitality, type HospitalityWorkspace, type WorkspaceRow } from "@/modules/hospitality/contracts";
 import { PageHeader } from "@/components/page-patterns";
 import { Button } from "@/components/ui/button";
+import { RoomsTabs } from "./rooms-tabs";
 import { ListTabs } from "@/components/list-tabs";
 import { RecordTable } from "@/components/record-table";
 import { RecordLink } from "@/components/record-item";
@@ -46,14 +47,23 @@ export async function HospitalityReport({ query: q, mode = "report" }: { query: 
     { label: "Products now", value: report.stockItems ?? 0 }, { label: "Low-stock products now", value: report.lowStock ?? 0 },
   ] : [{ label: "Movements in period", value: report.rowCount }];
   const filterControls = advanced ? <HospitalityReportFilters mode={mode} section={section} scope={scope} branchName={m.branchName} branches={m.branches}/> : null;
+  const reportActions = <nav id="hospitality-report-actions" aria-label="Report actions" className="flex min-w-0 max-w-full flex-wrap items-center gap-2 sm:justify-end">
+    {finance ? <>
+      <Button asChild variant="secondary" size="sm"><Link id="hospitality-product-sales-link" href="/dashboard/reports/products">Product sales & handover</Link></Button>
+      <Button asChild variant="ghost" size="sm"><Link id="hospitality-all-balances-link" href="/dashboard/payments/ledger">Bills & balances</Link></Button>
+      <Button asChild variant="ghost" size="sm"><Link id="hospitality-product-sale-link" href="/dashboard/checkout/new">New product sale</Link></Button>
+    </> : null}
+    {advanced ? <Button asChild variant="secondary" size="sm"><Link id="hospitality-report-export" href={`/dashboard/reports/export?${qs}`}><Download size={16} aria-hidden="true"/>Export CSV</Link></Button> : null}
+  </nav>;
   return <main id={mode === "report" ? "hospitality-reports-page" : mode === "payments" ? "hospitality-payments-page" : "hospitality-stay-history-page"} className="mx-auto min-w-0 max-w-7xl">
-    {finance?<div className="flex flex-wrap gap-4"><Link id="hospitality-product-sales-link" className="inline-flex min-h-11 items-center underline" href="/dashboard/reports/products">Product sales & handover</Link><Link id="hospitality-product-sale-link" className="inline-flex min-h-11 items-center underline" href="/dashboard/checkout/new">New product sale</Link><Link id="hospitality-all-balances-link" className="inline-flex min-h-11 items-center underline" href="/dashboard/payments/ledger">All bills & product balances</Link></div>:null}
-    <PageHeader id={`hospitality-${mode}-header`} title={mode === "report" ? "Reports" : mode === "payments" ? "Payments" : "Stay history"} description={mode === "payments" ? "Guest collections and balances." : "Activity uses each branch’s local dates. Room status, in-house stays, balances and stock are current snapshots."} action={mode === "payments" ? filterControls : mode === "report" && advanced ? <Button asChild variant="secondary"><Link id="hospitality-report-export" href={`/dashboard/reports/export?${qs}`}><Download size={16}/>Export CSV</Link></Button> : mode === "history" ? <Button asChild variant="secondary"><Link href="/dashboard/hospitality/rooms"><BedDouble size={16}/>Rooms</Link></Button> : undefined}/>
-    {mode === "report" && !advanced ? <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-3 text-sm">Free plan: current branch and the last 30 days. <div className="mt-3"><PlanUpgradeNotice id="hospitality-reports-plan-upgrade" capability="advanced_reports" compact/></div></div> : null}
+    {finance && mode === "payments"?<div className="flex flex-wrap gap-4"><Link id="hospitality-product-sales-link" className="inline-flex min-h-11 items-center underline" href="/dashboard/reports/products">Product sales & handover</Link><Link id="hospitality-product-sale-link" className="inline-flex min-h-11 items-center underline" href="/dashboard/checkout/new">New product sale</Link><Link id="hospitality-all-balances-link" className="inline-flex min-h-11 items-center underline" href="/dashboard/payments/ledger">All bills & product balances</Link></div>:null}
+    <PageHeader id={`hospitality-${mode}-header`} title={mode === "report" ? "Reports" : mode === "payments" ? "Payments" : "Rooms"} description={mode === "history" ? "Review guest stays, check-ins and checkouts for the selected dates." : mode === "payments" ? "Guest collections and balances." : "Activity uses each branch’s local dates. Room status, in-house stays, balances and stock are current snapshots."} action={mode === "payments" ? filterControls : mode === "report" && (finance || advanced) ? reportActions : undefined}/>
+    {mode === "history" ? <RoomsTabs value="history"/> : null}
+    {mode === "report" && !advanced ? <div className="mt-4 flex flex-wrap items-center gap-3 rounded-xl border border-admin-border bg-admin-surface-muted p-3 text-sm"><p className="text-admin-text-secondary">Free reports · Current branch · Last 30 days</p><PlanUpgradeNotice id="hospitality-reports-plan-upgrade" capability="advanced_reports" compact/></div> : null}
     {mode !== "payments" ? filterControls : null}
     <p className="mt-4 text-xs text-slate-500">Activity period: {scope.range.start} to {scope.range.end}</p>
     <div id="hospitality-report-summary" className="mt-3 grid grid-cols-2 gap-3 lg:grid-cols-3">{metrics.map(metric => <Metric key={metric.label} {...metric}/>)}</div>
-    <ListTabs id="hospitality-report-tabs" baseHref={base} parameter="section" query={query} value={section} options={options}/>
+    {mode !== "history" ? <ListTabs id="hospitality-report-tabs" baseHref={base} parameter="section" query={query} value={section} options={options}/> : null}
     <p className="my-3 text-xs text-slate-500">{section === "deposits" ? "All held deposits, plus deposits received or returned in the selected period. These are excluded from room revenue and invoice balances." : section === "outstanding" ? "All current outstanding balances, including checked-out stays. Independent of the activity period." : section === "collections" ? "Payments received in the period. Voided and refunded entries are shown for history and excluded from collected totals. This is not profit." : section === "rooms" || section === "inventory" ? "Current snapshot, independent of the activity period." : section === "stays" ? "Current in-house stays plus check-ins or checkouts during the period." : "Stock movements during the selected period."} Totals cover the full authorized scope.</p>
     {section === "collections" && report.finance ? <div className="mb-3 flex flex-wrap gap-2 text-xs">{report.finance.methods.map(method => <span key={method.method} className="rounded-lg border bg-white px-3 py-2 capitalize">{method.method.replaceAll("_", " ")}: {formatMoney(method.amount, m.currency)}</span>)}</div> : null}
     <ReportRows rows={report.rows} section={section} timezone={m.timezone} currency={m.currency}/><PageLinks page={page} count={report.rowCount} href={p => `${base}?${qs}&page=${p}`}/>

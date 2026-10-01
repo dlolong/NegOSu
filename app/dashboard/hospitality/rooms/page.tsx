@@ -15,7 +15,7 @@ import { RecordLink } from "@/components/record-item";
 import { FormDialog } from "@/components/management-ui";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ListTabs } from "@/components/list-tabs";
+import { RoomsTabs } from "@/components/hospitality/rooms-tabs";
 import { HospitalityActionForm } from "@/components/hospitality/action-form";
 import { RoomRatesEditor } from "@/components/hospitality/room-rates-editor";
 import { PaidCheckInForm } from "@/components/hospitality/paid-check-in-form";
@@ -23,11 +23,11 @@ import { Field, fieldClass, SaveActions, LoadError, PageLinks, pageNumber, dateL
 import { saveRoom, markRoomReady } from "../actions";
 import { HospitalityReport } from "@/components/hospitality/report";
 
-type Query = { message?: string; q?: string; page?: string; dialog?: string; room?: string; guest?: string; tab?: string };
+type Query = { message?: string; q?: string; page?: string; dialog?: string; room?: string; guest?: string; tab?: string; preset?: string; start?: string; end?: string };
 type AvailableRoom = Room & { stay_id: string | null; occupancy_status: string; planned_checkout_at: string | null; stay_period_label: string | null; occupants: number | null; cleaning_required: boolean; cleaning_stay_id: string | null };
 export default async function RoomsPage({ searchParams }: { searchParams: Promise<Query> }) {
   const [q, { db, activeMembership: m, user }] = await Promise.all([searchParams, hospitalityContext()]);
-  if (q.tab === "history") return <HospitalityReport query={{ ...q, section: "stays", preset: "month" }} mode="history"/>;
+  if (q.tab === "history") return <HospitalityReport query={{ ...q, section: "stays", preset: q.preset ?? "month" }} mode="history"/>;
   const tab = "all";
   const page = pageNumber(q.page), term = (q.q ?? "").replace(/[,%()\\_"]/g, " ").trim().slice(0, 80);
   let request = db.from("hospitality_room_availability").select("*", { count: "exact" }).eq("organization_id", m.organizationId).eq("branch_id", m.branchId);
@@ -44,8 +44,9 @@ export default async function RoomsPage({ searchParams }: { searchParams: Promis
   return <main id="hospitality-rooms-page" className="mx-auto min-w-0 max-w-7xl">
     <PageHeader id="hospitality-rooms-header" eyebrow={m.branchName} title="Rooms" description="See every room and its current status. Check in available rooms, check out occupied rooms, and mark cleaned rooms ready." action={manage ? <Button id="hospitality-add-room-button" asChild><Link href={`${base}?tab=${tab}&dialog=room`}><Plus size={16}/>Add room</Link></Button> : undefined}/>
     <FormMessage message={q.message}/>
-    {!rooms.error ? <DashboardChart id="hospitality-room-chart" title="Room availability" description="Current branch · Rooms on this page, including any search filter (up to 50)." points={statusChart(rows.map(room => ({ status: room.occupancy_status })))}/> : null}
-    <ListTabs id="hospitality-rooms-tabs" baseHref={base} query={{}} value={tab} options={[{ value: "all", label: "Rooms" }, { value: "history", label: "Stay history" }]} parameter="tab"/>
+    <RoomsTabs value={tab}/>
+    <div id="hospitality-rooms-workspace" className={`mt-4 grid min-w-0 items-start gap-5 ${!rooms.error ? "xl:grid-cols-[minmax(0,1fr)_18rem]" : ""}`}>
+    <div id="hospitality-rooms-content" className="min-w-0">
     <CompactFilters id="hospitality-room-search-form" searchLabel="Search rooms" search={<input id="hospitality-room-search"  name="q" defaultValue={q.q} placeholder="Room name or number" type="search" enterKeyHint="search" className="min-h-11 w-full min-w-0 rounded-ui-md border border-admin-border bg-admin-surface px-3 py-2 text-sm"/>} searchValue={q.q} hiddenFields={<><input type="hidden" name="tab" value={tab}/></>}><Button id="hospitality-room-search-button" type="submit" variant="secondary"><Search size={16}/><span className="sr-only sm:not-sr-only">Search</span></Button></CompactFilters>
     {rooms.error ? <LoadError/> : <RecordTable id="hospitality-room-grid" caption="Rooms and current occupancy" empty="No rooms found." columns={[{ key: "room", label: "Room" }, { key: "status", label: "Status", secondary: true, className: "lg:w-32" }, { key: "period", label: "Stay / rate", secondary: true }, { key: "capacity", label: "Capacity", secondary: true }, { key: "actions", label: "Actions", align: "right", className: "w-36 sm:w-56" }]} rows={rows.map(r => {
       const href = r.stay_id ? `/dashboard/hospitality/stays/${r.stay_id}` : `${base}?tab=${tab}&dialog=details&room=${r.id}`;
@@ -53,6 +54,9 @@ export default async function RoomsPage({ searchParams }: { searchParams: Promis
       return { id: `hospitality-room-${r.id}`, cells: { room: <><RecordLink href={href}>{r.name}</RecordLink>{r.room_type ? <p className="mt-1 text-xs text-slate-500">{r.room_type}</p> : null}<div className="mt-2 lg:hidden"><RoomStatus status={r.occupancy_status}/></div></>, status: <RoomStatus status={r.occupancy_status}/>, period, capacity: r.capacity, actions: <div className="flex flex-wrap justify-end gap-2">{r.occupancy_status === "vacant" && r.rates.length > 0 && checkIn ? <Button asChild size="sm"><Link id={`hospitality-check-in-${r.id}`} href={`${base}?tab=${tab}&dialog=check-in&room=${r.id}${q.guest ? `&guest=${encodeURIComponent(q.guest)}` : ""}`}><LogIn size={15} className="shrink-0"/><span className="whitespace-nowrap">Check in</span></Link></Button> : null}{r.stay_id && canHospitality(m.role, "operate") ? <Button asChild size="sm" variant="secondary"><Link id={`hospitality-check-out-${r.id}`} href={`/dashboard/hospitality/stays/${r.stay_id}?dialog=checkout`}><LogOut size={15} className="shrink-0"/><span>Check out</span></Link></Button> : null}{r.cleaning_required && !r.stay_id && canHospitality(m.role, "housekeeping") ? <Button asChild size="sm" variant="secondary"><Link id={`hospitality-mark-ready-${r.id}`} href={`${base}?tab=${tab}&dialog=ready&room=${r.id}`}><CheckCheck size={15} className="shrink-0"/><span>Mark ready</span></Link></Button> : null}{manage ? <Button asChild size="sm" variant="secondary"><Link href={`${base}?tab=all&dialog=room&room=${r.id}`} aria-label={`Edit ${r.name}`}><Pencil size={15}/></Link></Button> : null}</div> }, mobile: <><p>{period}</p><p>Capacity {r.capacity}</p></> };
     })}/>}
     <PageLinks page={page} count={rooms.count ?? 0} href={p => `${base}?tab=${tab}&page=${p}&q=${encodeURIComponent(term)}`}/>
+    </div>
+    {!rooms.error ? <aside id="hospitality-rooms-sidebar" aria-label="Room availability summary" className="min-w-0 [&>section]:my-0"><DashboardChart id="hospitality-room-chart" title="Room availability" description="Current branch · Rooms on this page, including any search filter (up to 50)." points={statusChart(rows.map(room => ({ status: room.occupancy_status })))}/></aside> : null}
+    </div>
     {q.dialog === "room" && manage && (!q.room || room) ? <FormDialog id="hospitality-room-form-dialog" title={room ? `Edit ${room.name}` : "Add room"} closeHref={closeHref} size="md"><HospitalityActionForm id="hospitality-room-form" action={saveRoom}>
       <input type="hidden" name="id" value={room?.id ?? ""}/><Field label="Room name / number *"><input id="hospitality-room-name" name="name" required maxLength={80} defaultValue={room?.name} className={fieldClass}/></Field><Field label="Room type"><input id="hospitality-room-type" name="roomType" maxLength={80} defaultValue={room?.room_type ?? ""} className={fieldClass}/></Field><Field label="Occupant capacity *"><input id="hospitality-room-capacity" name="capacity" type="number" min={1} max={100} required defaultValue={room?.capacity ?? 2} className={fieldClass}/></Field><label className="flex min-h-11 items-center gap-2 self-end text-sm"><input id="hospitality-room-active" name="active" type="checkbox" defaultChecked={room?.is_active ?? true}/>Active room</label>
       <RoomRatesEditor currency={m.currency} rates={room?.rates ?? []} version={room?.rates_version ?? 0} ids={stayPackages.map(() => crypto.randomUUID())}/>

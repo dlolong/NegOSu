@@ -115,7 +115,7 @@ export default async function Page({
         </div>
       </Card>
 
-      <ListTabs wrap id="website-settings-tabs" baseHref="/dashboard/settings/public-page" query={{}} parameter="tab" value={tab} options={[{value:"profile",label:"Business details"},{value:"services",label:"Services",count:publicServiceCount},{value:"locations",label:"Locations & hours",count:branches.length},{value:"gallery",label:"Gallery",count:gallery.length}]}/>
+      <ListTabs id="website-settings-tabs" baseHref="/dashboard/settings/public-page" query={{}} parameter="tab" value={tab} options={[{value:"profile",label:"Business details"},{value:"services",label:"Services",count:publicServiceCount},{value:"locations",label:"Locations & hours",count:branches.length},{value:"gallery",label:"Gallery",count:gallery.length}]}/>
       <div id="public-page-settings-grid" className="mt-6 grid min-w-0 gap-5">
         {tab==="profile"?<Card id="public-page-profile-card" className="p-4 sm:p-6">
           <h2 className="text-lg font-medium text-admin-text">Business details</h2>

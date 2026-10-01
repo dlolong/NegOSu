@@ -39,8 +39,8 @@ function supportsCapability(industry: IndustryKey, capability: UpgradeCapability
 
 const featureLabels = {
   image_uploads: "direct image uploads",
-  advanced_reports: "custom report dates, detailed reports and CSV exports",
-  public_page: "publishing your public website and accepting online booking requests",
+  advanced_reports: "detailed reports, custom dates and CSV export",
+  public_page: "a public website and online bookings",
   reminders: "maintenance reminders",
 };
 const limitLabels = { staff: "staff logins", branches: "active branches", monthly_jobs: "jobs per month" };
@@ -57,7 +57,7 @@ export function selectUpgrade(state: UpgradeState | null, industry: IndustryKey,
   const limit = state.current.limits[capability];
   if (limit == null || limit < 0) return null;
   const plan = state.higherPlans.find(plan => plan.limits[capability] === -1 || plan.limits[capability] > limit);
-  return plan ? { plan, description: `${state.current.planName} allows ${limit} ${limitLabels[capability as keyof typeof limitLabels]}. This limit has been reached. Explore ${plan.name} for more capacity.` } : null;
+  return plan ? { plan, description: `Your ${limit} ${limitLabels[capability as keyof typeof limitLabels]} limit has been reached. Get more with ${plan.name}.` } : null;
 }
 
 export function upgradeDestination(planId: string, isOwner: boolean) {

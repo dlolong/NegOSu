@@ -15,7 +15,7 @@ export async function renderFormFixture(entryPoint: string) {
       builder.onResolve({ filter: /^@\/app\/.*(?:actions|entity-actions)$/ }, args => ({ path: args.path, namespace: "form-boundary" }));
       builder.onLoad({ filter: /.*/, namespace: "form-boundary" }, args => {
         let contents: string;
-        if (args.path === "next/link") contents = 'import React from "react"; export default function Link({replace,prefetch,...props}) { return React.createElement("a",props); }';
+        if (args.path === "next/link") contents = 'import React from "react"; export function useLinkStatus(){return {pending:false};} export default function Link({replace,prefetch,...props}) { return React.createElement("a",props); }';
         else if (args.path === "next/image") contents = 'import React from "react"; export default function Image({unoptimized,fill,priority,...props}) { return React.createElement("img",props); }';
         else if (args.path === "next/navigation") contents = 'export function useRouter(){ return {replace: href => location.assign(href)}; } export function usePathname(){ return new URLSearchParams(location.search).get("pathname") || location.pathname; }';
         else {
