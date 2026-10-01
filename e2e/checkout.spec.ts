@@ -1,0 +1,45 @@
+import {expect,test} from "@playwright/test";
+import {renderFormFixture} from "./fixtures/form-browser";
+let html:string;
+test.beforeAll(async()=>{html=await renderFormFixture("e2e/fixtures/checkout.tsx");});
+test("checkout summary and accepted product quantity work without mobile overflow",async({page})=>{
+ const submitted:Array<Record<string,string>>=[];
+ await page.exposeFunction("recordFormAction",(_name:string,fields:Array<[string,string]>)=>{submitted.push(Object.fromEntries(fields));});
+ await page.route("https://forms.test/**",route=>route.fulfill({contentType:"text/html",body:html}));
+ await page.goto("https://forms.test/checkout");
+ await expect(page.locator("#checkout-total")).toContainText("125.00");
+ await expect(page.locator("#checkout-paid")).toContainText("50.00");
+ await expect(page.locator("#checkout-balance")).toContainText("75.00");
+ await page.locator("#checkout-add-product-button").click();
+ await expect(page.locator("#checkout-product-dialog")).toBeVisible();
+ await page.locator("#checkout-product-quantity-product").fill("1.5");
+ await expect(page.locator("#checkout-product-row-product")).toContainText("37.50");
+ expect(submitted.length).toBe(0);
+ await page.locator("#checkout-product-add-product").click();
+ await expect.poll(()=>submitted.length).toBe(1);
+ expect(submitted[0]).toMatchObject({checkoutId:"checkout",productId:"product",quantity:"1.5"});
+ expect(submitted[0]).not.toHaveProperty("price");
+ await expect(page.locator("#checkout-product-add-empty")).toBeDisabled();
+ expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+});
+
+test("checkout handover and finalized payment have separate explicit submissions",async({page})=>{
+ const submissions:Array<{name:string;fields:Record<string,string>}>=[];
+ await page.exposeFunction("recordFormAction",(name:string,fields:Array<[string,string]>)=>{submissions.push({name,fields:Object.fromEntries(fields)});});
+ await page.route("https://forms.test/**",route=>route.fulfill({contentType:"text/html",body:html}));
+ await page.goto("https://forms.test/checkout");
+ await page.locator("#checkout-handover-line").click();
+ await expect.poll(()=>submissions.length).toBe(1);
+ expect(submissions[0]).toMatchObject({name:"fulfillCheckoutProduct",fields:{action:"handover",lineId:"line",quantity:"1"}});
+ await page.goto("https://forms.test/checkout?payment=1&error=Payment+changed.+Refresh.");
+ await expect(page.getByRole("alert")).toContainText("Payment changed");
+ await expect(page.locator("#checkout-add-product-button")).toHaveCount(0);
+ await page.locator("#payment-amount-input").fill("25.00");
+ await page.locator("#payment-method-select").selectOption("cash");
+ await page.locator("#payment-submit-button").click();
+ await expect.poll(()=>submissions.length).toBe(2);
+ expect(submissions[1]).toMatchObject({name:"payCheckout",fields:{amount:"25.00",method:"cash",checkoutId:"checkout"}});
+ expect(submissions[1].fields).not.toHaveProperty("total");
+ await expect(page.locator("#payment-back-checkout")).toBeVisible();
+ expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+});

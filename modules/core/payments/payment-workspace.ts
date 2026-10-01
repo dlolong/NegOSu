@@ -19,7 +19,7 @@ export async function readAllFinancialRows<T>(fetch: (from: number, to: number) 
 export async function loadPaymentWorkspace(db: SupabaseClient, organizationId: string, branchId: string, kind: PaymentDocument["kind"]) {
   const [payments, invoices, appointments] = await Promise.all([
     readAllFinancialRows<LedgerPayment>((from, to) => db.from("payments").select("id,invoice_id,appointment_id,amount_centavos,currency,method,status,reference,paid_at").eq("organization_id", organizationId).eq("branch_id", branchId).order("id").range(from, to)),
-    kind === "invoice" ? readAllFinancialRows<Invoice>((from, to) => db.from("invoices").select("id,invoice_number,customer_name_snapshot,issued_at,total_centavos,balance_centavos,status").eq("organization_id", organizationId).eq("branch_id", branchId).order("id").range(from, to)) : Promise.resolve([]),
+    readAllFinancialRows<Invoice>((from, to) => db.from("invoices").select("id,invoice_number,customer_name_snapshot,issued_at,total_centavos,balance_centavos,status").eq("organization_id", organizationId).eq("branch_id", branchId).order("id").range(from, to)),
     kind === "appointment" ? readAllFinancialRows<Appointment>((from, to) => db.from("appointments").select("id,starts_at,expected_total_centavos,status,customers(full_name)").eq("organization_id", organizationId).eq("branch_id", branchId).order("id").range(from, to)) : Promise.resolve([]),
   ]);
   const paid = new Map<string, number>();

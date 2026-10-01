@@ -1,0 +1,11 @@
+import Link from "next/link";
+import {createClient} from "@/lib/supabase/server";
+import {randomUUID} from "node:crypto";
+import {notFound} from "next/navigation";
+import {getDashboardContext} from "@/lib/auth/context";
+import {checkoutRoles} from "@/modules/core/checkout/contracts";
+import {openCheckout} from "../actions";
+import {SearchableSelect} from "@/components/searchable-select";
+import {SubmitButton} from "@/components/submit-button";
+import {FormMessage} from "@/components/form-message";
+export default async function Page({searchParams}:{searchParams:Promise<{error?:string}>}){const {activeMembership:m}=await getDashboardContext();if(!checkoutRoles.includes(m.role))notFound();const db=await createClient();const recent=await db.from("checkouts").select("id,customer_name,created_at").eq("organization_id",m.organizationId).eq("branch_id",m.branchId).order("created_at",{ascending:false}).limit(20);return <main id="product-new-sale-page" className="mx-auto max-w-xl space-y-5"><h1 className="text-2xl">Sell products</h1><p className="text-sm">Choose the customer, then add their accepted product purchases at checkout.</p><FormMessage {...await searchParams}/><form action={openCheckout} className="space-y-4"><input type="hidden" name="request" value={randomUUID()}/><label htmlFor="checkout-customer-select">Customer</label><SearchableSelect id="checkout-customer-select" name="customerId" lookup="customer" options={[]} required placeholder="Search customer"/><SubmitButton id="product-new-sale-button" pendingText="Opening…">Continue to checkout</SubmitButton></form><section className="border-t pt-4"><h2 className="text-lg">Recent checkouts</h2><p className="text-sm">Resume an order, hand over products, or remove unfulfilled draft products to release their stock.</p>{recent.error?<p role="alert">Recent checkouts could not be loaded.</p>:recent.data?.map(c=><Link key={c.id} className="flex min-h-11 items-center justify-between gap-3 border-b py-3 text-sm underline" href={`/dashboard/checkout/${c.id}`}><span>{c.customer_name}</span><span>{new Intl.DateTimeFormat("en-PH",{timeZone:m.timezone,dateStyle:"short"}).format(new Date(c.created_at))}</span></Link>)}</section></main>;}

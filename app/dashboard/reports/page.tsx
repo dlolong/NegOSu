@@ -88,6 +88,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<Rec
 
   return (
     <main id="reports-page" className="mx-auto w-full max-w-7xl">
+      <Link id="reports-product-sales-link" className="inline-flex min-h-11 items-center underline" href="/dashboard/reports/products">Product sales & handover</Link>
       <header id="reports-page-header" className="flex flex-wrap items-center justify-between gap-4 min-w-0 [&>a]:ml-auto [&>button]:ml-auto [&>form]:ml-auto">
         <div className="min-w-0 flex-1 basis-full sm:basis-64 [overflow-wrap:anywhere]">
           <p className="text-sm font-medium text-brand-primary">Owner analytics</p>

@@ -16,12 +16,12 @@ import { createClient } from "@/lib/supabase/server";
 import { formatMoney } from "@/lib/operations";
 import { loadPaymentWorkspace, summarizePayments, collectionsByCurrency, type PaymentDocument } from "@/modules/core/payments/payment-workspace";
 
-export async function PaymentWorkspace({ query, legacyPet = false }: { query: PaymentQuery; legacyPet?: boolean }) {
+export async function PaymentWorkspace({ query, legacyPet = false, allBills = false }: { query: PaymentQuery; legacyPet?: boolean; allBills?: boolean }) {
   const { activeMembership: membership } = await getDashboardContext();
   if (!roleHasPermission(membership.role, "payments.record")) notFound();
-  const kind = membership.industry === "automotive" ? "invoice" : "appointment";
+  const kind = ["automotive","hospitality"].includes(membership.industry) ? "invoice" : "appointment";
   const appointmentsHref = membership.industry === "pet_care" ? "/dashboard/pet-care/appointments" : "/dashboard/appointments";
-  const baseHref = legacyPet ? "/dashboard/pet-care/payments" : "/dashboard/payments";
+  const baseHref = allBills ? "/dashboard/payments/ledger" : legacyPet ? "/dashboard/pet-care/payments" : "/dashboard/payments";
   let workspace: Awaited<ReturnType<typeof loadPaymentWorkspace>>;
   let timezone = membership.timezone;
   try {
@@ -42,6 +42,7 @@ export async function PaymentWorkspace({ query, legacyPet = false }: { query: Pa
   const isHistory = view.tab === "history";
   return <main id={legacyPet ? "pet-payments-page" : "payments-page"} className="mx-auto min-w-0 max-w-6xl">
     <PageHeader id="payments-page-header" eyebrow={membership.branchName} title="Payments" description="Track what has been paid and what is still due." action={<Button asChild variant="secondary"><Link id="payments-appointments-button" href={appointmentsHref}><CalendarDays size={16} aria-hidden="true"/>View appointments</Link></Button>}/>
+    <Button asChild variant="secondary" className="mt-3"><Link id="payments-new-sale-button" href="/dashboard/checkout/new">New product sale</Link></Button>
     <section id="payments-metrics" aria-label="Branch payment summary" className="mt-4 grid grid-cols-2 gap-3">
       <Card id="payments-collected-today" elevation="none" className="min-w-0 p-3 sm:p-4"><p className="text-xs font-medium text-admin-text-secondary sm:text-sm">Collected today</p><strong className="mt-1 block text-lg tabular-nums text-admin-text [overflow-wrap:anywhere] sm:text-2xl">{collections.map(group => <span className="block" key={group.currency}>{formatMoney(group.collected, group.currency)}</span>)}</strong><p id="payments-count-today" className="mt-1 text-xs text-admin-text-muted">{summary.count} {summary.count === 1 ? "payment" : "payments"}</p></Card>
       <Card id="payments-outstanding-total" elevation="none" className="min-w-0 p-3 sm:p-4"><p className="text-xs font-medium text-admin-text-secondary sm:text-sm">To collect</p><strong className="mt-1 block text-lg tabular-nums text-admin-text [overflow-wrap:anywhere] sm:text-2xl">{money(summary.outstanding)}</strong><p className="mt-1 text-xs text-admin-text-muted">{view.outstandingCount} unpaid {kind === "invoice" ? "invoices" : "appointments"}</p></Card>
