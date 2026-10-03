@@ -1,4 +1,5 @@
 "use client";
+import { SettingsFormSection } from "@/components/settings-form-section";
 import type { ShiftPreferenceScope } from "@/modules/hospitality/shift-preferences";
 import { useState } from "react";
 import { checkIn } from "@/app/dashboard/hospitality/actions";
@@ -16,14 +17,14 @@ export function PaidCheckInForm({ room, guestId = "", requestKey, currency, clos
   const rate = room.rates.find(r => r.id === rateId);
   return <HospitalityActionForm id="hospitality-check-in-form" action={checkIn}>
     <input type="hidden" name="roomId" value={room.id}/><input type="hidden" name="requestKey" value={requestKey}/><input type="hidden" name="ratesVersion" value={room.rates_version}/><input type="hidden" name="guestId" value={guestId}/>
-    <h2 className="sm:col-span-2 text-sm font-medium">1. Choose the stay</h2>
+    <SettingsFormSection id="hospitality-check-in-stay-section" title="Stay details">
     {manual ? <><input type="hidden" name="bookingMode" value="past"/><Field label={`Check-in date and time (${timezone}) *`} full><input id="hospitality-check-in-date-time" name="checkedInLocal" type="datetime-local" required className={fieldClass}/></Field>
     <label className="flex min-h-11 items-center gap-2 text-sm sm:col-span-2"><input id="hospitality-past-booking-checked-out" type="checkbox" name="alreadyCheckedOut" checked={alreadyCheckedOut} onChange={event => setAlreadyCheckedOut(event.target.checked)}/>Guest already checked out</label>
     {alreadyCheckedOut ? <Field label={`Checkout date and time (${timezone}) *`} full><input id="hospitality-past-booking-checkout-time" name="checkedOutLocal" type="datetime-local" required className={fieldClass}/></Field> : null}</> : null}
     <Field label="Stay period *" full><select id="hospitality-check-in-rate" name="rateId" required className={fieldClass} value={rateId} onChange={e => setRateId(e.target.value)}>{room.rates.map(r => <option key={r.id} value={r.id}>{r.label} · {formatMoney(r.priceCentavos, currency)}</option>)}</select></Field>
     <p className="sm:col-span-2 text-xs text-slate-500">{manual ? "Record a previous stay missed during an emergency. Dates must be in the past and cannot overlap recorded stays. Completed stays do not change the room’s current status. Payment and staff audit records use the time this entry is saved." : "The period starts when check-in is saved."} {rate?.extensionHourlyCentavos ? `Extra hours: ${formatMoney(rate.extensionHourlyCentavos, currency)} per hour.` : ""}</p>
+    </SettingsFormSection>
     {rate && staff.length ? <SettlementFields key={rate.id} prefix="hospitality-check-in" base={rate.priceCentavos} currency={currency} closeHref={closeHref} depositEnabled recording={manual} submitLabel={manual ? "Save previous booking" : undefined}>
-      <h2 className="sm:col-span-2 text-sm font-medium">3. Confirm staff</h2>
       <ShiftStaffFields scope={staffScope} canManage={canManageStaff} options={staff} prefix="hospitality-check-in"/>
       {manual && alreadyCheckedOut ? <fieldset id="hospitality-past-booking-checkout-details" className="sm:col-span-2 rounded-xl border border-slate-200 p-4"><legend className="px-1 text-sm font-medium">Checkout details</legend><div className="grid gap-3 sm:grid-cols-2">
         <Field label="Cashier at checkout *"><SearchableSelect id="hospitality-past-checkout-cashier" name="checkoutCashierStaffId" options={staff} required placeholder="Select cashier…"/></Field>

@@ -10,7 +10,7 @@ export default async function Page({params,searchParams}:{params:Promise<{servic
   const [{serviceId},query,{activeMembership},supabase]=await Promise.all([params,searchParams,getDashboardContext(),createClient()]);
   const config=resolveIndustryConfig(activeMembership.industry);
   const [{data:service},{data:categories},{data:branches},priceResult,{data:availability},{data:services}]=await Promise.all([
-    supabase.from("services").select("id,name,category_id,description,short_description,code,duration_minutes,base_price_centavos,currency,is_add_on,parent_service_id").eq("id",serviceId).eq("organization_id",activeMembership.organizationId).maybeSingle(),
+    supabase.from("services").select("id,name,thumbnail_url,category_id,description,short_description,code,duration_minutes,base_price_centavos,currency,is_add_on,parent_service_id").eq("id",serviceId).eq("organization_id",activeMembership.organizationId).maybeSingle(),
     supabase.from("service_categories").select("id,name").eq("organization_id",activeMembership.organizationId).order("name"),
     supabase.from("branches").select("id,name").eq("organization_id",activeMembership.organizationId).eq("is_active",true).order("name"),
     config.key==="automotive"?supabase.from("service_prices").select("branch_id,vehicle_class,price_centavos").eq("service_id",serviceId):Promise.resolve({data:[]}),

@@ -1,4 +1,5 @@
 "use client";
+import { SettingsFormSection } from "@/components/settings-form-section";
 
 import { useActionState, useState, type ReactNode } from "react";
 import { ArrowRightLeft, Save } from "lucide-react";
@@ -31,25 +32,27 @@ export function InventoryForm({ mode, salon, stock, item, branches, services, re
   return <form id={id} action={action} className="grid min-w-0 gap-4">
     <input type="hidden" name="returnTo" value={returnHref}/><input type="hidden" name="idempotencyKey" value={idempotencyKey}/>
     <FormMessage error={state.error}/>
+    <SettingsFormSection id={`${id}-details`} title={mode === "transfer" ? "Transfer details" : mode === "recipe" ? "Service usage" : "Stock movement"}>
     {mode === "movement" ? <>
       <input type="hidden" name="itemId" value={item?.id ?? ""}/>
-      <div className="min-w-0 rounded-xl border border-admin-border bg-admin-surface p-4 [overflow-wrap:anywhere]"><strong>{item?.name}</strong><p className="mt-1 text-sm text-admin-text-muted">On hand: {quantityLabel(item?.quantity_on_hand ?? 0, item?.unit ?? "")}</p></div>
+      <div className="col-span-full min-w-0 rounded-xl border border-admin-border bg-admin-surface p-4 [overflow-wrap:anywhere]"><strong>{item?.name}</strong><p className="mt-1 text-sm text-admin-text-muted">On hand: {quantityLabel(item?.quantity_on_hand ?? 0, item?.unit ?? "")}</p></div>
       <InventoryField label="Movement type"><select id={`${productPrefix}-movement-type`} className={select} {...field("type")}><option value="purchase">Purchase · add stock</option><option value="opening">Opening balance · add stock</option><option value="return">Return · add stock</option><option value="usage">Usage · remove stock</option><option value="waste">Waste / damage · remove stock</option><option value="adjustment">Positive adjustment · add stock</option></select></InventoryField>
-      <p className="text-sm text-admin-text-muted">{["usage", "waste"].includes(draft.type) ? "This quantity will be deducted. Stock already reserved cannot be removed." : "This quantity will be added to your current stock. Enter the amount to add, not the final balance."}</p>
+      <p className="col-span-full text-xs leading-5 text-admin-text-muted">{["usage", "waste"].includes(draft.type) ? "This quantity will be deducted. Stock already reserved cannot be removed." : "This quantity will be added to your current stock. Enter the amount to add, not the final balance."}</p>
       <InventoryField label="Quantity"><Input id={`${productPrefix}-movement-quantity`} required type="number" min="0.001" step="0.001" {...field("quantity")} className="mt-2"/></InventoryField>
       <InventoryField label="Reference / note" optional><Input id={`${productPrefix}-movement-note`} maxLength={500} {...field("note")} className="mt-2"/></InventoryField>
     </> : mode === "transfer" ? <>
       <InventoryField label="Source stock"><SearchableSelect id={`${inventoryPrefix}-transfer-source`} required {...choiceField("sourceItemId")} options={stock.map(row=>({id:row.id,name:`${row.name} · ${branches.find(branch=>branch.id===row.branch_id)?.name??"Branch"} · ${quantityLabel(row.quantity_on_hand,row.unit)}`}))} placeholder="Search source product or branch"/></InventoryField>
       <InventoryField label="Destination stock"><SearchableSelect id={`${inventoryPrefix}-transfer-target`} required disabled={!source||!targets.length} {...choiceField("targetItemId")} options={targets.map(row=>({id:row.id,name:`${row.name} · ${branches.find(branch=>branch.id===row.branch_id)?.name??"Branch"} · ${row.unit}`}))} placeholder="Search destination product or branch"/></InventoryField>
-      <p role="status" className="text-sm text-admin-text-muted">{source && !targets.length ? "No matching product in another accessible branch. Create the product there with the same product code first." : "Choose the same product in another branch. Matching product codes are shown; check the product and unit before transferring."}</p>
+      <p role="status" className="col-span-full text-xs leading-5 text-admin-text-muted">{source && !targets.length ? "No matching product in another accessible branch. Create the product there with the same product code first." : "Choose the same product in another branch. Matching product codes are shown; check the product and unit before transferring."}</p>
       <InventoryField label="Quantity"><Input id={`${inventoryPrefix}-transfer-quantity`} required type="number" min="0.001" step="0.001" {...field("quantity")} className="mt-2"/></InventoryField>
       <InventoryField label="Transfer note" optional><Input id={`${inventoryPrefix}-transfer-note`} maxLength={500} {...field("note")} className="mt-2"/></InventoryField>
     </> : <>
       <InventoryField label="Service"><SearchableSelect id="inventory-recipe-service-select" required {...choiceField("serviceId")} options={services} lookup="service" placeholder="Search service or category"/></InventoryField>
       <InventoryField label="Inventory item"><SearchableSelect id="inventory-recipe-item-select" required {...choiceField("inventoryItemId")} options={stock.map(row=>({id:row.id,name:`${row.name} · ${row.unit}`}))} placeholder="Search inventory item"/></InventoryField>
       <InventoryField label="Quantity used"><Input id="inventory-recipe-quantity-input" required type="number" min="0.001" step="0.001" {...field("quantity")} className="mt-2"/></InventoryField>
-      <p className="text-sm text-admin-text-muted">Set how much of this item the service uses. Saving replaces the quantity for this service and product.</p>
+      <p className="col-span-full text-xs leading-5 text-admin-text-muted">Set how much of this item the service uses. Saving replaces the quantity for this service and product.</p>
     </>}
+    </SettingsFormSection>
     <FormActions id={`${id}-actions`} cancelHref={returnHref}>
       <SubmitButton id={mode === "transfer" ? `${inventoryPrefix}-transfer-button` : mode === "recipe" ? "inventory-recipe-save-button" : `${productPrefix}-movement-save`} pendingText="Saving…" disabled={mode === "transfer" && !draft.targetItemId}>
         {mode === "transfer" ? <ArrowRightLeft aria-hidden="true" size={16}/> : <Save aria-hidden="true" size={16}/>}{mode === "transfer" ? "Transfer stock" : mode === "recipe" ? "Save recipe" : "Record movement"}

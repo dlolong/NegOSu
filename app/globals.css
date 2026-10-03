@@ -246,16 +246,14 @@ input:is([type="date"], [type="time"], [type="datetime-local"], [type="month"], 
   background-color: var(--admin-canvas);
 }
 
-#dashboard-main-content input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]),
-#dashboard-main-content select,
+#dashboard-main-content input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]):not([role="combobox"]),
 #dashboard-main-content textarea {
   border-color: var(--admin-border);
   color: var(--admin-text);
   transition: border-color 150ms ease, box-shadow 150ms ease;
 }
 
-#dashboard-main-content input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]):focus-visible,
-#dashboard-main-content select:focus-visible,
+#dashboard-main-content input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]):not([role="combobox"]):focus-visible,
 #dashboard-main-content textarea:focus-visible {
   border-color: var(--brand-primary);
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand-primary) 14%, transparent);
@@ -263,6 +261,66 @@ input:is([type="date"], [type="time"], [type="datetime-local"], [type="month"], 
 
 #dashboard-main-content :is(button, a, summary, input, select, textarea):focus-visible {
   outline-color: var(--brand-primary);
+}
+
+/* One select surface across forms, filters, public pages and searchable pickers.
+   Keep each caller's width/margins; the shared rules own visual treatment. */
+:is(select, input[role="combobox"]) {
+  appearance: none;
+  -webkit-appearance: none;
+  box-sizing: border-box;
+  min-height: 44px;
+  min-width: 0;
+  max-width: 100%;
+  border: 1px solid var(--admin-border-strong);
+  border-radius: var(--radius-md);
+  background-color: var(--admin-surface);
+  color: var(--admin-text);
+  padding: 0.625rem 2.75rem 0.625rem 0.875rem;
+  font-weight: 400;
+  line-height: 1.5;
+  box-shadow: 0 1px 2px rgb(15 23 42 / 0.04);
+  transition: border-color 150ms ease, box-shadow 150ms ease;
+}
+:is(select:not([multiple]):not([size]), input[role="combobox"]) {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23526071' stroke-width='1.75' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.875rem center;
+  background-size: 1rem;
+}
+select { cursor: pointer; }
+select[multiple], select[size] { padding-right: 0.875rem; }
+input[role="combobox"] { padding-right: 4.75rem; }
+input[role="combobox"]::placeholder { color: var(--admin-text-muted); opacity: 1; }
+:is(select, input[role="combobox"]):hover:not(:disabled),
+#dashboard-main-content :is(select, input[role="combobox"]):hover:not(:disabled) { border-color: var(--brand-primary); }
+:is(select, input[role="combobox"]):focus-visible,
+#dashboard-main-content :is(select, input[role="combobox"]):focus-visible {
+  border-color: var(--brand-primary);
+  outline: 2px solid transparent;
+  outline-offset: 2px;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand-primary) 16%, transparent);
+}
+:is(select, input[role="combobox"]):disabled,
+#dashboard-main-content :is(select, input[role="combobox"]):disabled {
+  cursor: not-allowed;
+  border-color: var(--admin-border);
+  background-color: var(--admin-surface-muted);
+  color: var(--admin-text-muted);
+  box-shadow: none;
+}
+:is(select, input[role="combobox"]):is([aria-invalid="true"], :user-invalid),
+#dashboard-main-content :is(select, input[role="combobox"]):is([aria-invalid="true"], :user-invalid) {
+  border-color: var(--danger);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--danger) 12%, transparent);
+}
+@media (min-width: 768px) and (pointer: fine) {
+  :is(select, input[role="combobox"]) { font-size: 0.875rem; }
+}
+@media (forced-colors: active) {
+  select { appearance: auto; background-image: none; }
+  :is(select, input[role="combobox"]):focus-visible,
+  #dashboard-main-content :is(select, input[role="combobox"]):focus-visible { outline-color: Highlight; }
 }
 
 #negosu-sidebar :is(a, button, summary):focus-visible {

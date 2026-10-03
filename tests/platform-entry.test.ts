@@ -55,6 +55,7 @@ test("vertical pages and auth forms expose stable operational IDs", () => {
     readFileSync("app/salon/page.tsx", "utf8"),
     readFileSync("app/login/page.tsx", "utf8"),
     readFileSync("app/signup/page.tsx", "utf8"),
+    readFileSync("components/signup-form.tsx", "utf8"),
     readFileSync("components/business-type-selector.tsx", "utf8"),
     readFileSync("app/organizations/page.tsx", "utf8"),
     readFileSync("app/onboarding/setup/page.tsx", "utf8"),

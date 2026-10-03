@@ -2,7 +2,7 @@ type DatabaseError = { code?: string; message?: string };
 
 export function catalogSaveError(error: DatabaseError, kind: "product" | "promo", editing = false): string {
   if (["PGRST202", "PGRST203", "PGRST204", "PGRST205", "42883", "42P01", "42703"].includes(error.code ?? "")) {
-    return "Product and promo setup needs a database update. Ask your administrator to apply migration 0104_restore_catalog_save_rpcs.sql, then try again.";
+    return kind === "product" ? "Product setup needs a database update. Ask your administrator to apply migrations through 0119_product_photos.sql, then try again." : "Product and promo setup needs a database update. Ask your administrator to apply migration 0104_restore_catalog_save_rpcs.sql, then try again.";
   }
   if (error.code === "42501") return "You do not have permission to save in this branch. Ask your owner or manager to check your access.";
   if (error.code === "23505") return kind === "product" ? "This product code is already used in this branch. Choose another product code or edit that product." : "This promo already exists. Reload the catalog and try again.";

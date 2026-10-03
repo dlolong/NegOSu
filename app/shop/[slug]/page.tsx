@@ -1,3 +1,4 @@
+import { PublicProductCards } from "@/components/public-product-cards";
 import { Tag } from "lucide-react";
 import { loadPublicPromos } from "@/lib/public-promos.runtime";
 import { PublicPromoCards } from "@/components/public-promo-cards";
@@ -44,6 +45,7 @@ export default async function Page({ params }: { params: Promise<{ slug: string 
   const primaryBranch = publicShop.branches.find(branch => branch.acceptsBookings) ?? publicShop.branches[0];
   const bookingAvailable = !hospitality && publicShop.services.length > 0 && publicShop.branches.some(branch=>branch.acceptsBookings);
   const {promos}=hospitality ? { promos: [] } : await loadPublicPromos(slug);
+  const products = publicShop.products ?? [];
   const bookingHref = `/shop/${encodeURIComponent(slug)}/book`;
   const jsonLd = {
     "@context": "https://schema.org",
@@ -67,7 +69,7 @@ export default async function Page({ params }: { params: Promise<{ slug: string 
         </Link>
         <div className="hidden shrink-0 sm:block"><Button id="public-shop-header-book-button" asChild size="sm"><Link href={bookingAvailable?bookingHref:"#public-automotive-shop-branches"}><CalendarDays aria-hidden="true" size={16} className="shrink-0"/>{bookingAvailable?"Book now":"Visit us"}</Link></Button></div>
       </div>
-      <nav id="public-shop-section-navigation" aria-label="Website sections" className="mx-auto hidden max-w-6xl flex-wrap sm:flex gap-x-5 border-t border-admin-border px-4 text-sm font-medium sm:px-6">{!hospitality ? <a className="inline-flex min-h-11 items-center hover:text-brand-primary" href="#public-automotive-shop-services">{industry==="salon"?"Treatments":"Services"}</a> : null}{promos.length?<a id="public-shop-promos-nav" className="inline-flex min-h-11 items-center hover:text-brand-primary" href="#public-shop-promos">Promos</a>:null}<a className="inline-flex min-h-11 items-center hover:text-brand-primary" href="#public-automotive-shop-branches">Locations</a>{publicShop.gallery.length?<a className="inline-flex min-h-11 items-center hover:text-brand-primary" href="#public-automotive-shop-gallery">Gallery</a>:null}<a className="inline-flex min-h-11 items-center hover:text-brand-primary" href="#public-shop-contact">Contact</a></nav>
+      <nav id="public-shop-section-navigation" aria-label="Website sections" className="mx-auto hidden max-w-6xl flex-wrap sm:flex gap-x-5 border-t border-admin-border px-4 text-sm font-medium sm:px-6">{!hospitality ? <a className="inline-flex min-h-11 items-center hover:text-brand-primary" href="#public-automotive-shop-services">{industry==="salon"?"Treatments":"Services"}</a> : null}{promos.length?<a id="public-shop-promos-nav" className="inline-flex min-h-11 items-center hover:text-brand-primary" href="#public-shop-promos">Promos</a>:null}{products.length ? <a id="public-shop-products-nav" className="inline-flex min-h-11 items-center hover:text-brand-primary" href="#public-shop-products">Products</a> : null}<a className="inline-flex min-h-11 items-center hover:text-brand-primary" href="#public-automotive-shop-branches">Locations</a>{publicShop.gallery.length?<a className="inline-flex min-h-11 items-center hover:text-brand-primary" href="#public-automotive-shop-gallery">Gallery</a>:null}<a className="inline-flex min-h-11 items-center hover:text-brand-primary" href="#public-shop-contact">Contact</a></nav>
     </header>
 
     <section id="public-automotive-shop-hero" className="overflow-hidden bg-white">
@@ -76,7 +78,7 @@ export default async function Page({ params }: { params: Promise<{ slug: string 
           <p className="text-sm font-medium text-brand-primary-strong">{hospitality ? "Apartelle & Inn" : industry === "pet_care" ? "Pet grooming" : industry === "salon" ? "Salon & beauty" : "Automotive care"}</p>
           <h1 className="mt-3 max-w-3xl text-3xl font-medium tracking-tight text-brand-ink sm:text-5xl lg:text-6xl">{publicShop.name}</h1>
           <p className="mt-4 max-w-2xl text-base leading-7 sm:text-lg sm:leading-8 text-admin-text-secondary">{publicShop.description ?? (hospitality ? "Plan your stay with us. Contact our property for room rates and availability." : industry === "pet_care" ? "Thoughtful pet grooming with a simple online booking experience." : industry === "salon" ? "Professional salon care with a simple online booking experience." : "Professional vehicle care with a simple online booking experience.")}</p>
-          <div className="mt-7 flex flex-col gap-3 sm:flex-row sm:flex-wrap"><Button id="public-automotive-shop-book-button" asChild size="lg"><Link href={bookingAvailable?bookingHref:"#public-automotive-shop-branches"}>{bookingAvailable?"View available dates":"Find a location"}<ArrowRight aria-hidden="true" size={18}/></Link></Button></div>
+          <div className="mt-7 flex flex-col gap-3 sm:flex-row sm:flex-wrap"><Button id="public-automotive-shop-book-button" asChild size="lg"><Link href={bookingAvailable?bookingHref:"#public-automotive-shop-branches"}>{bookingAvailable?"View available dates":"Find a location"}<ArrowRight aria-hidden="true" size={18}/></Link></Button>{products.length ? <Button id="public-shop-browse-products" asChild variant="secondary" size="lg"><a href="#public-shop-products">Browse products</a></Button> : null}</div>
           <div id="public-shop-quick-details" className="mt-7 flex flex-wrap gap-x-6 gap-y-3 text-sm text-admin-text-secondary">{primaryBranch ? <a id="public-shop-quick-location" href="#public-automotive-shop-branches" className="inline-flex min-w-0 items-center gap-2"><MapPin aria-hidden="true" className="text-brand-primary" size={17}/>{primaryBranch.name}</a> : null}{publicShop.phone ? <a className="inline-flex items-center gap-2 hover:text-brand-primary-strong" href={`tel:${publicShop.phone.replace(/[^\d+]/g, "")}`}><Phone aria-hidden="true" className="text-brand-primary" size={17}/>{publicShop.phone}</a> : null}</div>
         </div>
         <div id="public-shop-hero-media" className="relative min-h-52 overflow-hidden rounded-ui-lg border border-admin-border bg-brand-ink shadow-ui-md sm:min-h-96">
@@ -92,6 +94,7 @@ export default async function Page({ params }: { params: Promise<{ slug: string 
         {publicShop.services.length ? <PublicServiceCategories services={publicShop.services} shopName={publicShop.name} currency={publicShop.currency} bookingHref={bookingHref} serviceLabel={serviceLabel}/> : <Card id="public-shop-services-empty-state" elevation="none" className="mt-6 p-6 text-center"><h3 className="font-medium">Services will be available soon</h3><p className="mt-2 text-sm text-admin-text-secondary">Contact {publicShop.name} directly for current offerings.</p></Card>}
       </section> : null}
 
+      <PublicProductCards products={products}/>
       <section id="public-automotive-shop-branches" className="scroll-mt-[calc(6rem+env(safe-area-inset-top))] sm:scroll-mt-5" aria-labelledby="public-shop-locations-title">
         <div><p className="text-sm font-medium text-brand-primary-strong">Visit us</p><h2 id="public-shop-locations-title" className="mt-1 text-3xl font-medium tracking-tight text-brand-ink">Locations</h2></div>
         {publicShop.branches.length ? <div className="mt-6 grid gap-4 lg:grid-cols-2">{publicShop.branches.map(branch => {

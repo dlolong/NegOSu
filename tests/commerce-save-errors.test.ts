@@ -5,7 +5,7 @@ import { catalogSaveError } from "../modules/core/commerce/save-errors";
 test("missing catalog RPCs and receipt tables give migration guidance, never stock-history errors", () => {
   for (const code of ["PGRST202", "PGRST205", "42883", "42P01"]) {
     const result = catalogSaveError({ code }, "product");
-    assert.match(result, /0104_restore_catalog_save_rpcs.sql/);
+    assert.match(result, /0119_product_photos.sql/);
     assert.doesNotMatch(result, /stock history/i);
   }
 });

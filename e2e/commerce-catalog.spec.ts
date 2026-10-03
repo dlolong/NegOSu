@@ -11,11 +11,15 @@ test("product edits preserve inputs on a rejected save and submit no stock balan
   await page.goto("https://forms.test/catalog");
   await expect(page.getByLabel("How do you count this product?")).toBeVisible();
   await expect(page.locator("#product-unit-help")).toContainText("piece for individual items");
+  await expect(page.locator("#product-public")).not.toBeChecked();
+  await page.locator("#product-public").check();
   await page.locator("#product-name").fill("Updated shampoo");
   await page.locator("#product-price").fill("12.50");
   await page.locator("#product-save").click();
   await expect(page.getByRole("alert")).toHaveText("Product unavailable.");
   await expect(page.locator("#product-name")).toHaveValue("Updated shampoo");
+  await expect(page.locator("#product-public")).toBeChecked();
+  expect(Object.fromEntries(submissions[0]).isPublic).toBe("on");
   expect(submissions).toHaveLength(1);
   expect(Object.fromEntries(submissions[0]).price).toBe("12.50");
   expect(submissions[0].some(([key]) => ["quantity_on_hand", "quantity", "balance"].includes(key))).toBe(false);
@@ -82,4 +86,37 @@ test("promo can select multiple service components without requiring a product",
  await page.locator("#promo-save").click();await expect.poll(()=>submissions.length).toBe(1);
  expect(JSON.parse(Object.fromEntries(submissions[0]).components).map((c:{kind:string})=>c.kind)).toEqual(["service","service"]);
  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+});
+
+
+test("internal supplies cannot be opted into the public catalog", async ({ page }) => {
+  await page.goto("https://forms.test/catalog");
+  await page.locator("#product-public").check();
+  await page.locator("#product-purpose").selectOption("internal");
+  await expect(page.locator("#product-public")).toBeDisabled();
+  await expect(page.locator("#product-public")).not.toBeChecked();
+});
+
+
+test("product photo URL works without upload entitlement and survives a rejected save", async ({ page }) => {
+  const submissions: Array<Array<[string, string]>> = [];
+  await page.exposeFunction("recordFormAction", (_name: string, fields: Array<[string, string]>) => { submissions.push(fields); return { error: "Please review." }; });
+  await page.goto("https://forms.test/catalog");
+  await expect(page.getByText("Image uploads require a paid plan.")).toBeVisible();
+  await page.locator("#product-photo-url").fill("https://images.example.test/product.jpg");
+  await page.locator("#product-save").click();
+  await expect(page.getByRole("alert")).toHaveText("Please review.");
+  expect(Object.fromEntries(submissions[0]).thumbnailUrl).toBe("https://images.example.test/product.jpg");
+  await expect(page.locator("#product-photo-url")).toHaveValue("https://images.example.test/product.jpg");
+  await page.locator("#product-photo-clear").click();
+  await expect(page.locator("#product-photo-url")).toHaveValue("");
+  await expect(page.locator("#product-photo-preview")).toContainText("Product preview");
+});
+
+test("product photo upload uses the shared service endpoint", async ({ page }) => {
+  await page.route("**/api/dashboard/images", route => route.fulfill({ contentType: "application/json", body: JSON.stringify(route.request().method() === "POST" ? { url: "https://images.example.test/product-upload.jpg" } : { allowed: true, owner: true }) }));
+  await page.goto("https://forms.test/catalog");
+  await page.locator("#product-photo-upload-file").setInputFiles({ name: "product.png", mimeType: "image/png", buffer: Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVQIHWP4z8DwHwAFgAI/ScLbtAAAAABJRU5ErkJggg==", "base64") });
+  await expect(page.locator("#product-photo-url")).toHaveValue("https://images.example.test/product-upload.jpg");
+  await expect(page.getByText("Uploaded. Save this form to use the photo.")).toBeVisible();
 });

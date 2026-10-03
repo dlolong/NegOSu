@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Check, ChevronDown, Plus, X } from "lucide-react";
+import { Check, Plus, X } from "lucide-react";
 import { lookupRecords } from "@/app/dashboard/appointments/entity-actions";
 import type { RecordKind } from "@/lib/record-lookup";
 
@@ -53,8 +53,8 @@ export function SearchableSelect({ id, name, options, value, defaultValue = "", 
   return <div data-record-ignore className="relative mt-2 min-w-0 text-sm font-normal" onClick={event => event.stopPropagation()} onBlur={event => { if (!event.currentTarget.contains(event.relatedTarget)) { setOpen(false); setQuery(""); } }}>
     {name ? <input type="hidden" name={name} value={selectedId} disabled={disabled}/> : null}
     <div className="relative flex min-w-0 items-center">
-      <input ref={input} id={id} role="combobox" aria-autocomplete="list" aria-expanded={open} aria-busy={loading} aria-controls={`${id}-options`} aria-activedescendant={open && active >= 0 && visible[active] ? `${id}-option-${visible[active].id}` : undefined} aria-describedby={error ? `${id}-error` : undefined} autoComplete="off" maxLength={160} aria-required={required} required={required && !selectedId} disabled={disabled} placeholder={selectedOption?.name ?? placeholder} value={open ? query : selectedOption?.name ?? ""}
-        className="min-h-11 w-full min-w-0 rounded-xl border border-slate-300 bg-white py-2 pl-3 pr-16 text-admin-text focus:outline-none focus:ring-2 focus:ring-brand-primary/25 disabled:bg-slate-100"
+      <input ref={input} id={id} role="combobox" aria-autocomplete="list" aria-expanded={open} aria-busy={loading} aria-controls={`${id}-options`} aria-activedescendant={open && active >= 0 && visible[active] ? `${id}-option-${visible[active].id}` : undefined} aria-describedby={error ? `${id}-error` : undefined} aria-invalid={error ? true : undefined} autoComplete="off" maxLength={160} aria-required={required} required={required && !selectedId} disabled={disabled} placeholder={selectedOption?.name ?? placeholder} value={open ? query : selectedOption?.name ?? ""}
+        className="w-full"
         onFocus={() => { const rect=input.current?.getBoundingClientRect(); setAbove(Boolean(rect && window.innerHeight-rect.bottom<300 && rect.top>300)); setOpen(true); setQuery(""); }} onClick={() => setOpen(true)}
         onChange={event => { setQuery(event.target.value); setOpen(true); setActive(-1); }}
         onKeyDown={event => {
@@ -62,9 +62,9 @@ export function SearchableSelect({ id, name, options, value, defaultValue = "", 
           if (event.key === "Enter" && open) { event.preventDefault(); if (visible[active]) choose(visible[active]); }
           if (event.key === "Escape" && open) { event.preventDefault(); event.stopPropagation(); setOpen(false); setQuery(""); }
         }}/>
-      <div className="absolute right-2 flex items-center gap-1">{selectedId && !disabled ? <button id={`${id}-clear`} type="button" aria-label={`Clear ${selectedOption?.name ?? "selection"}`} className="flex min-h-9 min-w-9 items-center justify-center rounded-lg hover:bg-slate-100" onClick={() => choose()}><X size={16} aria-hidden="true"/></button> : null}<ChevronDown size={16} aria-hidden="true" className="pointer-events-none"/></div>
+      <div className="absolute right-8 flex items-center">{selectedId && !disabled ? <button id={`${id}-clear`} type="button" aria-label={`Clear ${selectedOption?.name ?? "selection"}`} className="flex min-h-9 min-w-9 items-center justify-center rounded-lg hover:bg-slate-100" onClick={() => choose()}><X size={16} aria-hidden="true"/></button> : null}</div>
     </div>
-    {open && !disabled ? <div className={`absolute inset-x-0 z-30 rounded-xl border border-slate-200 bg-white p-1 shadow-lg ${above ? "bottom-full mb-1" : "top-full mt-1"}`}>
+    {open && !disabled ? <div className={`absolute inset-x-0 z-30 rounded-ui-md border border-admin-border bg-admin-surface p-1 text-sm text-admin-text shadow-ui-md ${above ? "bottom-full mb-1" : "top-full mt-1"}`}>
       {loading ? <p role="status" className="p-3 text-slate-500">Searching…</p> : null}
       {error ? <p id={`${id}-error`} role="alert" className="p-3 text-status-danger">{error}</p> : null}
       <div id={`${id}-options`} role="listbox" aria-label="Matching records" className="max-h-56 overflow-y-auto">

@@ -49,7 +49,7 @@ function parsePriceLines(value:string) {
 
 export async function saveService(data:FormData) {
   const id=formValue(data,"id"),back=id?`/dashboard/services/${id}/edit`:"/dashboard/services/new";
-  const parsed=serviceSchema.safeParse({name:formValue(data,"name"),categoryId:formValue(data,"categoryId"),description:formValue(data,"description"),shortDescription:formValue(data,"shortDescription"),code:formValue(data,"code"),durationMinutes:formValue(data,"durationMinutes"),basePrice:formValue(data,"basePrice"),isAddOn:data.get("isAddOn")==="on",parentServiceId:formValue(data,"parentServiceId")});
+  const parsed=serviceSchema.safeParse({thumbnailUrl:data.has("thumbnailUrl")?formValue(data,"thumbnailUrl"):undefined,name:formValue(data,"name"),categoryId:formValue(data,"categoryId"),description:formValue(data,"description"),shortDescription:formValue(data,"shortDescription"),code:formValue(data,"code"),durationMinutes:formValue(data,"durationMinutes"),basePrice:formValue(data,"basePrice"),isAddOn:data.get("isAddOn")==="on",parentServiceId:formValue(data,"parentServiceId")});
   if(!parsed.success) go(back,"error",firstError(parsed.error));
   const {activeMembership}=await getDashboardContext(); if(!admin(activeMembership.role)) go("/dashboard/services","error","Owner or manager access is required.");
   const automotive=activeMembership.industry==="automotive",base=parseMoneyToCentavos(parsed.data.basePrice),orgPrices=automotive?parsePriceLines(formValue(data,"vehiclePrices")):[];
@@ -63,7 +63,7 @@ export async function saveService(data:FormData) {
     branchPriceRows.push(...vehicleRows.map(row=>({...row,branch_id:branch.id})));
   }
   const supabase=await createClient();
-  const payload={organization_id:activeMembership.organizationId,category_id:parsed.data.categoryId,name:parsed.data.name,description:parsed.data.description,short_description:parsed.data.shortDescription,code:parsed.data.code,duration_minutes:parsed.data.durationMinutes,base_price_centavos:Number(base),is_add_on:parsed.data.isAddOn,parent_service_id:parsed.data.isAddOn?parsed.data.parentServiceId:null};
+  const payload={...(parsed.data.thumbnailUrl !== undefined ? {thumbnail_url:parsed.data.thumbnailUrl || null} : {}),organization_id:activeMembership.organizationId,category_id:parsed.data.categoryId,name:parsed.data.name,description:parsed.data.description,short_description:parsed.data.shortDescription,code:parsed.data.code,duration_minutes:parsed.data.durationMinutes,base_price_centavos:Number(base),is_add_on:parsed.data.isAddOn,parent_service_id:parsed.data.isAddOn?parsed.data.parentServiceId:null};
   const result=id?await supabase.from("services").update(payload).eq("id",id).eq("organization_id",activeMembership.organizationId).select("id").maybeSingle():await supabase.from("services").insert({...payload,currency:activeMembership.currency}).select("id").single();
   if(result.error||!result.data) go(back,"error",result.error?.code==="23505"?"A service with this name or code already exists.":"Unable to save service.");
   const serviceId=result.data.id,branchIds=selectedValues(data,"branchIds");
@@ -71,7 +71,7 @@ export async function saveService(data:FormData) {
   const priceRows=[...orgPrices.map(price=>({...price,branch_id:null})),...branchPriceRows].map(price=>({...price,organization_id:activeMembership.organizationId,service_id:serviceId}));
   if(priceRows.length) { const {error}=await supabase.from("service_prices").insert(priceRows); if(error) go(back,"error","Service saved, but pricing could not be updated."); }
   if(data.get("allBranches")!=="on"&&branchIds.length) { const {error}=await supabase.from("service_branch_availability").insert(branchIds.map(branch_id=>({organization_id:activeMembership.organizationId,service_id:serviceId,branch_id,is_available:true}))); if(error) go(back,"error","Service saved, but branch availability could not be updated."); }
-  revalidatePath("/dashboard/services"); redirect(`/dashboard/services/${serviceId}?message=${encodeURIComponent(`Service ${id?"updated":"created"}.`)}`);
+  revalidatePath("/dashboard/services"); revalidatePath("/dashboard/settings/public-page"); revalidatePath("/shop/[slug]", "page"); redirect(`/dashboard/services/${serviceId}?message=${encodeURIComponent(`Service ${id?"updated":"created"}.`)}`);
 }
 
 export async function toggleService(data:FormData) {

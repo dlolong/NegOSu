@@ -1,4 +1,5 @@
 "use client";
+import { SettingsFormSection } from "@/components/settings-form-section";
 import { useState } from "react";
 import { discountedRoomPrice } from "@/modules/hospitality/discount";
 import { CreditCard } from "lucide-react";
@@ -17,7 +18,7 @@ export function SettlementFields({ base, currency, prefix, closeHref, depositEna
   const ready = final !== null && final <= base && held !== null && tendered !== null && tendered >= due && (final === base || kind !== "none");
   const card = ["card", "pwd", "senior"].includes(kind);
   return <>
-    <h2 className="sm:col-span-2 border-t border-slate-200 pt-4 text-sm font-medium">{recording ? "2. Payment already received" : depositEnabled ? "2. Collect payment" : "Payment"}</h2>
+    <SettingsFormSection id={`${prefix}-payment-section`} title={recording ? "Payment received" : "Payment details"}>
     <Field label={`Final price (${currency}) *`}><input id={`${prefix}-final-price`} name="finalPrice" required inputMode="decimal" className={fieldClass} value={final === null ? "" : (final / 100).toFixed(2)} readOnly aria-describedby={`${prefix}-price-help`}/><span id={`${prefix}-price-help`} className="mt-1 block text-xs text-slate-500">Calculated from room rate: {formatMoney(base, currency)}</span></Field>
     <Field label="Discount type"><select id={`${prefix}-discount-type`} name="discountType" className={fieldClass} value={kind} onChange={e => { setKind(e.target.value); if (e.target.value !== "none") setPercentage("20"); }}><option value="none">No discount</option><option value="manual">Other / discretionary</option><option value="card">Discount card</option><option value="pwd">PWD</option><option value="senior">Senior citizen</option></select></Field>
     {kind !== "none" ? <Field label="Discount (%) *"><input id={`${prefix}-discount-percent`} name="discountPercent" type="number" inputMode="decimal" required min="0" max="100" step="0.01" aria-invalid={final === null} value={percentage} onChange={e=>setPercentage(e.target.value)} className={fieldClass}/><span className="mt-1 block text-xs text-slate-500">Starts at 20%. Adjust to the discount approved for this stay.</span></Field> : null}
@@ -31,6 +32,7 @@ export function SettlementFields({ base, currency, prefix, closeHref, depositEna
       {final !== null && final > base ? <p className="col-span-2 text-sm text-red-700">Final price cannot exceed the configured rate.</p> : null}
       {tendered !== null && tendered < due ? <p className="col-span-2 text-sm text-red-700">Still needed: {formatMoney(due - tendered, currency)}</p> : null}
     </section>
+    </SettingsFormSection>
     {children}
     <details id={`${prefix}-receipt-details`} className="sm:col-span-2"><summary className="cursor-pointer py-2 text-sm text-slate-600">Paper receipt (optional)</summary><div className="mt-2">
     <Field label="Receipt number (optional)"><input id={`${prefix}-receipt-number`} name="receiptNumber" maxLength={80} className={fieldClass} placeholder="From the paper receipt"/></Field>

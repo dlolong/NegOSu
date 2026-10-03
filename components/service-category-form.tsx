@@ -1,5 +1,6 @@
 "use client";
 
+import { SettingsFormSection } from "@/components/settings-form-section";
 import { useActionState, useState } from "react";
 import { Save, Plus, Trash2 } from "lucide-react";
 import { saveCategory, deleteCategory } from "@/app/dashboard/operations-actions";
@@ -27,7 +28,7 @@ export function ServiceCategoryForm({ category, mode, prefix, q, filterCategory,
       <p>Delete <strong className="break-words text-admin-text [overflow-wrap:anywhere]">{category?.name}</strong>?</p>
       <p>{category?.serviceCount ?? 0} linked services or treatments will remain in the catalog and become <strong>Uncategorized</strong>. Their prices, bookings, and history are kept.</p>
       <p>This category cannot be restored after deletion.</p>
-    </div> : <>
+    </div> : <SettingsFormSection id={`${prefix}-${mode}-details`} title="Category details">
       <label htmlFor={`${prefix}-${mode}-name-input`} className="min-w-0 text-sm font-medium">Category name
         <Input id={`${prefix}-${mode}-name-input`} name="name" required minLength={2} maxLength={100} value={name} onChange={event => setName(event.target.value)} placeholder="e.g. Hair care or Exterior detailing" className="mt-2"/>
       </label>
@@ -36,7 +37,7 @@ export function ServiceCategoryForm({ category, mode, prefix, q, filterCategory,
         <span className="mt-1 block text-xs font-normal text-admin-text-muted">Lower numbers appear first.</span>
       </label>
       <label className="flex min-h-11 items-center gap-2 text-sm"><input id={`${prefix}-${mode}-active-input`} type="checkbox" name="isActive" checked={active} onChange={event => setActive(event.target.checked)}/>Available when adding services</label>
-    </>}
+    </SettingsFormSection>}
     <FormActions id={`${prefix}-${mode}-actions`}>
       <SubmitButton id={`${prefix}-${mode}-save-button`} pendingText={deleting ? "Deleting…" : "Saving…"} variant={deleting ? "destructive" : "primary"}>
         {deleting ? <Trash2 aria-hidden="true" size={16}/> : mode === "create" ? <Plus aria-hidden="true" size={16}/> : <Save aria-hidden="true" size={16}/>}

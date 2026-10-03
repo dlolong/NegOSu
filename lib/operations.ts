@@ -1,3 +1,4 @@
+import { businessLogoUrlSchema } from "@/modules/platform/business-branding";
 import { z } from "zod";
 
 export function formatMoney(centavos: number | bigint, currency = "PHP") {
@@ -61,6 +62,7 @@ export function inputDateTimeInZone(value: string | Date, timeZone: string) {
 const optional = (max: number) => z.string().trim().max(max).transform((value) => value || null);
 export const categorySchema = z.object({ name: z.string().trim().min(2).max(100), sortOrder: z.coerce.number().int().min(0).max(9999) });
 export const serviceSchema = z.object({
+  thumbnailUrl: businessLogoUrlSchema.optional(),
   name: z.string().trim().min(2).max(160), categoryId: z.union([z.literal(""), z.uuid()]).transform((value) => value || null),
   description: optional(2000), shortDescription: optional(300), code: optional(50),
   durationMinutes: z.coerce.number().int().min(1).max(10080), basePrice: z.string(), isAddOn: z.boolean(), parentServiceId: z.union([z.literal(""), z.uuid()]).transform((value) => value || null),

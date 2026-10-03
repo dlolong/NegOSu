@@ -18,9 +18,9 @@ const Field = ({ label, children }: { label: string; children: React.ReactNode }
 
 export type BranchRecord = { id: string; name: string; address_line: string | null; barangay: string | null; city: string | null; province: string | null; postal_code: string | null; country: string; phone: string | null; email: string | null; opening_notes: string | null };
 export function BranchForm({ branch, error }: { branch?: BranchRecord; error?: string }) {
-  return <Card className="p-5 sm:p-7"><FormMessage error={error}/><form id={branch?"branch-edit-form":"branch-create-form"} action={saveBranch} className="mt-5 grid gap-5 sm:grid-cols-2">
+  return <Card className="border-0 bg-transparent p-0 shadow-none"><FormMessage error={error}/><form id={branch?"branch-edit-form":"branch-create-form"} action={saveBranch} className="mt-5 grid gap-5 sm:grid-cols-2">
     {branch?<input type="hidden" name="id" value={branch.id}/>:null}
-    <SettingsFormSection id="branch-location-section" title="Location details" description="Fields marked * are required. Use the address customers should visit.">
+    <SettingsFormSection id="branch-location-section" title="Location details" description="Use the address customers should visit.">
     <Field label="Branch name *"><Input id="branch-name-input" name="name" required maxLength={120} defaultValue={branch?.name}/></Field>
     <Field label="Country *"><Input id="branch-country-input" name="country" required defaultValue={branch?.country??"Philippines"}/></Field>
     <div className="sm:col-span-2"><Field label="Address line *"><Input id="branch-address-input" name="addressLine" required maxLength={200} defaultValue={branch?.address_line??""}/></Field></div>
@@ -29,7 +29,7 @@ export function BranchForm({ branch, error }: { branch?: BranchRecord; error?: s
     <Field label="Province *"><Input id="branch-province-input" name="province" required maxLength={120} defaultValue={branch?.province??""}/></Field>
     <Field label="Postal code"><Input id="branch-postal-input" name="postalCode" maxLength={20} defaultValue={branch?.postal_code??""}/></Field>
     </SettingsFormSection>
-    <SettingsFormSection id="branch-contact-section" title="Contact & visiting information" description="Optional. Add the contact details and notes that help people reach this branch.">
+    <SettingsFormSection id="branch-contact-section" title="Contact & visiting information" description="Optional contact details and opening notes.">
     <Field label="Phone"><Input type="tel" id="branch-phone-input" name="phone" autoComplete="tel" maxLength={40} defaultValue={branch?.phone??""}/></Field>
     <Field label="Email"><Input id="branch-email-input" name="email" type="email" autoComplete="email" defaultValue={branch?.email??""}/></Field>
     <div className="sm:col-span-2"><Field label="Opening hours notes"><textarea id="branch-opening-notes-input" className={textarea} name="openingNotes" maxLength={500} defaultValue={branch?.opening_notes??""}/></Field></div>
@@ -42,22 +42,27 @@ export type CustomerRecord = { id: string; full_name: string; phone: string | nu
 export function CustomerForm({ customer, error, warning, duplicateId, embedded = false, returnTo, entityLabel = "customer" }: { customer?: CustomerRecord; entityLabel?: string; error?: string; warning?: string; duplicateId?: string; embedded?: boolean; returnTo?: string }) {
   const content=<><FormMessage error={error}/>{warning?<div id="customer-duplicate-warning" role="alert" className="mt-4 rounded-xl border border-status-warning/25 bg-status-warning-tint p-4 text-sm text-status-warning"><p className="font-medium">{warning}</p>{duplicateId?<Link id="customer-duplicate-link" className="mt-2 inline-block underline" href={`/dashboard/customers/${duplicateId}`}>View existing {entityLabel}</Link>:null}<label className="mt-3 flex min-h-11 items-center gap-2"><input id="customer-accept-duplicate-checkbox" type="checkbox" name="acceptDuplicate" form="customer-form"/> Save anyway</label></div>:null}<form id="customer-form" action={saveCustomer} className="grid gap-4 sm:grid-cols-2">
     {customer?<input type="hidden" name="id" value={customer.id}/>:null}{returnTo?<input type="hidden" name="returnTo" value={returnTo}/>:null}
+    <SettingsFormSection id="customer-contact-section" title="Name & contact">
     <div className="sm:col-span-2"><Field label="Full name *"><Input id="customer-full-name-input" name="fullName" required autoFocus autoComplete="name" maxLength={160} defaultValue={customer?.full_name}/></Field></div>
     <Field label="Mobile number"><Input id="customer-phone-input" name="phone" autoComplete="tel" maxLength={40} placeholder="0917 123 4567" defaultValue={customer?.phone??""}/></Field>
     <Field label="Email"><Input id="customer-email-input" name="email" type="email" autoComplete="email" defaultValue={customer?.email??""}/></Field>
+    </SettingsFormSection>
+    <SettingsFormSection id="customer-address-section" title="Address & notes (optional)">
     <div className="sm:col-span-2"><Field label="Address"><Input id="customer-address-input" name="addressLine" autoComplete="street-address" maxLength={200} defaultValue={customer?.address_line??""}/></Field></div>
     <Field label="City / municipality"><Input id="customer-city-input" name="city" maxLength={120} defaultValue={customer?.city??""}/></Field>
     <Field label="Province"><Input id="customer-province-input" name="province" maxLength={120} defaultValue={customer?.province??""}/></Field>
     <div className="sm:col-span-2"><Field label="Notes"><textarea id="customer-notes-input" className={textarea} name="notes" maxLength={2000} defaultValue={customer?.notes??""}/></Field></div>
+    </SettingsFormSection>
     <FormActions id="customer-actions" cancelHref={customer ? `/dashboard/customers/${customer.id}` : "/dashboard/customers"} cancelId="customer-cancel-button"><SubmitButton id="customer-save-button" pendingText={`Saving ${entityLabel}…`}><SaveIcon aria-hidden="true" size={16} className="shrink-0"/>Save {entityLabel}</SubmitButton></FormActions>
   </form></>;
-  return embedded?content:<Card className="p-5 sm:p-7">{content}</Card>;
+  return embedded?content:<Card className="border-0 bg-transparent p-0 shadow-none">{content}</Card>;
 }
 
 export type VehicleRecord = { id: string; customer_id: string; make: string; model: string; plate_number: string | null; model_year: number | null; variant: string | null; color: string | null; vehicle_type: string | null; fuel_type: string | null; transmission: string | null; odometer_km: number | null; vin: string | null; engine_number: string | null; notes: string | null };
 export function VehicleForm({ vehicle, customers, presetCustomerId, error, warning, duplicateId, embedded = false, returnTo }: { vehicle?: VehicleRecord; customers: {id:string;full_name:string}[]; presetCustomerId?: string; error?: string; warning?: string; duplicateId?: string; embedded?: boolean; returnTo?: string }) {
   const content=<><FormMessage error={error}/>{warning?<div id="vehicle-duplicate-warning" role="alert" className="mb-4 rounded-xl border border-status-warning/25 bg-status-warning-tint p-4 text-sm text-status-warning"><p className="font-medium">{warning}</p>{duplicateId?<Link id="vehicle-duplicate-link" className="mt-2 inline-block underline" href={`/dashboard/vehicles/${duplicateId}`}>View existing vehicle</Link>:null}<label className="mt-3 flex min-h-11 items-center gap-2"><input id="vehicle-accept-duplicate-checkbox" type="checkbox" name="acceptDuplicate" form="vehicle-form"/> Save anyway</label></div>:null}<form id="vehicle-form" action={saveVehicle} className="grid gap-4 sm:grid-cols-2">
     {vehicle?<input type="hidden" name="id" value={vehicle.id}/>:null}{returnTo?<input type="hidden" name="returnTo" value={returnTo}/>:null}
+    <SettingsFormSection id="vehicle-details-section" title="Owner & vehicle">
     <div className="sm:col-span-2"><VisitEntityFields prefix="vehicle" vehiclePrefix="vehicle" customerLabel="Customer" selectId="vehicle-customer-select" requiresVehicle={false} vehicles={[]} customers={customers.map(customer=>({id:customer.id,name:customer.full_name}))} defaultCustomerId={vehicle?.customer_id??presetCustomerId}/></div>
     <Field label="Make *"><Input id="vehicle-make-input" name="make" required maxLength={80} placeholder="Toyota" defaultValue={vehicle?.make}/></Field>
     <Field label="Model *"><Input id="vehicle-model-input" name="model" required maxLength={80} placeholder="Fortuner" defaultValue={vehicle?.model}/></Field>
@@ -65,6 +70,8 @@ export function VehicleForm({ vehicle, customers, presetCustomerId, error, warni
     <Field label="Variant"><Input id="vehicle-variant-input" name="variant" maxLength={80} defaultValue={vehicle?.variant??""}/></Field>
     <Field label="Plate number"><Input id="vehicle-plate-number-input" name="plateNumber" maxLength={30} placeholder="ABC 1234" defaultValue={vehicle?.plate_number??""}/></Field>
     <Field label="Vehicle type"><select id="vehicle-type-select" className={select} name="vehicleType" defaultValue={vehicle?.vehicle_type??""}><option value="">Not specified</option>{["Sedan","Hatchback","SUV","Crossover","Pickup","Van","MPV","Coupe","Sports Car","Motorcycle","Scooter","Truck","Other"].map(type=><option key={type}>{type}</option>)}</select></Field>
+    </SettingsFormSection>
+    <SettingsFormSection id="vehicle-extra-section" title="Additional details (optional)">
     <Field label="Color"><Input id="vehicle-color-input" name="color" maxLength={60} defaultValue={vehicle?.color??""}/></Field>
     <Field label="Odometer (km)"><Input id="vehicle-odometer-input" name="odometerKm" type="number" min={0} defaultValue={vehicle?.odometer_km??""}/></Field>
     <Field label="Fuel type"><Input id="vehicle-fuel-type-input" name="fuelType" maxLength={40} defaultValue={vehicle?.fuel_type??""}/></Field>
@@ -72,7 +79,8 @@ export function VehicleForm({ vehicle, customers, presetCustomerId, error, warni
     <Field label="VIN / chassis number"><Input id="vehicle-vin-input" name="vin" maxLength={80} defaultValue={vehicle?.vin??""}/></Field>
     <Field label="Engine number"><Input id="vehicle-engine-number-input" name="engineNumber" maxLength={80} defaultValue={vehicle?.engine_number??""}/></Field>
     <div className="sm:col-span-2"><Field label="Notes"><textarea id="vehicle-notes-input" className={textarea} name="notes" maxLength={2000} defaultValue={vehicle?.notes??""}/></Field></div>
+    </SettingsFormSection>
     <FormActions id="vehicle-actions" cancelHref={vehicle ? `/dashboard/vehicles/${vehicle.id}` : "/dashboard/vehicles"} cancelId="vehicle-cancel-button"><SubmitButton id="vehicle-save-button" pendingText="Saving vehicle…"><SaveIcon aria-hidden="true" size={16} className="shrink-0"/>Save vehicle</SubmitButton></FormActions>
   </form></>;
-  return embedded?content:<Card className="p-5 sm:p-7">{content}</Card>;
+  return embedded?content:<Card className="border-0 bg-transparent p-0 shadow-none">{content}</Card>;
 }

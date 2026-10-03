@@ -1,3 +1,4 @@
+import { ServiceThumbnail } from "@/components/service-thumbnail";
 
 import { Pencil as PencilIcon, Power as PowerIcon } from "lucide-react";
 import Link from "next/link";
@@ -49,6 +50,7 @@ export default async function Page({
           id,
           name,
           description,
+          thumbnail_url,
           duration_minutes,
           base_price_centavos,currency,
           is_active,
@@ -103,6 +105,7 @@ export default async function Page({
       id={isSalon ? "salon-treatment-detail-page" : undefined}
       className="mx-auto max-w-4xl"
     >
+      <div className="mb-5 max-w-sm"><ServiceThumbnail id="service-detail-photo" url={service.thumbnail_url} name={service.name}/></div>
       {/* Header */}
       <div className="flex flex-wrap justify-between gap-4 items-center min-w-0 [&>a]:ml-auto [&>button]:ml-auto [&>form]:ml-auto">
         <div className="min-w-0 flex-1 basis-full sm:basis-64 [overflow-wrap:anywhere]">

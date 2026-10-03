@@ -228,3 +228,21 @@ Use shared `Button` / `SubmitButton` variants for operational actions across Aut
 | `destructive` | Red | Cancel / decline / reverse |
 
 `components/ui/workflow-button-variant.ts` maps workflow action keys to presentation variants; it does not authorize transitions. Generic creation/saving keeps `primary`; navigation, search and dismiss actions keep neutral variants. Retain explicit labels/icons, keyboard focus, pending states and disabled treatment so color is never the only cue. Financial checkout uses `payment`; checking a guest out uses `complete`.
+
+
+### Public product catalog and photos
+
+Products has a per-product **Show on public website** flag, off by default. Only active retail/both-purpose products with a selling price, in an active branch of a published active business, appear on `/shop/[slug]`. Public cards show product name, description, category, price, unit, photo and branch. They do not expose stock balances, costs or internal product codes, and do not provide online product purchasing.
+
+Product photos use the same `ImageUploadButton`, `/api/dashboard/images` endpoint, tenant-scoped storage and plan checks as Services: JPG/PNG/WebP up to 2 MB for entitled plans; a public HTTP(S) image URL may be pasted on any plan. Preview, upload feedback, clear-photo behavior and the submit-during-upload guard are shared. Uploaded files are public assets even when their product is private; the catalog flag controls listing visibility. Failed saves retain the draft URL. Missing or failed images show a product placeholder.
+
+Apply append-only migrations `0118_public_products.sql` and `0119_product_photos.sql` before releasing the UI. Older product-save signatures retain their retry behavior and preserve photos; existing rows remain private with no photo. SQL regressions live in `supabase/tests/public_products.sql`; browser fixtures are in `e2e/commerce-catalog.spec.ts` and `e2e/public-products.spec.ts`. Manually check publish/unpublish, inactive/internal exclusion, URL/upload/clear, rejected saves and a published shop at desktop and 320px widths. No production migration is applied automatically.
+
+Services and Salon treatments expose the same `CatalogPhotoField` as Products in their main Add/Edit forms. Saving persists `services.thumbnail_url` with the rest of the service; clearing writes null, while older submissions without the field preserve the current image. The service detail and public catalog use the saved photo. Existing public-page photo settings remain supported. This uses migration 0100’s existing column and URL constraint, with no additional service migration.
+
+Add/edit forms group related fields in `SettingsFormSection`: concise section titles, bordered white panels, aligned two-column desktop fields and one-column mobile fields. Descriptions are optional and muted; keep only instructions needed to enter correct data. Put identity and pricing first, photos and optional details in their own sections, and keep Save/Cancel outside the field groups. Dialog bodies use a subtle background with a single scrolling area. Grouping preserves input names, IDs, validation and submission boundaries.
+
+
+### Standard select controls
+
+All native selects and the shared `SearchableSelect` combobox use the select rules in `app/globals.css`: 44px minimum height, one corner radius, surface, border, chevron and consistent focus, disabled and invalid states. Callers may set width and layout spacing; do not add a new select skin. Native controls keep platform option pickers and keyboard behavior. Searchable selectors retain filtering, async lookup, clear controls and listbox navigation. Mobile text stays at least 16px to avoid focus zoom; forced-color mode retains a visible native picker and focus indicator.
