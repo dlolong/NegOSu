@@ -6,7 +6,7 @@ import Link from "next/link";
 
 import { MarketingCta, MarketingFooter, MarketingHeader } from "@/components/marketing/product-landing";
 import { PublicPlanCatalog } from "@/components/marketing/plan-catalog";
-import { productBrand, verticalBrands, petCareBrand, hospitalityBrand } from "@/modules/platform/brand";
+import { productBrand, verticalBrands, supportedVerticalKeys, petCareBrand, hospitalityBrand } from "@/modules/platform/brand";
 
 export const metadata: Metadata = {
   title: { absolute: "NegOSu | Business Operating System" },
@@ -14,6 +14,13 @@ export const metadata: Metadata = {
   alternates: { canonical: "/" },
   openGraph: { title: `${productBrand.name} | Business Operating System`, description: productBrand.description, url: "/" },
 };
+
+const applicationPreviews = {
+  automotive: { icon: CarFront, description: "Appointments, vehicles, Job Orders, parts, and maintenance." },
+  salon: { icon: Scissors, description: "Clients, treatments, staff, appointments, and payments." },
+  pet_care: { icon: PawPrint, description: "Pets, owners, grooming appointments, payments, and pickup." },
+  hospitality: { icon: Building2, description: "Room bookings, check-ins, checkout, guest history, and payments." },
+} as const;
 
 const sharedCapabilities = [
   { icon: Users, title: "Customer records", description: "Keep the people you serve and their history easy to find." },
@@ -25,9 +32,9 @@ const sharedCapabilities = [
 ] as const;
 
 const faqs = [
-  ["Which businesses can use NegOSu today?", "Automotive, Salon & Beauty, and Pet Care are open for signup. Apartelle & Inn is also open for signup, with rooms, guests, staff, payments, inventory and reports."],
+  ["Which businesses can use NegOSu today?", "All four applications are available: Automotive, Salon & Beauty, Pet Care, and Apartelle & Inn. Choose your business type and start with the Free plan."],
   ["Is this one generic workspace?", "No. NegOSu shares secure platform capabilities underneath, while Automotive, Salon & Beauty, Pet Care, and Apartelle & Inn present different workflows for the business using them."],
-  ["Can I choose my business type during signup?", "Choose Automotive, Salon & Beauty, Pet Care, or Apartelle & Inn during signup. Apartelle & Inn uses the same account, business and branch setup."],
+  ["Can I choose my business type during signup?", "Yes. Choose Automotive, Salon & Beauty, Pet Care, or Apartelle & Inn to get the workspace built for your business."],
   ["Do I need separate accounts for different businesses?", "No. One NegOSu account can access authorized businesses, and switching changes the actual organization context."],
 ] as const;
 
@@ -38,9 +45,9 @@ export default function NegOSuLandingPage() {
 
       <section id="negosu-hero" className="mx-auto grid w-full max-w-7xl gap-8 px-4 pb-12 pt-9 sm:px-6 sm:pb-16 sm:pt-12 lg:min-h-[calc(100svh-4rem)] lg:grid-cols-[1.04fr_.96fr] lg:items-center lg:gap-12 lg:py-14">
         <div>
-          <p className="inline-flex rounded-full border border-brand-border bg-brand-tint px-3 py-1 text-sm font-medium text-brand-primary-strong">One platform. Industry-specific experience.</p>
+          <p className="inline-flex rounded-full border border-brand-border bg-brand-tint px-3 py-1 text-sm font-medium text-brand-primary-strong">Four applications. One business platform.</p>
           <h1 className="mt-5 max-w-4xl text-4xl font-medium tracking-[-0.05em] sm:text-5xl lg:text-6xl xl:text-7xl">{productBrand.tagline}</h1>
-          <p className="mt-5 max-w-2xl text-base leading-7 text-zinc-600 sm:text-lg sm:leading-8">From service appointments to guest stays, bring your customers, team, inventory and payments together. Built for automotive, beauty, pet care, and now apartelles and inns.</p>
+          <p className="mt-5 max-w-2xl text-base leading-7 text-zinc-600 sm:text-lg sm:leading-8">From service appointments to guest stays, bring your customers, team, inventory and payments together. Choose Automotive, Salon & Beauty, Pet Care, or Apartelle & Inn. All four are available to get started today.</p>
           <div className="mt-7 flex flex-col gap-3 min-[380px]:flex-row">
             <Link id="negosu-start-free-button" href="/signup" className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-brand-primary px-5 py-3 font-medium text-white shadow-sm hover:bg-brand-primary-strong">Start Free <ArrowRight aria-hidden="true" size={18} /></Link>
             <a id="negosu-explore-solutions-button" href="#solutions" className="inline-flex min-h-11 items-center justify-center rounded-xl border border-brand-border bg-white px-5 py-3 font-medium hover:bg-brand-tint"><ArrowRightIcon aria-hidden="true" size={16} className="shrink-0"/>Explore Solutions</a>
@@ -50,15 +57,25 @@ export default function NegOSuLandingPage() {
         <div id="negosu-hero-product-visual" className="min-w-0 rounded-ui-lg border border-slate-200 bg-white p-3 shadow-ui-md sm:p-4">
           <div className="overflow-hidden rounded-xl border border-slate-200 bg-slate-50">
             <div className="flex items-center justify-between gap-3 border-b border-slate-200 bg-white px-4 py-3 sm:px-5">
-              <div><p className="text-xs font-medium tracking-wider text-brand-primary-strong">NegOSu</p><p className="mt-0.5 font-medium text-brand-ink">Today at a glance</p></div>
-              <span className="max-w-36 text-right text-xs text-slate-500">4 business solutions</span>
+              <div><p className="text-xs font-medium tracking-wider text-brand-primary-strong">NegOSu</p><p className="mt-0.5 font-medium text-brand-ink">Choose your application</p></div>
+              <span className="max-w-36 text-right text-xs text-slate-500">All available now</span>
             </div>
             <div className="p-4 sm:p-5">
             <div className="mt-5 grid gap-3 sm:grid-cols-2">
-              <article className="rounded-xl border border-slate-200 bg-white p-4 text-brand-ink"><CarFront aria-hidden="true" className="text-brand-primary" size={22} /><h2 className="mt-5 font-medium">Automotive</h2><p className="mt-1 text-sm text-slate-600">Appointments, vehicles, Job Orders, parts, and maintenance.</p></article>
-              <article className="rounded-xl border border-slate-200 bg-white p-4 text-brand-ink"><Scissors aria-hidden="true" className="text-brand-primary" size={22} /><h2 className="mt-5 font-medium">Salon &amp; Beauty</h2><p className="mt-1 text-sm text-slate-600">Clients, Treatments, Staff, stations, and reminders.</p></article>
-              <article id="negosu-pet-care-preview" className="rounded-xl border border-slate-200 bg-white p-4 text-brand-ink"><PawPrint aria-hidden="true" className="text-brand-primary" size={22}/><h2 className="mt-3">Pet Care · Pet Grooming</h2><p className="mt-1 text-sm text-slate-600">Pets, owners, grooming appointments, payments, and pickup.</p></article>
-              <article id="negosu-hospitality-preview" className="rounded-xl border border-slate-200 bg-white p-4 text-brand-ink"><Building2 aria-hidden="true" className="text-brand-primary" size={22}/><h2 className="mt-3">Apartelle &amp; Inn</h2><p className="mt-1 text-sm text-slate-600">Rooms, guests, stays, payments, inventory and reports.</p><Link id="negosu-hero-hospitality-link" href={hospitalityBrand.path} className="mt-3 inline-flex min-h-11 items-center gap-2 text-sm text-brand-primary-strong">Explore Apartelle & Inn <ArrowRight size={16} aria-hidden="true"/></Link></article>
+              {supportedVerticalKeys.map(key => {
+                const brand = verticalBrands[key];
+                const { icon: Icon, description } = applicationPreviews[key];
+                const id = key.replaceAll("_", "-");
+                return <article id={`negosu-${id}-preview`} key={key} className="flex min-w-0 flex-col rounded-xl border border-slate-200 bg-white p-4 text-brand-ink">
+                  <div className="flex flex-wrap items-center justify-between gap-2"><Icon aria-hidden="true" className="text-brand-primary" size={22}/><span className="rounded-full bg-brand-tint px-2 py-1 text-xs font-medium text-brand-primary-strong">Available now</span></div>
+                  <h2 className="mt-3 font-medium">{brand.shortName}</h2>
+                  <p className="mt-1 flex-1 text-sm leading-6 text-slate-600">{description}</p>
+                  <div className="mt-3 flex flex-wrap items-center gap-x-4">
+                    <Link id={`negosu-hero-${id}-signup`} href={brand.signupPath} aria-label={`Start free with ${brand.shortName}`} className="inline-flex min-h-11 items-center gap-2 text-sm font-medium text-brand-primary-strong">Start free <ArrowRight size={16} aria-hidden="true"/></Link>
+                    <Link id={`negosu-hero-${id}-link`} href={brand.path} aria-label={`Explore ${brand.shortName}`} className="inline-flex min-h-11 items-center text-sm text-slate-600 underline underline-offset-4">Explore</Link>
+                  </div>
+                </article>;
+              })}
             </div>
             <div className="mt-3 flex items-center gap-2 rounded-xl border border-brand-border bg-brand-tint px-4 py-3 text-sm text-brand-ink"><CheckCircle2 aria-hidden="true" className="shrink-0 text-brand-primary" size={18} />Shared staff, inventory, payments, permissions and reports.</div>
             </div>
@@ -70,7 +87,7 @@ export default function NegOSuLandingPage() {
         <div className="mx-auto max-w-7xl px-4 py-14 sm:px-6 sm:py-18">
           <p className="text-sm font-medium normal-case tracking-wider text-brand-primary-strong">Supported industries</p>
           <h2 className="mt-2 text-3xl font-medium tracking-tight sm:text-4xl">What kind of business do you run?</h2>
-          <p className="mt-3 max-w-2xl leading-7 text-zinc-600">Choose the solution that matches your work. Each uses the same NegOSu platform with workflows for its industry, including simple front-desk operations for Apartelle & Inn businesses.</p>
+          <p className="mt-3 max-w-2xl leading-7 text-zinc-600">Choose the application that matches your work. Each has its own industry workflows, connected by the same business platform.</p>
           <div id="negosu-industry-selector" className="mt-8 grid gap-4 sm:grid-cols-2">
             <article id="negosu-automotive-card" className="rounded-ui-lg border border-zinc-200 bg-white p-6 shadow-ui-sm sm:p-7">
               <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-brand-tint text-brand-primary-strong"><CarFront aria-hidden="true" /></div>
@@ -87,7 +104,7 @@ export default function NegOSuLandingPage() {
             <article id="negosu-pet-care-card" className="rounded-ui-lg border border-zinc-200 bg-white p-6 shadow-ui-sm sm:p-7"><div className="flex h-11 w-11 items-center justify-center rounded-xl bg-brand-tint text-brand-primary-strong"><PawPrint aria-hidden="true"/></div><h3 className="mt-5 text-2xl">Pet Care</h3><p className="mt-2 text-sm text-brand-primary-strong">Grooming, bath, and pet spa services</p><p className="mt-2 leading-7 text-zinc-600">For appointment-based pet grooming, from owner and pet records to payments and collection.</p><Link id="negosu-explore-pet-care-link" href={petCareBrand.path} className="mt-6 inline-flex min-h-11 items-center gap-2">Explore Pet Care <ArrowRight aria-hidden="true" size={18}/></Link></article>
             <article id="negosu-hospitality-card" className="rounded-ui-lg border border-zinc-200 bg-white p-6 shadow-ui-sm sm:p-7"><div className="flex items-center justify-between gap-3"><Building2 aria-hidden="true" className="text-brand-primary-strong"/><span className="rounded-full border border-brand-border bg-brand-tint px-3 py-1 text-xs text-brand-primary-strong">Rooms & guests</span></div><h3 className="mt-5 text-2xl">Apartelle &amp; Inn</h3><p className="mt-2 leading-7 text-zinc-600">Manage available rooms, fixed stay rates, cashier check-in, payments, checkout, supplies and reports.</p><Link id="negosu-explore-hospitality-link" href={hospitalityBrand.path} className="mt-6 inline-flex min-h-11 items-center gap-2">Explore Apartelle &amp; Inn <ArrowRight aria-hidden="true" size={18}/></Link></article>
           </div>
-          <p className="mt-5 text-sm text-zinc-500">Automotive, Salon & Beauty, and Pet Care are open for signup. Apartelle &amp; Inn is open for signup.</p>
+          <p className="mt-5 text-sm text-zinc-500">All four applications are available. Choose your business type and start free.</p>
         </div>
       </section>
 
@@ -111,7 +128,7 @@ export default function NegOSuLandingPage() {
       <section id="negosu-how-it-works" className="mx-auto max-w-7xl px-4 py-14 sm:px-6 sm:py-18">
         <p className="text-sm font-medium tracking-wider text-brand-primary-strong">How NegOSu works</p>
         <h2 className="mt-2 text-3xl font-medium tracking-tight sm:text-4xl">Choose your business. Set up the essentials. Run the day.</h2>
-        <div className="mt-8 grid gap-4 md:grid-cols-3">{["Create your account and choose a supported business type.", "Add your business, first branch, services, team, and resources.", "Enter the workspace built for your industry and start operating."].map((step, index) => <article id={`negosu-how-it-works-step-${index + 1}`} key={step} className="border-t border-zinc-200 py-5"><p className="text-xs font-medium normal-case tracking-wider text-zinc-500">Step {index + 1}</p><p className="mt-2 font-medium leading-6">{step}</p></article>)}</div>
+        <div className="mt-8 grid gap-4 md:grid-cols-3">{["Create your account and choose a supported business type.", "Add your business, first branch, team, and services or rooms.", "Enter the workspace built for your industry and start operating."].map((step, index) => <article id={`negosu-how-it-works-step-${index + 1}`} key={step} className="border-t border-zinc-200 py-5"><p className="text-xs font-medium normal-case tracking-wider text-zinc-500">Step {index + 1}</p><p className="mt-2 font-medium leading-6">{step}</p></article>)}</div>
       </section>
 
       <section id="negosu-faq" className="border-y border-zinc-100 bg-zinc-50">

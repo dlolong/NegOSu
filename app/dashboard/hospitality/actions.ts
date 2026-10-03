@@ -1,5 +1,6 @@
 "use server";
 import { z } from "zod";
+import { resolveArrivalTime, resolvePastBookingTimes } from "@/modules/hospitality/arrival-time";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { hospitalityContext } from "@/modules/hospitality/runtime";
@@ -34,8 +35,23 @@ export async function checkIn(_state: HospitalityActionState, data: FormData): P
     if (!canHospitality(m.role, "checkIn")) return { error: "Cashier access is required to collect payment and check in." };
     let tendered: number | null;
     try { tendered = chargeCentavos(p.tendered); } catch { return { error: "Enter a valid amount received." }; }
-    const result = await db.rpc("check_in_hospitality_shift", { p_cashier: z.uuid("Select the cashier for this shift.").parse(value(data, "cashierStaffId")), p_housekeeper: z.uuid("Select the housekeeper for this shift.").parse(value(data, "housekeeperStaffId")), p_final: chargeCentavos(settlement.finalPrice), p_discount_type: settlement.discountType, p_discount_card: settlement.discountCard, p_deposit: chargeCentavos(settlement.deposit || "0"), p_receipt: settlement.receiptNumber, p_org: m.organizationId, p_branch: m.branchId, p_room: p.roomId, p_rate: p.rateId, p_rates_version: p.ratesVersion, p_tendered: tendered, p_method: p.method, p_reference: p.reference, p_occupants: p.occupants, p_guest_name: p.guestName, p_guest: p.guestId || null, p_notes: p.notes, p_request: p.requestKey });
-    if (result.error) return { error: result.error.code === "40001" ? "Room rates or recorded shift details changed. Close this form and review the room and stay before collecting payment." : result.error.code === "55000" ? "This room is being cleaned. Wait until it is marked ready before check-in." : result.error.code === "23505" ? "This room is already occupied. Choose another vacant room." : result.error.code === "22023" ? "Review the selected staff, final price, discount card number and deposit. Payment must cover the final price plus deposit." : failure(result.error).error };
+    let arrivalAt: string | undefined;
+    let departureAt: string | null = null;
+    const historical = value(data, "bookingMode") === "past";
+    // Live arrivals use the existing transaction. Historical forms require explicit past dates.
+    if (historical || data.has("checkedInLocal")) {
+      const branch = await db.from("branches").select("timezone").eq("organization_id", m.organizationId).eq("id", m.branchId).eq("is_active", true).single();
+      if (branch.error || !branch.data) return { error: "Unable to verify the branch timezone. Refresh and try again." };
+      try {
+        if (historical) {
+          const dates = resolvePastBookingTimes(value(data, "checkedInLocal"), data.get("alreadyCheckedOut") === "on" ? value(data, "checkedOutLocal") : null, branch.data.timezone);
+          arrivalAt = dates.arrival; departureAt = dates.departure;
+        } else arrivalAt = resolveArrivalTime(value(data, "checkedInLocal"), branch.data.timezone);
+      }
+      catch (error) { return { error: error instanceof Error ? error.message : "Enter a valid check-in date and time." }; }
+    }
+    const result = await db.rpc(historical ? "record_hospitality_past_booking" : arrivalAt ? "check_in_hospitality_at" : "check_in_hospitality_shift", { ...(arrivalAt ? { p_check_in_at: arrivalAt } : {}), ...(historical ? { p_check_out_at: departureAt, p_checkout_cashier: departureAt ? z.uuid("Select the cashier at checkout.").parse(value(data, "checkoutCashierStaffId")) : null, p_checkout_housekeeper: departureAt ? z.uuid("Select the housekeeper at checkout.").parse(value(data, "checkoutHousekeeperStaffId")) : null, p_confirm_refund: data.get("confirmPastRefund") === "on", p_refund_method: z.enum(paymentMethods).parse(value(data, "pastRefundMethod") || "cash"), p_refund_reference: z.string().trim().max(200).parse(value(data, "pastRefundReference")) } : {}), p_cashier: z.uuid("Select the cashier for this shift.").parse(value(data, "cashierStaffId")), p_housekeeper: z.uuid("Select the housekeeper for this shift.").parse(value(data, "housekeeperStaffId")), p_final: chargeCentavos(settlement.finalPrice), p_discount_type: settlement.discountType, p_discount_card: settlement.discountCard, p_deposit: chargeCentavos(settlement.deposit || "0"), p_receipt: settlement.receiptNumber, p_org: m.organizationId, p_branch: m.branchId, p_room: p.roomId, p_rate: p.rateId, p_rates_version: p.ratesVersion, p_tendered: tendered, p_method: p.method, p_reference: p.reference, p_occupants: p.occupants, p_guest_name: p.guestName, p_guest: p.guestId || null, p_notes: p.notes, p_request: p.requestKey });
+    if (result.error) return { error: ["PGRST202", "42883"].includes(result.error.code) ? "Manual date/time check-in is not available yet. Ask your administrator to apply the latest database update." : result.error.code === "22007" ? "Enter a past check-in time and, if checked out, a later checkout time that is not in the future." : result.error.code === "23P01" ? "This arrival time overlaps another stay for the room. Review its stay history and choose a later time or another room." : result.error.code === "40001" ? "Room rates, arrival time or recorded shift details changed. Close this form and review the room and stay before collecting payment." : result.error.code === "55000" ? "This room is being cleaned. Wait until it is marked ready before check-in." : result.error.code === "23505" ? "This room is already occupied. Choose another vacant room." : result.error.code === "22023" ? "Review staff, price, discount and deposit details. Confirm any deposit return for a completed booking. Payment must cover the final price plus deposit." : failure(result.error).error };
     stayId = result.data;
   } catch (error) { return failure(error); }
   done(`/dashboard/hospitality/stays/${stayId}`);
@@ -101,7 +117,7 @@ export async function markRoomReady(_state: HospitalityActionState, data: FormDa
     const result = await db.rpc("mark_hospitality_room_ready", { p_org: m.organizationId, p_branch: m.branchId, p_room: p.roomId, p_cleaning_stay: p.cleaningStayId });
     if (result.error) return { error: result.error.code === "40001" || result.error.code === "55000" ? "The room status has changed. Close this form and refresh before marking it ready." : failure(result.error).error };
   } catch (error) { return failure(error); }
-  done("/dashboard/hospitality/rooms");
+  done("/dashboard/hospitality/bookings");
 }
 
 export async function extendStay(_state: HospitalityActionState, data: FormData): Promise<HospitalityActionState> {

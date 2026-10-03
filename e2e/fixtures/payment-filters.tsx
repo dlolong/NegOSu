@@ -5,9 +5,9 @@ import { PageHeader } from "@/components/page-patterns";
 
 const query = new URLSearchParams(location.search);
 const mode = query.get("mode") === "report" ? "report" : query.get("mode") === "history" ? "history" : "payments";
-const preset = query.get("preset") === "custom" ? "custom" : "month";
+const preset = query.get("preset") === "custom" ? "custom" : "30d";
 const start = query.get("start") ?? "2026-09-01", end = query.get("end") ?? "2026-09-18";
-const filters = <HospitalityReportFilters mode={mode} section={query.get("section") ?? "collections"} branchName="Main branch" branches={[{ id: "main", name: "Main branch" }]} scope={{ filters: { preset, branch: "main", start, end }, branch: "main", range: { start, end } }}/>;
+const filters = <HospitalityReportFilters advanced={true} mode={mode} section={query.get("section") ?? "collections"} branchName="Main branch" branches={[{ id: "main", name: "Main branch" }]} scope={{ filters: { preset, branch: "main", start, end }, branch: "main", range: { start, end } }}/>;
 
 createRoot(document.getElementById("root")!).render(<div id="payment-fixture-scroll" className="h-[calc(100dvh-2rem)] overflow-y-auto">
   <PageHeader id="hospitality-payments-header" title="Payments" description="Guest collections and balances." action={mode === "payments" ? filters : undefined}/>

@@ -4,8 +4,9 @@ export function dashboardBackDestination(pathname: string, salon = false, indust
   if (parts[0] !== "dashboard" || parts.length < 3) return null;
   const section = parts[1];
   if (section === "hospitality" && parts[2] === "stays" && parts[3]) {
-    return parts[4] === "receipt" ? { href: `/dashboard/hospitality/stays/${parts[3]}?tab=charges`, label: "Back to stay" } : { href: "/dashboard/hospitality/rooms", label: "Back to rooms" };
+    return parts[4] === "receipt" ? { href: `/dashboard/hospitality/stays/${parts[3]}?tab=charges`, label: "Back to stay" } : { href: "/dashboard/hospitality/bookings", label: "Back to bookings" };
   }
+  if (section === "hospitality" && parts[2] === "rooms" && parts[3]) return { href: "/dashboard/hospitality/rooms", label: "Back to rooms" };
   // Salon appointment forms provide a Close control to the same destination.
   if (salon && section === "appointments" && (parts[2] === "new" || parts[3] === "edit")) return null;
   if (section === "settings") {

@@ -114,3 +114,23 @@ test("staff access roles use the active business terminology", () => {
   assert.equal(isStaffRoleAvailableForIndustry("manager", "salon"), true);
   assert.equal(isStaffRoleAvailableForIndustry("manager", "hospitality"), true);
 });
+
+test("Apartelle navigation prioritizes guest operations and groups maintenance separately", () => {
+  const config = resolveIndustryConfig("hospitality");
+  const items = navigationForIndustry(config, "owner");
+  const groups = groupNavigation(items);
+  assert.deepEqual(groups.map(group => group.label), ["Dashboard", "Daily operations", "Property management", "Reports", "Administration"]);
+  assert.deepEqual(groups[1].items.map(item => item.key), ["bookings", "payments", "customers"]);
+  assert.deepEqual(groups[2].items.map(item => item.key), ["rooms", "products", "promos", "inventory", "staff"]);
+  assert.deepEqual(groups[3].items.map(item => item.key), ["reports"]);
+  assert.deepEqual(groups[4].items.map(item => item.key), ["website", "branches", "billing", "settings"]);
+  assert.deepEqual(primaryMobileNavigation(items).map(item => item.key), ["dashboard", "bookings", "payments"]);
+  for (const role of ["cashier", "technician", "viewer"] as const) {
+    const allowed = navigationForIndustry(config, role);
+    const grouped = groupNavigation(allowed);
+    assert.ok(grouped.every(group => group.items.length > 0));
+    assert.deepEqual(new Set(grouped.flatMap(group => group.items)), new Set(allowed));
+    assert.ok(primaryMobileNavigation(allowed).every(item => allowed.includes(item)));
+    assert.ok(!allowed.some(item => item.key === "billing"));
+  }
+});

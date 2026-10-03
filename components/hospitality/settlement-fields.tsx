@@ -10,14 +10,14 @@ import { FormActions } from "@/components/form-actions";
 import { Field, fieldClass } from "./shared";
 
 // Display preview only: database routines resolve prices and validate every total.
-export function SettlementFields({ base, currency, prefix, closeHref, depositEnabled = false, children }: { base: number; currency: string; prefix: string; closeHref: string; depositEnabled?: boolean; children?: React.ReactNode }) {
+export function SettlementFields({ base, currency, prefix, closeHref, depositEnabled = false, children, recording = false, submitLabel }: { recording?: boolean; submitLabel?: string; base: number; currency: string; prefix: string; closeHref: string; depositEnabled?: boolean; children?: React.ReactNode }) {
   const [percentage, setPercentage] = useState("20"), [kind, setKind] = useState("none"), [deposit, setDeposit] = useState("0"), [method, setMethod] = useState("cash"), [cash, setCash] = useState("");
   const amount = (value: string) => { try { return chargeCentavos(value); } catch { return null; } };
   const final = kind === "none" ? base : discountedRoomPrice(base, percentage), held = amount(deposit), due = (final ?? 0) + (held ?? 0), tendered = method === "cash" ? amount(cash) : due;
   const ready = final !== null && final <= base && held !== null && tendered !== null && tendered >= due && (final === base || kind !== "none");
   const card = ["card", "pwd", "senior"].includes(kind);
   return <>
-    <h2 className="sm:col-span-2 border-t border-slate-200 pt-4 text-sm font-medium">{depositEnabled ? "2. Collect payment" : "Payment"}</h2>
+    <h2 className="sm:col-span-2 border-t border-slate-200 pt-4 text-sm font-medium">{recording ? "2. Payment already received" : depositEnabled ? "2. Collect payment" : "Payment"}</h2>
     <Field label={`Final price (${currency}) *`}><input id={`${prefix}-final-price`} name="finalPrice" required inputMode="decimal" className={fieldClass} value={final === null ? "" : (final / 100).toFixed(2)} readOnly aria-describedby={`${prefix}-price-help`}/><span id={`${prefix}-price-help`} className="mt-1 block text-xs text-slate-500">Calculated from room rate: {formatMoney(base, currency)}</span></Field>
     <Field label="Discount type"><select id={`${prefix}-discount-type`} name="discountType" className={fieldClass} value={kind} onChange={e => { setKind(e.target.value); if (e.target.value !== "none") setPercentage("20"); }}><option value="none">No discount</option><option value="manual">Other / discretionary</option><option value="card">Discount card</option><option value="pwd">PWD</option><option value="senior">Senior citizen</option></select></Field>
     {kind !== "none" ? <Field label="Discount (%) *"><input id={`${prefix}-discount-percent`} name="discountPercent" type="number" inputMode="decimal" required min="0" max="100" step="0.01" aria-invalid={final === null} value={percentage} onChange={e=>setPercentage(e.target.value)} className={fieldClass}/><span className="mt-1 block text-xs text-slate-500">Starts at 20%. Adjust to the discount approved for this stay.</span></Field> : null}
@@ -35,7 +35,7 @@ export function SettlementFields({ base, currency, prefix, closeHref, depositEna
     <details id={`${prefix}-receipt-details`} className="sm:col-span-2"><summary className="cursor-pointer py-2 text-sm text-slate-600">Paper receipt (optional)</summary><div className="mt-2">
     <Field label="Receipt number (optional)"><input id={`${prefix}-receipt-number`} name="receiptNumber" maxLength={80} className={fieldClass} placeholder="From the paper receipt"/></Field>
     </div></details>
-    <p className="sm:col-span-2 text-xs text-slate-500">Confirm only after receiving payment.{depositEnabled && held ? " Return the refundable deposit at checkout." : ""}</p>
-    <FormActions id={`${prefix}-actions`} cancelHref={closeHref}><SubmitButton id={`${prefix}-submit`} disabled={!ready} pendingText="Saving payment…"><CreditCard size={16}/>{depositEnabled ? "Pay & check in" : "Pay & extend stay"}</SubmitButton></FormActions>
+    <p className="sm:col-span-2 text-xs text-slate-500">{recording ? "Enter the payment already received for this stay." : "Confirm only after receiving payment."}{depositEnabled && held && !recording ? " Return the refundable deposit at checkout." : ""}</p>
+    <FormActions id={`${prefix}-actions`} cancelHref={closeHref}><SubmitButton id={`${prefix}-submit`} disabled={!ready} pendingText="Saving payment…"><CreditCard size={16}/>{submitLabel ?? (depositEnabled ? "Pay & check in" : "Pay & extend stay")}</SubmitButton></FormActions>
   </>;
 }

@@ -93,7 +93,7 @@ const list=(value:string|string[]|undefined)=>Array.isArray(value)?value:value?[
 export default async function Page({params,searchParams}:{params:Promise<{slug:string}>;searchParams:Promise<Query>}){
  const [{slug},query,db]=await Promise.all([params,searchParams,createClient()]);
  const [shop,promoResult]=await Promise.all([loadPublicBusiness(slug),loadPublicPromos(slug)]);
- if(!shop)notFound();
+ if(!shop || shop.industry === "hospitality")notFound();
  const branch=shop.branches.find(b=>b.id===query.branch&&b.acceptsBookings)??shop.branches.find(b=>b.acceptsBookings);
  const selected=publicBookingSelection(shop.services,promoResult.promos,branch?.id??"",list(query.services??query.service),list(query.promos??query.promo));
  const serviceIds=selected.services.map(s=>s.id),promoIds=selected.promos.map(p=>p.id);

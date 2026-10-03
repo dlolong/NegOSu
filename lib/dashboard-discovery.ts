@@ -17,7 +17,7 @@ export function dashboardFeaturePreviews(industry: string, role: OrganizationMem
     ? [{key: "new-sale", label: "New product sale", href: "/dashboard/checkout/new", description: "Sell products with or without customer details."}] : [];
   return [...sales, ...Object.entries(featureDescriptions).flatMap(([key, description]) => {
     const item = navigation.find(item => item.key === key);
-    return item ? [{ key, label: item.label, href: item.href, description }] : [];
+    return item ? [{ key, label: item.label, href: item.href, description: industry === "hospitality" && key === "bookings" ? "Manage room arrivals, departures and cleaning." : description }] : [];
   })].slice(0, 3);
 }
 

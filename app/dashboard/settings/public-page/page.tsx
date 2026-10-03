@@ -48,6 +48,7 @@ export default async function Page({
     createClient(),
   ]);
 
+  const hospitality = activeMembership.industry === "hospitality";
   const [{ data: organization, error: organizationError }, { data: branches, error: branchesError }, { data: services, error: servicesError }, { data: gallery, error: galleryError }] =
     await Promise.all([
       supabase
@@ -76,7 +77,7 @@ export default async function Page({
 
   if (organizationError || branchesError || servicesError || galleryError || !organization) {
     return <main id="public-page-settings-page" className="mx-auto min-w-0 max-w-6xl [overflow-wrap:anywhere]">
-      <PageHeader id="public-page-settings-header" title="Website and booking" description="Manage your public page and online booking." />
+      <PageHeader id="public-page-settings-header" title={hospitality ? "Public website" : "Website and booking"} description={hospitality ? "Manage your property’s public website." : "Manage your public page and online booking."} />
       <Card id="public-page-settings-load-error" className="mt-6 p-6" role="alert">
         <h2 className="font-medium">Unable to load public page settings</h2>
         <p className="mt-2 text-sm text-admin-text-muted">Please try again before making changes.</p>
@@ -85,7 +86,7 @@ export default async function Page({
     </main>;
   }
 
-  const tab=["profile","services","locations","gallery"].includes(query.tab??"")?query.tab!:"profile";
+  const tab=(hospitality ? ["profile","locations","gallery"] : ["profile","services","locations","gallery"]).includes(query.tab??"")?query.tab!:"profile";
   const publicServiceCount = services.filter(service => service.is_public).length;
   const bookingBranchCount = branches.filter(branch => {
     const openingHours = branch.opening_hours && typeof branch.opening_hours === "object"
@@ -101,21 +102,21 @@ export default async function Page({
       <PageHeader
         id="public-page-settings-header"
         eyebrow="Public storefront"
-        title="Website and booking"
-        description="Control the services, branches, business details, and images customers can see."
+        title={hospitality ? "Public website" : "Website and booking"}
+        description={hospitality ? "Share your property, photos, locations and contact details with guests." : "Control the services, branches, business details, and images customers can see."}
         action={publicPageAction}
       />
       <FormMessage {...query} />
-      <Card id="public-page-readiness-card" elevation="none" className="mt-5 p-4 sm:p-5">
+      {!hospitality ? <Card id="public-page-readiness-card" elevation="none" className="mt-5 p-4 sm:p-5">
         <div className="flex flex-wrap items-center justify-between gap-3 min-w-0 [&>a]:ml-auto [&>button]:ml-auto [&>form]:ml-auto"><div className="min-w-0 flex-1 basis-full sm:basis-64 [overflow-wrap:anywhere]"><h2 className="font-medium text-admin-text">Online booking readiness</h2><p id="public-page-setup-help" className="mt-1 text-sm text-admin-text-muted">Complete these essentials, then review incoming requests in <Link href="/dashboard/bookings" className="font-medium text-brand-primary-strong">Booking Requests</Link>.</p></div><StatusPill active={readyForRequests} activeLabel="Ready for requests" inactiveLabel="Setup needed"/></div>
         <div className="mt-4 grid gap-2 sm:grid-cols-3">
           <ReadinessItem id="public-page-publish-readiness" complete={organization.public_page_enabled} label="Public page" detail={organization.public_page_enabled ? "Published" : "Not published"}/>
           <ReadinessItem id="public-page-services-readiness" complete={publicServiceCount > 0} label={activeMembership.industry === "salon" ? "Treatments" : "Services"} detail={`${publicServiceCount} visible`}/>
           <ReadinessItem id="public-page-branches-readiness" complete={bookingBranchCount > 0} label="Booking locations" detail={`${bookingBranchCount} accepting requests`}/>
         </div>
-      </Card>
+      </Card> : <Card id="public-website-readiness-card" className="mt-5 p-4"><h2 className="font-medium">{organization.public_page_enabled ? "Your website is published" : "Your website is private"}</h2><p className="mt-2 text-sm">Guests can view your photos, locations and contact details. Ask guests to contact the property for room rates and availability.</p></Card>}
 
-      <ListTabs id="website-settings-tabs" baseHref="/dashboard/settings/public-page" query={{}} parameter="tab" value={tab} options={[{value:"profile",label:"Business details"},{value:"services",label:"Services",count:publicServiceCount},{value:"locations",label:"Locations & hours",count:branches.length},{value:"gallery",label:"Gallery",count:gallery.length}]}/>
+      <ListTabs id="website-settings-tabs" baseHref="/dashboard/settings/public-page" query={{}} parameter="tab" value={tab} options={[{value:"profile",label:"Business details"},...(!hospitality ? [{value:"services",label:"Services",count:publicServiceCount}] : []),{value:"locations",label:"Locations & hours",count:branches.length},{value:"gallery",label:"Gallery",count:gallery.length}]}/>
       <div id="public-page-settings-grid" className="mt-6 grid min-w-0 gap-5">
         {tab==="profile"?<Card id="public-page-profile-card" className="p-4 sm:p-6">
           <h2 className="text-lg font-medium text-admin-text">Business details</h2>
@@ -187,7 +188,7 @@ export default async function Page({
         </Card>:null}
 
         {tab==="locations"?<section id="public-page-locations-section" className="min-w-0" aria-labelledby="public-page-locations-title">
-          <div className="flex min-w-0 flex-wrap items-center justify-between gap-3"><div><h2 id="public-page-locations-title" className="text-lg font-medium text-admin-text">Booking locations</h2><p className="mt-1 text-sm text-admin-text-muted">Set where customers can request appointments and when each location is open.</p></div><span className="text-sm font-medium text-admin-text-secondary">{bookingBranchCount} of {branches.length} enabled</span></div>
+          <div className="flex min-w-0 flex-wrap items-center justify-between gap-3"><div><h2 id="public-page-locations-title" className="text-lg font-medium text-admin-text">{hospitality ? "Locations" : "Booking locations"}</h2><p className="mt-1 text-sm text-admin-text-muted">{hospitality ? "Publish directions, property details and reception hours." : "Set where customers can request appointments and when each location is open."}</p></div><span className="text-sm font-medium text-admin-text-secondary">{hospitality ? `${branches.length} locations` : `${bookingBranchCount} of ${branches.length} enabled`}</span></div>
           {!branches.length?<Card className="mt-4 p-5"><p className="text-sm text-admin-text-secondary">No active locations yet. Add a branch to publish its address, map, and opening hours.</p><Button asChild variant="secondary" className="mt-3"><Link href="/dashboard/settings/branches/new"><PlusIcon size={16} aria-hidden="true"/>Add location</Link></Button></Card>:null}
           <div className="mt-4 grid min-w-0 gap-5 lg:grid-cols-2">
             {branches.map((branch) => {
@@ -196,14 +197,14 @@ export default async function Page({
                 : {};
               const address=[branch.address_line,branch.barangay,branch.city,branch.province,branch.postal_code,branch.country];
               return <Card id={`public-branch-card-${branch.id}`} className="p-5" key={branch.id}>
-                <div className="flex flex-wrap items-center justify-between gap-3"><h3 className="font-medium text-admin-text">{branch.name}</h3><StatusPill active={branch.accepts_public_bookings} activeLabel="Accepting requests" inactiveLabel="Requests off"/></div>
+                <div className="flex flex-wrap items-center justify-between gap-3"><h3 className="font-medium text-admin-text">{branch.name}</h3>{!hospitality ? <StatusPill active={branch.accepts_public_bookings} activeLabel="Accepting requests" inactiveLabel="Requests off"/> : null}</div>
                 <p className="mt-3 flex gap-2 text-sm text-admin-text-secondary"><MapPin size={16} aria-hidden="true" className="mt-0.5 shrink-0"/><span>{address.filter(Boolean).join(", ")||"Address not set"}</span></p>
                 <div className="mt-4"><LocationMap id={`website-location-map-${branch.id}`} name={branch.name} address={address} mapUrl={branch.map_url} compact/></div>
                 <div className="mt-4 flex flex-wrap justify-end gap-2"><Button asChild variant="secondary" size="sm"><Link id={`website-location-address-${branch.id}`} href={`/dashboard/settings/branches/${branch.id}/edit`}><Pencil size={16} aria-hidden="true"/>Edit address</Link></Button><Button asChild size="sm"><Link id={`website-location-edit-${branch.id}`} href={`/dashboard/settings/public-page?tab=locations&branchId=${branch.id}`}><MapPin size={16} aria-hidden="true"/>Map and hours</Link></Button></div>
                 {query.branchId===branch.id?<FormDialog id={`website-location-dialog-${branch.id}`} title={`${branch.name} · Map and hours`} description="Set the map location and weekly hours, then save this location." closeHref="/dashboard/settings/public-page?tab=locations">
                 <PublicBranchForm id={`public-branch-form-${branch.id}`} className="mt-4 grid gap-4">
                   <input type="hidden" name="branchId" value={branch.id}/>
-                  <label className="flex min-h-11 items-center gap-2 rounded-ui-md border border-admin-border bg-admin-surface-muted px-3 text-sm font-medium text-admin-text"><input id={`public-branch-bookings-checkbox-${branch.id}`} type="checkbox" name="acceptsBookings" defaultChecked={branch.accepts_public_bookings}/>Accept online requests at this location</label>
+                  {!hospitality ? <label className="flex min-h-11 items-center gap-2 rounded-ui-md border border-admin-border bg-admin-surface-muted px-3 text-sm font-medium text-admin-text"><input id={`public-branch-bookings-checkbox-${branch.id}`} type="checkbox" name="acceptsBookings" defaultChecked={branch.accepts_public_bookings}/>Accept online requests at this location</label> : null}
                   <label className="text-sm font-medium text-admin-text">Branch description<textarea id={`public-branch-description-input-${branch.id}`} name="description" defaultValue={branch.public_description ?? ""} className="mt-1.5 min-h-20 w-full rounded-ui-md border border-admin-border bg-white p-3"/></label>
                   <LocationMapField branchId={branch.id} name={branch.name} address={address} value={branch.map_url}/>
                   <fieldset id={`public-branch-hours-${branch.id}`} className="rounded-ui-lg border border-admin-border p-3">

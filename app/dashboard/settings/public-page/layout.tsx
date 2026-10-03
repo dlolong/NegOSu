@@ -3,7 +3,7 @@ import { roleHasPermission } from "@/lib/rbac";
 import { requireIndustryFeature } from "@/lib/auth/industry-access";
 
 export default async function PublicPageSettingsLayout({children}:{children:React.ReactNode}){
-  const { activeMembership } = await requireIndustryFeature("booking_requests");
+  const { activeMembership } = await requireIndustryFeature("public_website");
   if (!roleHasPermission(activeMembership.role, "settings.manage")) notFound();
   return children;
 }

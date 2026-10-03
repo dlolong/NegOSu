@@ -24,7 +24,8 @@ test("feature previews follow existing role permissions", () => {
 test("feature previews respect vertical capabilities and stay compact", () => {
   const hospitality = dashboardFeaturePreviews("hospitality", "owner");
   assert.ok(hospitality.length <= 3);
-  assert.ok(!hospitality.some(item => item.key === "bookings" || item.key === "inbox"));
+  assert.ok(!hospitality.some(item => item.key === "inbox"));
+  assert.ok(hospitality.some(item => item.href === "/dashboard/hospitality/bookings"));
   assert.ok(hospitality.some(item => item.key === "reports"));
   assert.ok(dashboardFeaturePreviews("pet_care", "owner").some(item => item.href === "/dashboard/bookings"));
 });

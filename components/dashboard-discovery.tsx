@@ -9,7 +9,7 @@ import { DashboardDiscoveryContent } from "@/components/dashboard-discovery-cont
 export async function DashboardDiscovery() {
   const { activeMembership: membership } = await getDashboardContext();
   const features = dashboardFeaturePreviews(membership.industry, membership.role);
-  const supportsWebsite = resolveIndustryConfig(membership.industry).features.booking_requests;
+  const supportsWebsite = resolveIndustryConfig(membership.industry).features.public_website;
   let organization: { public_page_enabled: boolean; status: string } | null = null;
   if (supportsWebsite) {
     try {
@@ -19,6 +19,6 @@ export async function DashboardDiscovery() {
     } catch { /* A secondary status lookup must not block operational work. */ }
   }
   const website = supportsWebsite ? publicWebsiteSummary(clientEnv.NEXT_PUBLIC_APP_URL, membership.organizationSlug, organization) : null;
-  return <DashboardDiscoveryContent website={website} canManage={roleHasPermission(membership.role, "settings.manage")} features={features}/>;
+  return <DashboardDiscoveryContent acceptsBookings={resolveIndustryConfig(membership.industry).features.booking_requests} website={website} canManage={roleHasPermission(membership.role, "settings.manage")} features={features}/>;
 }
 

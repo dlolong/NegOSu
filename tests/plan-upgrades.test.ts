@@ -42,7 +42,7 @@ test("feature prompt skips plans that do not enable the feature and disappears w
   assert.equal(selectUpgrade(state(1), "automotive", "advanced_reports"), null);
 });
 test("unsupported vertical capabilities are never advertised", () => {
-  for (const feature of ["public_page", "reminders", "monthly_jobs"] as const) assert.equal(selectUpgrade(state(), "hospitality", feature), null);
+  for (const feature of ["reminders", "monthly_jobs"] as const) assert.equal(selectUpgrade(state(), "hospitality", feature), null);
   for (const industry of ["salon", "pet_care"] as const) assert.equal(selectUpgrade(state(), industry, "monthly_jobs", true), null);
 });
 test("unlimited and missing limits never fabricate quota restrictions", () => {
@@ -110,4 +110,11 @@ test("only exact known plan errors receive safe contextual upgrade guidance", ()
     assert.equal(planErrorCapability(message), undefined);
     assert.equal(normalizeActionError({ message }, "Fallback"), "Fallback");
   }
+});
+
+test("hospitality offers website upgrades without advertising appointment bookings", () => {
+  const upgrade = selectUpgrade(state(), "hospitality", "public_page");
+  assert.equal(upgrade?.plan.id, "business");
+  assert.equal(upgrade?.description, "business includes a public website.");
+  assert.equal(selectUpgrade(state(2), "hospitality", "public_page"), null);
 });

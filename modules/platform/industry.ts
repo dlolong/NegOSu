@@ -16,6 +16,7 @@ export const industryFeatureKeys = [
   "queue",
   "maintenance",
   "booking_requests",
+  "public_website",
   "resources",
 ] as const;
 export type IndustryFeatureKey = (typeof industryFeatureKeys)[number];
@@ -59,7 +60,7 @@ export const karkrAutomotiveConfig: IndustryConfig = {
     reservations: false,
     queue: true,
     maintenance: true,
-    booking_requests: true,
+    booking_requests: true, public_website: true,
     resources: true,
   },
 };
@@ -88,7 +89,7 @@ export const salonConfig: IndustryConfig = {
     reservations: false,
     queue: false,
     maintenance: false,
-    booking_requests: true,
+    booking_requests: true, public_website: true,
     resources: true,
   },
 };
@@ -96,7 +97,7 @@ export const salonConfig: IndustryConfig = {
 export const petCareConfig: IndustryConfig = {
   key: "pet_care", productName: "NegOSu Pet Care",
   terminology: { customer: "Pet Owner", staff: "Staff", booking: "Grooming appointment", location: "Branch", service: "Service", resource: "Grooming resource", product: "Product" },
-  features: { pets: true, vehicles: false, appointments: true, job_orders: false, inventory: true, payments: true, reports: true, commissions: false, reservations: false, queue: false, maintenance: false, booking_requests: true, resources: true },
+  features: { pets: true, vehicles: false, appointments: true, job_orders: false, inventory: true, payments: true, reports: true, commissions: false, reservations: false, queue: false, maintenance: false, booking_requests: true, public_website: true, resources: true },
 };
 
 const disabledIndustryConfig = (key: "hospitality" | "field_service"): IndustryConfig => ({
@@ -110,7 +111,7 @@ export const hospitalityConfig: IndustryConfig = {
   ...disabledIndustryConfig("hospitality"),
   productName: "NegOSu Apartelle & Inn",
   terminology: { customer: "Guest", staff: "Staff", booking: "Stay", location: "Branch", service: "Charge", resource: "Room", product: "Product" },
-  features: { ...disabledIndustryConfig("hospitality").features, inventory: true, payments: true, reports: true },
+  features: { ...disabledIndustryConfig("hospitality").features, inventory: true, payments: true, reports: true, public_website: true },
 };
 
 const industryConfigs: Record<IndustryKey, IndustryConfig> = {

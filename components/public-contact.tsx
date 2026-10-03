@@ -14,7 +14,7 @@ export function PublicContact({ shop }: { shop: PublicShop }) {
   return <section id="public-shop-contact" className="scroll-mt-[calc(6rem+env(safe-area-inset-top))] sm:scroll-mt-5" aria-labelledby="public-shop-contact-title">
     <p className="text-sm font-medium text-brand-primary-strong">Get in touch</p>
     <h2 id="public-shop-contact-title" className="mt-1 text-3xl font-medium tracking-tight text-brand-ink">Contact us</h2>
-    <p className="mt-3 text-sm leading-6 text-admin-text-secondary">Have a question about a service or your visit? Contact {shop.name} or your preferred location.</p>
+    <p className="mt-3 text-sm leading-6 text-admin-text-secondary">{shop.industry === "hospitality" ? "Ask about room rates, availability or your stay." : "Have a question about a service or your visit?"} Contact {shop.name} or your preferred location.</p>
     <div className="mt-5 grid min-w-0 gap-4 lg:grid-cols-2">{contacts.map(contact=><Card id={`public-contact-card-${contact.id}`} key={contact.id} elevation="none" className="min-w-0 p-5">
       <h3 className="font-medium">{contact.name}</h3>
       <dl className="mt-3 space-y-3 text-sm">

@@ -19,7 +19,7 @@ test("payment filters start hidden and open without moving the page content", as
   await expect(panel).toBeVisible();
   await expect(trigger).toHaveAttribute("aria-expanded", "true");
   expect((await page.locator("#payment-fixture-period").boundingBox())!.y).toBe(before!.y);
-  await expect(page.locator("#hospitality-report-period")).toHaveValue("month");
+  await expect(page.locator("#hospitality-report-period")).toHaveValue("30d");
   await expect(panel.getByText("Main branch", { exact: true })).toBeVisible();
   await expect(page.locator("#hospitality-report-branch")).toHaveCount(0);
   const bounds = await panel.boundingBox(), viewport = page.viewportSize()!;

@@ -12,7 +12,7 @@ import { createClient } from "@/lib/supabase/server";
 const path = "/dashboard/settings/public-page";
 function go(kind: "message" | "error", message: string, tab="profile"): never { redirect(`${path}?${new URLSearchParams({tab,[kind]:message})}`); }
 async function settingsContext() {
-  const { activeMembership } = await requireIndustryFeature("booking_requests");
+  const { activeMembership } = await requireIndustryFeature("public_website");
   if (!roleHasPermission(activeMembership.role, "settings.manage")) go("error", "Settings access required.");
   return activeMembership;
 }
@@ -31,7 +31,7 @@ export async function savePublicPage(data: FormData) {
 }
 export async function saveBranchPublic(data: FormData): Promise<{error:string}> {
   const membership = await settingsContext();
-  const parsed = branchPublicSchema.safeParse({ branchId: formValue(data, "branchId"), description: formValue(data, "description"), mapUrl: formValue(data, "mapUrl"), acceptsBookings: data.get("acceptsBookings") === "on", openingHours: JSON.stringify(publicOpeningHoursFromFormData(data)) });
+  const parsed = branchPublicSchema.safeParse({ branchId: formValue(data, "branchId"), description: formValue(data, "description"), mapUrl: formValue(data, "mapUrl"), acceptsBookings: membership.industry !== "hospitality" && data.get("acceptsBookings") === "on", openingHours: JSON.stringify(publicOpeningHoursFromFormData(data)) });
   if (!parsed.success) return {error:firstError(parsed.error)};
   const supabase = await createClient();
   const { data: allowed, error: accessError } = await supabase.rpc("can_access_branch", { p_organization_id: membership.organizationId, p_branch_id: parsed.data.branchId });
@@ -42,6 +42,7 @@ export async function saveBranchPublic(data: FormData): Promise<{error:string}> 
 }
 export async function togglePublicService(data: FormData) {
   const membership = await settingsContext();
+  if (membership.industry === "hospitality") go("error", "Room stays are managed in Check-ins.");
   const parsed = publicServiceSchema.safeParse({ serviceId: formValue(data, "serviceId"), isPublic: formValue(data, "isPublic") });
   if (!parsed.success) go("error", "Select a valid service and visibility.","services");
   const supabase = await createClient();
@@ -61,6 +62,7 @@ export async function addGalleryImage(data: FormData) {
 
 export async function saveServiceThumbnail(data: FormData) {
   const membership = await settingsContext();
+  if (membership.industry === "hospitality") go("error", "Room stays are managed in Check-ins.");
   const parsed = publicServiceThumbnailSchema.safeParse({ serviceId: formValue(data, "serviceId"), thumbnailUrl: formValue(data, "thumbnailUrl") });
   if (!parsed.success) go("error", firstError(parsed.error), "services");
   const supabase = await createClient();

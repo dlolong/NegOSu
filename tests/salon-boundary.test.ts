@@ -25,7 +25,7 @@ test("Core does not import the Salon vertical",()=>{
 
 test("Shared public-page actions enforce supported industry features at the action boundary",()=>{
   const source=readFileSync(new URL("../app/dashboard/settings/public-page/actions.ts",import.meta.url),"utf8");
-  assert.match(source,/requireIndustryFeature\("booking_requests"\)/);
+  assert.match(source,/requireIndustryFeature\("public_website"\)/);
   assert.doesNotMatch(source,/from["']@\/lib\/auth\/context["']/);
 });
 

@@ -11,9 +11,9 @@ test("hospitality enables applicable Core capabilities without appointments or r
   const c = resolveIndustryConfig("hospitality");
   assert.equal(c.productName, "NegOSu Apartelle & Inn");
   assert.equal(c.terminology.customer, "Guest");
-  for (const key of ["inventory", "payments", "reports"] as const) assert.equal(c.features[key], true);
+  for (const key of ["inventory", "payments", "reports", "public_website"] as const) assert.equal(c.features[key], true);
   for (const key of ["appointments", "vehicles", "job_orders", "reservations", "booking_requests", "queue", "resources"] as const) assert.equal(c.features[key], false);
-  assert.deepEqual(navigationForIndustry(c, "owner").slice(0, 9).map(n => n.label), ["Overview", "Rooms", "Guests", "Payments", "Products", "Promos", "Inventory", "Reports", "Staff"]);
+  assert.deepEqual(navigationForIndustry(c, "owner").slice(0, 10).map(n => n.label), ["Overview", "Bookings", "Payments", "Guests", "Rooms", "Products", "Promos", "Inventory", "Staff", "Reports"]);
   const viewer = navigationForIndustry(c, "viewer");
   assert.equal(viewer.some(n => n.key === "payments" || n.key === "inventory"), false);
 });
@@ -43,13 +43,14 @@ test("server form contracts validate identifiers, capacity and bounded text", ()
   assert.equal(checkInInput.safeParse({ roomId: "fake", guestId: "fake", occupants: 1, notes: "", requestKey: "fake", amount: "" }).success, false);
 });
 test("hospitality plan copy advertises only implemented reporting and exports remain formula-safe", () => {
-  assert.deepEqual(visiblePlanFeatureLabels("hospitality", { public_page: true, reminders: true, advanced_reports: true }), ["Detailed reports and CSV exports"]);
+  assert.deepEqual(visiblePlanFeatureLabels("hospitality", { public_page: true, reminders: true, advanced_reports: true }), ["Public business page", "Detailed reports and CSV exports"]);
   assert.equal(csvCell("=HYPERLINK(A1)"), "'=HYPERLINK(A1)");
   assert.equal(csvCell("Guest, name"), '"Guest, name"');
 });
 
 test("stay and statement deep links have stable parent navigation", () => {
-  assert.deepEqual(dashboardBackDestination("/dashboard/hospitality/stays/123", false, "hospitality"), { href: "/dashboard/hospitality/rooms", label: "Back to rooms" });
+  assert.deepEqual(dashboardBackDestination("/dashboard/hospitality/rooms/123", false, "hospitality"), { href: "/dashboard/hospitality/rooms", label: "Back to rooms" });
+  assert.deepEqual(dashboardBackDestination("/dashboard/hospitality/stays/123", false, "hospitality"), { href: "/dashboard/hospitality/bookings", label: "Back to bookings" });
   assert.deepEqual(dashboardBackDestination("/dashboard/hospitality/stays/123/receipt", false, "hospitality"), { href: "/dashboard/hospitality/stays/123?tab=charges", label: "Back to stay" });
   assert.equal(dashboardBackDestination("/dashboard/customers/123", false, "hospitality")?.label, "Back to guests");
 });
@@ -89,4 +90,15 @@ test("Apartelle plan management navigation is available only to owners", () => {
   const config = resolveIndustryConfig("hospitality");
   assert.equal(navigationForIndustry(config, "owner").find(item => item.key === "billing")?.href, "/dashboard/settings/billing");
   for (const role of ["manager", "advisor", "cashier", "technician", "viewer"] as const) assert.equal(navigationForIndustry(config, role).some(item => item.key === "billing"), false);
+});
+
+
+test("manual check-ins and public website respect hospitality roles", () => {
+  const config = resolveIndustryConfig("hospitality");
+  for (const role of ["owner", "manager", "cashier", "advisor", "technician", "viewer"] as const) {
+    const navigation = navigationForIndustry(config, role);
+    assert.equal(navigation.some(item => item.key === "bookings" && item.href === "/dashboard/hospitality/bookings"), true);
+    assert.equal(navigation.some(item => item.key === "website"), role === "owner" || role === "manager");
+    assert.equal(navigation.some(item => item.href === "/dashboard/bookings"), false);
+  }
 });

@@ -3,7 +3,7 @@ import { roleHasPermission } from "@/lib/rbac";
 import type { FeatureAccessRequirement } from "@/modules/platform/features";
 import { industrySupportsFeature, type IndustryConfig } from "@/modules/platform/industry";
 
-export const navigationGroupOrder = ["dashboard", "operations", "customers", "business", "more"] as const;
+export const navigationGroupOrder = ["dashboard", "daily", "operations", "customers", "property", "business", "insights", "administration", "more"] as const;
 export type NavigationGroupKey = (typeof navigationGroupOrder)[number];
 
 export type NavigationItem = FeatureAccessRequirement & {
@@ -16,6 +16,10 @@ export type NavigationItem = FeatureAccessRequirement & {
 
 const navigationGroupLabels: Record<NavigationGroupKey, string> = {
   dashboard: "Dashboard",
+  daily: "Daily operations",
+  property: "Property management",
+  insights: "Reports",
+  administration: "Administration",
   operations: "Operations",
   customers: "Customers",
   business: "Business",
@@ -84,22 +88,25 @@ const petCareNavigation: readonly NavigationItem[] = [
 
 export const hospitalityNavigation: readonly NavigationItem[] = [
   { key: "dashboard", label: "Overview", href: "/dashboard", group: "dashboard" },
-  { key: "rooms", label: "Rooms", href: "/dashboard/hospitality/rooms", group: "operations", permission: "customers.read" },
-  { key: "customers", label: "Guests", href: "/dashboard/customers", group: "operations", permission: "customers.read" },
-  { key: "payments", label: "Payments", href: "/dashboard/payments", group: "operations", permission: "payments.record" },
-  { key: "inventory", label: "Inventory", href: "/dashboard/inventory", group: "business", permission: "inventory.manage" },
-  { key: "reports", label: "Reports", href: "/dashboard/reports", group: "business", permission: "reports.view" },
-  { key: "staff", label: "Staff", href: "/dashboard/settings/staff", group: "business", permission: "settings.manage" },
-  { key: "billing", label: "Billing & Plan", href: "/dashboard/settings/billing", group: "more", permission: "organization.manage" },
-  { key: "branches", label: "Branches", href: "/dashboard/settings/branches", group: "more", permission: "branches.manage" },
-  { key: "settings", label: "Settings", href: "/dashboard/settings", group: "more", permission: "settings.manage" },
+  { key: "bookings", label: "Bookings", href: "/dashboard/hospitality/bookings", group: "daily", permission: "customers.read" },
+  { key: "payments", label: "Payments", href: "/dashboard/payments", group: "daily", permission: "payments.record" },
+  { key: "customers", label: "Guests", href: "/dashboard/customers", group: "daily", permission: "customers.read" },
+  { key: "rooms", label: "Rooms", href: "/dashboard/hospitality/rooms", group: "property", permission: "customers.read" },
+  { key: "inventory", label: "Inventory", href: "/dashboard/inventory", group: "property", permission: "inventory.manage" },
+  { key: "staff", label: "Staff", href: "/dashboard/settings/staff", group: "property", permission: "settings.manage" },
+  { key: "reports", label: "Reports", href: "/dashboard/reports", group: "insights", permission: "reports.view" },
+  { key: "website", label: "Public website", href: "/dashboard/settings/public-page", group: "administration", industryFeature: "public_website", permission: "settings.manage" },
+  { key: "branches", label: "Branches", href: "/dashboard/settings/branches", group: "administration", permission: "branches.manage" },
+  { key: "billing", label: "Billing & Plan", href: "/dashboard/settings/billing", group: "administration", permission: "organization.manage" },
+  { key: "settings", label: "Settings", href: "/dashboard/settings", group: "administration", permission: "settings.manage" },
 ];
 
 export function navigationForIndustry(config: IndustryConfig, role?: OrganizationMembership["role"]): readonly NavigationItem[] {
   const navigation: readonly NavigationItem[] = config.key === "hospitality" ? hospitalityNavigation : config.key === "pet_care" ? petCareNavigation : config.key === "salon" ? salonNavigation : karkrNavigation;
+  const commerceGroup = config.key === "hospitality" ? "property" : "business";
   const commerce: readonly NavigationItem[] = [
-    { key: "products", label: "Products", href: "/dashboard/products", group: "business", industryFeature: "inventory", permission: "inventory.manage" },
-    { key: "promos", label: "Promos", href: "/dashboard/promos", group: "business", industryFeature: "inventory", permission: "inventory.manage" },
+    { key: "products", label: "Products", href: "/dashboard/products", group: commerceGroup, industryFeature: "inventory", permission: "inventory.manage" },
+    { key: "promos", label: "Promos", href: "/dashboard/promos", group: commerceGroup, industryFeature: "inventory", permission: "inventory.manage" },
   ];
   const items = navigation.flatMap(item => item.key === "inventory" ? [...commerce, item] : [item]);
   return items.filter((item) =>

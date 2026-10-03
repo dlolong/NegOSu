@@ -5,7 +5,7 @@ import type { UpgradeState } from "@/modules/platform/plan-upgrades";
 import { AdminNotificationBell } from "@/components/admin-notification-bell";
 import { MessageCircle } from "lucide-react";
 
-import { ArrowRightLeft as ArrowRightLeftIcon, LogOut as LogOutIcon, Armchair, BarChart3, Bell, Building2, CalendarCheck, CalendarDays, CarFront, ChevronDown, ClipboardList, CreditCard, Gauge, ListOrdered, MoreHorizontal, PawPrint, Package, Settings, Timer, Users, Wrench, type LucideIcon } from "lucide-react";
+import { ArrowRightLeft as ArrowRightLeftIcon, LogOut as LogOutIcon, Armchair, BarChart3, Bell, Building2, CalendarCheck, CalendarDays, CarFront, ChevronDown, ClipboardList, CreditCard, Gauge, ListOrdered, MoreHorizontal, Globe, PawPrint, Package, Settings, Timer, Users, Wrench, type LucideIcon } from "lucide-react";
 
 import Link from "next/link";
 import {LinkPending} from "@/components/ui/link-pending";
@@ -27,6 +27,7 @@ import type { DashboardThemeId } from "@/modules/platform/dashboard-theme";
 const navigationIcons: Record<string, LucideIcon> = {
   dashboard: Gauge,
   rooms: Building2,
+  website: Globe,
   customers: Users,
   pets: PawPrint,
   vehicles: CarFront,
@@ -103,7 +104,7 @@ function DismissibleDetails({ children, className }: { children: ReactNode; clas
 
 function SidebarNavigationGroup({ group, activeHref }: { group: NavigationGroup; activeHref?: string }) {
   const containsActiveItem = group.items.some((item) => item.href === activeHref);
-  const [expanded, setExpanded] = useState(group.key !== "more" || containsActiveItem);
+  const [expanded, setExpanded] = useState((group.key !== "more" && group.key !== "administration") || containsActiveItem);
 
   return <details
     id={`negosu-sidebar-${group.key}`}

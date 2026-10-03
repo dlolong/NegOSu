@@ -25,7 +25,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const { slug } = await params;
   const publicShop = await loadPublicBusiness(slug);
   if (!publicShop) return { title: "Business not found" };
-  const description = publicShop.description ?? `Book ${publicShop.industry === "pet_care" ? "pet grooming" : publicShop.industry === "salon" ? "salon treatments" : "automotive services"} with ${publicShop.name}.`;
+  const description = publicShop.description ?? `Book ${publicShop.industry === "hospitality" ? "a stay" : publicShop.industry === "pet_care" ? "pet grooming" : publicShop.industry === "salon" ? "salon treatments" : "automotive services"} with ${publicShop.name}.`;
   return {
     ...businessMetadata(publicShop.name, publicShop.logoUrl),
     description,
@@ -39,14 +39,15 @@ export default async function Page({ params }: { params: Promise<{ slug: string 
   const publicShop = await loadPublicBusiness(slug);
   if (!publicShop) notFound();
   const industry = publicShop.industry ?? "automotive";
+  const hospitality = industry === "hospitality";
   const serviceLabel = industry === "salon" ? "treatment" : "service";
   const primaryBranch = publicShop.branches.find(branch => branch.acceptsBookings) ?? publicShop.branches[0];
-  const bookingAvailable = publicShop.services.length > 0 && publicShop.branches.some(branch=>branch.acceptsBookings);
-  const {promos}=await loadPublicPromos(slug);
+  const bookingAvailable = !hospitality && publicShop.services.length > 0 && publicShop.branches.some(branch=>branch.acceptsBookings);
+  const {promos}=hospitality ? { promos: [] } : await loadPublicPromos(slug);
   const bookingHref = `/shop/${encodeURIComponent(slug)}/book`;
   const jsonLd = {
     "@context": "https://schema.org",
-    "@type": industry === "pet_care" ? "LocalBusiness" : industry === "salon" ? "BeautySalon" : "AutomotiveBusiness",
+    "@type": hospitality ? "LodgingBusiness" : industry === "pet_care" ? "LocalBusiness" : industry === "salon" ? "BeautySalon" : "AutomotiveBusiness",
     name: publicShop.name,
     description: publicShop.description,
     telephone: publicShop.phone,
@@ -55,10 +56,10 @@ export default async function Page({ params }: { params: Promise<{ slug: string 
     address: publicShop.branches[0]?.address.filter(Boolean).join(", "),
   };
 
-  return <main id={industry === "pet_care" ? "public-pet-care-shop-page" : industry === "salon" ? "public-salon-shop-page" : "public-automotive-shop-page"} className="min-h-dvh min-w-0 bg-admin-canvas text-admin-text [overflow-wrap:anywhere]">
+  return <main id={hospitality ? "public-hospitality-shop-page" : industry === "pet_care" ? "public-pet-care-shop-page" : industry === "salon" ? "public-salon-shop-page" : "public-automotive-shop-page"} className="min-h-dvh min-w-0 bg-admin-canvas text-admin-text [overflow-wrap:anywhere]">
     <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replaceAll("<", "\\u003c") }} />
 
-    <a id="public-shop-skip-link" href="#public-automotive-shop-services" className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-xl focus:bg-white focus:p-3">Skip to services</a>
+    <a id="public-shop-skip-link" href={hospitality ? "#public-automotive-shop-branches" : "#public-automotive-shop-services"} className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-xl focus:bg-white focus:p-3">{hospitality ? "Skip to locations" : "Skip to services"}</a>
     <header id="public-shop-header" className="sticky top-0 z-40 border-b border-admin-border bg-white pt-[env(safe-area-inset-top)] shadow-sm sm:static sm:pt-0 sm:shadow-none">
       <div className="mx-auto flex min-h-18 max-w-6xl flex-wrap items-center justify-between gap-3 px-4 sm:px-6">
         <Link id="public-shop-home-link" href={`/shop/${encodeURIComponent(slug)}`} className="flex min-w-0 flex-1 basis-36 items-center gap-3">
@@ -66,15 +67,15 @@ export default async function Page({ params }: { params: Promise<{ slug: string 
         </Link>
         <div className="hidden shrink-0 sm:block"><Button id="public-shop-header-book-button" asChild size="sm"><Link href={bookingAvailable?bookingHref:"#public-automotive-shop-branches"}><CalendarDays aria-hidden="true" size={16} className="shrink-0"/>{bookingAvailable?"Book now":"Visit us"}</Link></Button></div>
       </div>
-      <nav id="public-shop-section-navigation" aria-label="Website sections" className="mx-auto hidden max-w-6xl flex-wrap sm:flex gap-x-5 border-t border-admin-border px-4 text-sm font-medium sm:px-6"><a className="inline-flex min-h-11 items-center hover:text-brand-primary" href="#public-automotive-shop-services">{industry==="salon"?"Treatments":"Services"}</a>{promos.length?<a id="public-shop-promos-nav" className="inline-flex min-h-11 items-center hover:text-brand-primary" href="#public-shop-promos">Promos</a>:null}<a className="inline-flex min-h-11 items-center hover:text-brand-primary" href="#public-automotive-shop-branches">Locations</a>{publicShop.gallery.length?<a className="inline-flex min-h-11 items-center hover:text-brand-primary" href="#public-automotive-shop-gallery">Gallery</a>:null}<a className="inline-flex min-h-11 items-center hover:text-brand-primary" href="#public-shop-contact">Contact</a></nav>
+      <nav id="public-shop-section-navigation" aria-label="Website sections" className="mx-auto hidden max-w-6xl flex-wrap sm:flex gap-x-5 border-t border-admin-border px-4 text-sm font-medium sm:px-6">{!hospitality ? <a className="inline-flex min-h-11 items-center hover:text-brand-primary" href="#public-automotive-shop-services">{industry==="salon"?"Treatments":"Services"}</a> : null}{promos.length?<a id="public-shop-promos-nav" className="inline-flex min-h-11 items-center hover:text-brand-primary" href="#public-shop-promos">Promos</a>:null}<a className="inline-flex min-h-11 items-center hover:text-brand-primary" href="#public-automotive-shop-branches">Locations</a>{publicShop.gallery.length?<a className="inline-flex min-h-11 items-center hover:text-brand-primary" href="#public-automotive-shop-gallery">Gallery</a>:null}<a className="inline-flex min-h-11 items-center hover:text-brand-primary" href="#public-shop-contact">Contact</a></nav>
     </header>
 
     <section id="public-automotive-shop-hero" className="overflow-hidden bg-white">
       <div className="mx-auto grid max-w-6xl items-center gap-6 px-4 py-7 sm:gap-8 sm:px-6 sm:py-12 lg:grid-cols-[minmax(0,1fr)_minmax(22rem,0.9fr)] lg:py-16">
         <div>
-          <p className="text-sm font-medium text-brand-primary-strong">{industry === "pet_care" ? "Pet grooming" : industry === "salon" ? "Salon & beauty" : "Automotive care"}</p>
+          <p className="text-sm font-medium text-brand-primary-strong">{hospitality ? "Apartelle & Inn" : industry === "pet_care" ? "Pet grooming" : industry === "salon" ? "Salon & beauty" : "Automotive care"}</p>
           <h1 className="mt-3 max-w-3xl text-3xl font-medium tracking-tight text-brand-ink sm:text-5xl lg:text-6xl">{publicShop.name}</h1>
-          <p className="mt-4 max-w-2xl text-base leading-7 sm:text-lg sm:leading-8 text-admin-text-secondary">{publicShop.description ?? (industry === "pet_care" ? "Thoughtful pet grooming with a simple online booking experience." : industry === "salon" ? "Professional salon care with a simple online booking experience." : "Professional vehicle care with a simple online booking experience.")}</p>
+          <p className="mt-4 max-w-2xl text-base leading-7 sm:text-lg sm:leading-8 text-admin-text-secondary">{publicShop.description ?? (hospitality ? "Plan your stay with us. Contact our property for room rates and availability." : industry === "pet_care" ? "Thoughtful pet grooming with a simple online booking experience." : industry === "salon" ? "Professional salon care with a simple online booking experience." : "Professional vehicle care with a simple online booking experience.")}</p>
           <div className="mt-7 flex flex-col gap-3 sm:flex-row sm:flex-wrap"><Button id="public-automotive-shop-book-button" asChild size="lg"><Link href={bookingAvailable?bookingHref:"#public-automotive-shop-branches"}>{bookingAvailable?"View available dates":"Find a location"}<ArrowRight aria-hidden="true" size={18}/></Link></Button></div>
           <div id="public-shop-quick-details" className="mt-7 flex flex-wrap gap-x-6 gap-y-3 text-sm text-admin-text-secondary">{primaryBranch ? <a id="public-shop-quick-location" href="#public-automotive-shop-branches" className="inline-flex min-w-0 items-center gap-2"><MapPin aria-hidden="true" className="text-brand-primary" size={17}/>{primaryBranch.name}</a> : null}{publicShop.phone ? <a className="inline-flex items-center gap-2 hover:text-brand-primary-strong" href={`tel:${publicShop.phone.replace(/[^\d+]/g, "")}`}><Phone aria-hidden="true" className="text-brand-primary" size={17}/>{publicShop.phone}</a> : null}</div>
         </div>
@@ -86,10 +87,10 @@ export default async function Page({ params }: { params: Promise<{ slug: string 
 
     <div className="mx-auto min-w-0 max-w-6xl space-y-10 px-4 py-9 sm:space-y-14 sm:px-6 sm:py-14">
       <PublicPromoCards slug={slug} promos={promos} branches={publicShop.branches} services={publicShop.services}/>
-      <section id="public-automotive-shop-services" className="scroll-mt-[calc(6rem+env(safe-area-inset-top))] sm:scroll-mt-5" aria-labelledby="public-shop-services-title">
+      {!hospitality ? <section id="public-automotive-shop-services" className="scroll-mt-[calc(6rem+env(safe-area-inset-top))] sm:scroll-mt-5" aria-labelledby="public-shop-services-title">
         <div className="flex flex-wrap items-center justify-between gap-4 min-w-0 [&>a]:ml-auto [&>button]:ml-auto [&>form]:ml-auto"><div className="min-w-0 flex-1 basis-full sm:basis-64 [overflow-wrap:anywhere]"><p className="text-sm font-medium text-brand-primary-strong">What we offer</p><h2 id="public-shop-services-title" className="mt-1 text-3xl font-medium tracking-tight text-brand-ink">{industry === "salon" ? "Treatments" : "Services"}</h2></div>{publicShop.services.length ? <Button id="public-shop-services-book-button" className="ml-auto" asChild variant="secondary"><Link href={bookingHref}><ArrowRightIcon aria-hidden="true" size={16} className="shrink-0"/>Check availability</Link></Button> : null}</div>
         {publicShop.services.length ? <PublicServiceCategories services={publicShop.services} shopName={publicShop.name} currency={publicShop.currency} bookingHref={bookingHref} serviceLabel={serviceLabel}/> : <Card id="public-shop-services-empty-state" elevation="none" className="mt-6 p-6 text-center"><h3 className="font-medium">Services will be available soon</h3><p className="mt-2 text-sm text-admin-text-secondary">Contact {publicShop.name} directly for current offerings.</p></Card>}
-      </section>
+      </section> : null}
 
       <section id="public-automotive-shop-branches" className="scroll-mt-[calc(6rem+env(safe-area-inset-top))] sm:scroll-mt-5" aria-labelledby="public-shop-locations-title">
         <div><p className="text-sm font-medium text-brand-primary-strong">Visit us</p><h2 id="public-shop-locations-title" className="mt-1 text-3xl font-medium tracking-tight text-brand-ink">Locations</h2></div>
@@ -114,14 +115,14 @@ export default async function Page({ params }: { params: Promise<{ slug: string 
       <div className="mx-auto grid max-w-6xl gap-7 px-4 py-9 sm:px-6 md:grid-cols-[minmax(0,1fr)_auto] md:items-end"><div><p className="font-medium">{publicShop.name}</p><PoweredBy id="public-shop-powered-by" className="mt-2"/><div className="mt-3 flex flex-wrap gap-x-4 gap-y-2 text-sm text-admin-text-secondary">{publicShop.phone?<a id="public-shop-call-link" className="inline-flex min-h-11 items-center gap-2" href={`tel:${publicShop.phone.replace(/[^\d+]/g,"")}`}><Phone size={16} aria-hidden="true"/>{publicShop.phone}</a>:null}{publicShop.email?<a id="public-shop-email-link" className="inline-flex min-h-11 min-w-0 items-center gap-2" href={`mailto:${publicShop.email}`}><Mail size={16} className="shrink-0" aria-hidden="true"/>{publicShop.email}</a>:null}</div></div><nav id="public-shop-social-links" className="flex flex-wrap gap-x-5 gap-y-2 text-sm font-medium text-brand-primary-strong" aria-label={`${publicShop.name} links`}>{publicShop.website ? <a href={publicShop.website} target="_blank" rel="noopener noreferrer">Website</a> : null}{publicShop.facebook ? <a href={publicShop.facebook} target="_blank" rel="noopener noreferrer">Facebook</a> : null}{publicShop.instagram ? <a href={publicShop.instagram} target="_blank" rel="noopener noreferrer">Instagram</a> : null}</nav></div>
     </footer>
     <nav id="public-shop-mobile-actions" aria-label="Website menu" className="fixed inset-x-0 bottom-0 z-40 flex items-stretch border-t border-admin-border bg-white px-1 pt-1 pb-[max(0.25rem,env(safe-area-inset-bottom))] shadow-ui-md sm:hidden">
-      <a id="public-mobile-services-button" href="#public-automotive-shop-services" className="flex min-h-14 min-w-0 flex-1 flex-col items-center justify-center gap-1 rounded-ui-md px-1 text-[10px] font-medium text-admin-text-secondary focus-visible:ring-2 focus-visible:ring-brand-primary"><List size={20} aria-hidden="true"/>{industry==="salon"?"Treatments":"Services"}</a>
+      {!hospitality ? <a id="public-mobile-services-button" href="#public-automotive-shop-services" className="flex min-h-14 min-w-0 flex-1 flex-col items-center justify-center gap-1 rounded-ui-md px-1 text-[10px] font-medium text-admin-text-secondary focus-visible:ring-2 focus-visible:ring-brand-primary"><List size={20} aria-hidden="true"/>{industry==="salon"?"Treatments":"Services"}</a> : null}
       <a id="public-mobile-location-button" href="#public-automotive-shop-branches" className="flex min-h-14 min-w-0 flex-1 flex-col items-center justify-center gap-1 rounded-ui-md px-1 text-[10px] font-medium text-admin-text-secondary focus-visible:ring-2 focus-visible:ring-brand-primary"><MapPin size={20} aria-hidden="true"/>Locations</a>
       {publicShop.gallery.length?<a id="public-mobile-gallery-button" href="#public-automotive-shop-gallery" className="flex min-h-14 min-w-0 flex-1 flex-col items-center justify-center gap-1 rounded-ui-md px-1 text-[10px] font-medium text-admin-text-secondary focus-visible:ring-2 focus-visible:ring-brand-primary"><Images size={20} aria-hidden="true"/>Gallery</a>:null}
       {promos.length?<a id="public-mobile-promos-button" href="#public-shop-promos" className="flex min-h-14 min-w-0 flex-1 flex-col items-center justify-center gap-1 rounded-ui-md px-1 text-[10px] font-medium text-admin-text-secondary"><Tag size={20} aria-hidden="true"/>Promos</a>:null}
       <a id="public-mobile-contact-button" href="#public-shop-contact" className="flex min-h-14 min-w-0 flex-1 flex-col items-center justify-center gap-1 rounded-ui-md px-1 text-[10px] font-medium text-admin-text-secondary focus-visible:ring-2 focus-visible:ring-brand-primary"><Phone size={20} aria-hidden="true"/>Contact</a>
       {bookingAvailable?<Link id="public-mobile-book-button" href={bookingHref} className="flex min-h-14 min-w-0 flex-1 flex-col items-center justify-center gap-1 rounded-ui-md bg-brand-tint px-1 text-[10px] font-medium text-brand-primary-strong focus-visible:ring-2 focus-visible:ring-brand-primary"><CalendarDays size={20} aria-hidden="true"/>Book now</Link>:null}
     </nav>
-    <PublicChat key={publicShop.slug} shop={publicShop}/>
+    {!hospitality ? <PublicChat key={publicShop.slug} shop={publicShop}/> : null}
   </main>;
 }
 

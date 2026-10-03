@@ -17,7 +17,7 @@ Core domain modules do not import Hospitality. Application routes choose the act
 
 ## Navigation and permissions
 
-Overview → Rooms → Guests → Payments → Inventory → Reports → Staff; Settings contains Business/Profile, Branches, Staff/Access, Billing & Plan. Resources, public booking and service-management links are excluded. Front-desk and other non-manager users land on Rooms. Owners/managers use the existing Command Center.
+Overview → Bookings → Rooms → Guests → Payments → Inventory → Reports → Staff → Public website; Settings contains Business/Profile, Branches, Staff/Access, Billing & Plan. Resources, public booking and service-management links are excluded. Front-desk and other non-manager users land on Bookings. Owners/managers use the existing Command Center.
 
 | Existing access role | Hospitality policy |
 | --- | --- |
@@ -47,7 +47,7 @@ Free Reports: one accessible branch, last 30 local calendar days, no CSV export.
 - New collection requests use a stable UUID. The invoice lock and unique request key prevent concurrent overpayment/duplicate recording. The older Automotive payment RPC delegates to the shared primitive and preserves its error contract. Currency is resolved/validated against the business. Collection date must be between bill creation and today in branch time.
 - Cash/GCash/Maya/bank/card/other entries record money already received. No external transaction is initiated. Existing full-entry refund/void semantics reopen the invoice balance; an actual refund is arranged separately. No partial refund engine is introduced.
 - Checkout requires explicit confirmation that any full deposit was actually returned; only cashiers/owners/managers can record that return. Refund and checkout commit together, so failed debt acknowledgment cannot partially refund a deposit. Checkout ends physical occupancy and sends the room to **Cleaning**, keeping it visible in the combined room table but unavailable for check-in. Outstanding debt needs an explicit acknowledgment and remains collectible afterward. Acknowledgment is held with the finance-protected association, not exposed on operational stay rows. Checkout retries preserve the original timestamp and never restart completed cleaning.
-- A Housekeeper with Operations Staff access (or owner/manager/front desk/cashier) uses **Rooms → find the Cleaning room → Mark ready** after cleaning. Completion saves the actor/time. The expected checkout ID and room lock reject stale confirmations from an earlier cleaning cycle. Viewers cannot mutate cleaning status. Inactive rooms remain inactive even if marked clean; reactivation does not bypass pending cleaning. Dashboard, reports and CSV separate Cleaning from Available.
+- A Housekeeper with Operations Staff access (or owner/manager/front desk/cashier) uses **Bookings → find the Cleaning room → Mark as Ready** after cleaning. Completion saves the actor/time. The expected checkout ID and room lock reject stale confirmations from an earlier cleaning cycle. Viewers cannot mutate cleaning status. Inactive rooms remain inactive even if marked clean; reactivation does not bypass pending cleaning. Dashboard, reports and CSV separate Cleaning from Available.
 - Guest statements are authenticated, printable ledger summaries. They are not tax invoices, provider receipts or SaaS subscription receipts. Statements are capped at 1,000 lines/payments with an explicit error rather than silent truncation; the stay ledger remains paginated.
 
 ## Extensions, deposits and paper receipts
@@ -142,3 +142,46 @@ Check-in presents the stay period, collection amounts and change, then staff on 
 Cashier and housekeeper choices are remembered as browser preferences, separately for each signed-in user, workspace and branch, shared between check-in and checkout. Changing a choice immediately updates the default for the next form (including after Cancel); it does not change any previously recorded stay. Only currently available active staff can be restored. Staff removed from branch access or deactivated are left blank and must be replaced. Each submission still undergoes server/database validation and records independent event snapshots.
 
 Preferences stay on this browser, not across devices. Clearing site data removes them. When persistent browser storage is blocked, choices remain available during the current app session. No guest, discount-card or payment data is saved in these preferences.
+
+
+### Bookings, emergency back-entry and room maintenance
+
+**Bookings** (`/dashboard/hospitality/bookings`) is the operational room list. It shows Available, Occupied, Cleaning and Inactive statuses with permission-appropriate **Check In**, **Check Out** and **Mark as Ready** actions. Selecting a room opens its current check-in, or most recent check-in if vacant. Rooms without history show an empty check-in-details dialog. Booking history has date filters and pagination. Old Check-ins links and Rooms history/action bookmarks redirect to Bookings.
+
+**Rooms** contains room setup, capacity, package rates and active/inactive configuration. It does not display live occupancy/cleaning statuses or operational buttons. Its room-details dialog includes scoped, paginated stay history.
+
+**Manually Add Booking** opens a dialog for a previously unrecorded arrival, such as an emergency back-entry. Owners, managers and cashiers select a room, past arrival time in the branch timezone, configured stay package, payment already received and staff. With **Guest already checked out**, they must also enter a later checkout time (no future times), checkout cashier/housekeeper and confirm any deposit was returned. The room selector includes occupied, cleaning and inactive rooms because a completed historical stay need not reflect today’s room state. Completed intervals are inserted as already closed and never alter current occupancy or cleaning. An entry still in house must pass the normal vacant/active/clean room checks. Database locks and interval checks reject overlapping stays, including concurrent back-entries. Exact retries reuse the stay and ledger; changed requests fail. Current configured package/rate and staff-validation rules still apply.
+
+The effective arrival/departure times are distinct from when staff encode the record. The paid period starts at the entered arrival. Payments, deposit receipt/return, staff attribution and audit timestamps remain at recording time; back-entry does not silently rewrite financial reporting dates. History entry records previously received/returned money and does not initiate charges or transfers. This is not offline storage, future reservations, or arbitrary historical price reconstruction.
+
+Apply **0114**, then **0115_hospitality_past_bookings.sql**, before using dated/emergency back-entry. 0115 extracts the existing paid-arrival implementation into a private canonical helper used by both the unchanged cashier RPC signature and the new historical-booking RPC. Existing active stays and legacy request payloads remain compatible. The same Core invoice, payment, deposit and staff primitives enforce authorization and business rules; no RLS grants or tenant boundaries are relaxed. Existing records are not backfilled. Nothing was applied to a hosted database or deployed by this work.
+
+### Public website
+
+Owners/managers can open **Public website** from the menu or Settings. The shared editor publishes property descriptions, logo/cover, gallery, social links, locations/maps and reception hours at `/shop/{business-slug}`. Publication and image upload retain existing plan entitlement checks. No site is automatically published. Contact details are maintained in business/branch settings. Guests contact the property for room rates and availability; online room reservations and the appointment booking/chat interface are not offered for Hospitality. No private room occupancy, guest, staff or payment data is added to the public projection. The `public_website` application capability is separate from `booking_requests`; other industries retain their existing booking workflows.
+
+### Validation and release checks (2026-10-03)
+
+All 502 root-and-nested unit tests passed with `node --import tsx --test tests/*.test.ts tests/**/*.test.ts`. Lint and type checking passed. Coverage includes branch timezone conversion, invalid/future dates, closed-stay date ordering, permissions and existing business behavior. The latest production build was not rerun because elevated execution was declined; an earlier build before the Bookings/back-entry changes passed.
+
+The guarded `scripts/test-hospitality-manual-arrivals.ts` suite covers atomic rollback, tenant/branch/role checks, overlaps, exact/changed retries, concurrency, historical closed stays alongside a current occupant, unchanged cleaning state and deposit returns. Browser regressions cover the manual dialog, room statuses/actions, current-stay navigation, completed back-entry, room-specific history and responsive layouts. These database/browser tests have not been executed: the local Docker connection was unavailable. Responsive behavior was reviewed in code only.
+
+Before release, apply the migrations to a disposable local database, run the existing Hospitality integration suites plus `scripts/test-hospitality-manual-arrivals.ts`, then run `e2e/hospitality.spec.ts` at desktop and mobile widths. Also verify public website publish/unpublish, property photos/maps/contact links and absence of appointment controls. Production release remains pending this integration validation.
+
+Hospitality period filters (migration `0116_hospitality_period_plan_limits.sql`):
+Bookings history, Payments and Reports offer Today, Last 7 days and Last 30 days.
+Custom date inputs require the effective `advanced_reports` entitlement. Free users
+retain the current branch and can choose any of the three rolling presets; forged
+custom-date URLs fall back to the last 30 days. The workspace RPC also rejects
+non-preset ranges for Free plans, using the selected branch's local date. Paid
+reports retain accessible branch selection. Legacy “month” links now use 30 days.
+Current occupancy and outstanding balances remain live snapshots. Apply 0116
+before releasing these controls; it preserves existing role and branch checks.
+
+Room details now uses `/dashboard/hospitality/rooms/[roomId]` with Details and
+History tabs. Old details-dialog links redirect to the page. History reuses the
+Bookings period controls and effective paid custom-date entitlement, with 50-row
+pagination that retains filters. Migration `0117_hospitality_room_history.sql`
+adds the room-scoped read RPC with organization membership, accessible branch,
+room ownership and period enforcement. Existing RLS remains unchanged. The
+Details tab shows room setup and rates; live room operations remain in Bookings.

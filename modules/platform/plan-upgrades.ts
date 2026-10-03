@@ -30,7 +30,7 @@ export function resolveUpgradeState(entitlements: unknown, catalog: unknown): Up
 
 function supportsCapability(industry: IndustryKey, capability: UpgradeCapability) {
   const supported = resolveIndustryConfig(industry).features;
-  if (capability === "public_page") return supported.booking_requests;
+  if (capability === "public_page") return supported.public_website;
   if (capability === "reminders") return supported.maintenance;
   if (capability === "advanced_reports") return supported.reports;
   if (capability === "monthly_jobs") return supported.job_orders;
@@ -51,7 +51,7 @@ export function selectUpgrade(state: UpgradeState | null, industry: IndustryKey,
   if (capability in featureLabels) {
     if (state.current.features[capability] !== false) return null;
     const plan = state.higherPlans.find(plan => plan.features[capability] === true);
-    return plan ? { plan, description: `${plan.name} includes ${featureLabels[capability as keyof typeof featureLabels]}.` } : null;
+    return plan ? { plan, description: `${plan.name} includes ${industry === "hospitality" && capability === "public_page" ? "a public website" : featureLabels[capability as keyof typeof featureLabels]}.` } : null;
   }
   if (!limitReached) return null;
   const limit = state.current.limits[capability];

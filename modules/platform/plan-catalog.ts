@@ -92,7 +92,7 @@ export function planMatchesLaunchCatalog(plan: {
 }
 
 export function visiblePlanFeatureLabels(industry: string, features: Record<string, boolean>) {
-  if (industry === "hospitality") return [features.advanced_reports ? "Detailed reports and CSV exports" : "Reports: last 30 days, one branch", ...(features.image_uploads ? ["Direct image uploads"] : [])];
+  if (industry === "hospitality") return [...(features.public_page ? ["Public business page"] : []), features.advanced_reports ? "Detailed reports and CSV exports" : "Reports: last 30 days, one branch", ...(features.image_uploads ? ["Direct image uploads"] : [])];
   if (industry !== "automotive" && industry !== "salon" && industry !== "pet_care") return [];
 
   const labels: string[] = features.image_uploads ? ["Direct image uploads"] : [];
