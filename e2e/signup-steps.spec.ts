@@ -1,0 +1,51 @@
+import { expect, test } from "@playwright/test";
+
+test("signup validates each step and retains values when going back", async ({ page }) => {
+  await page.goto("/signup");
+  const next = page.locator("#negosu-signup-continue-button");
+  const back = page.locator("#negosu-signup-back-button");
+  const title = page.locator("#negosu-signup-step-title");
+  const error = page.locator("#negosu-signup-step-error");
+  await expect(title).toHaveText("Choose your business");
+  await expect(page.locator("#negosu-signup-first-name-input")).toBeHidden();
+  await next.click();
+  await expect(error).toContainText("Choose Automotive");
+  await page.locator("#negosu-business-type-salon-option").click();
+  await next.click();
+  await expect(title).toHaveText("Tell us about yourself");
+  await expect(title).toBeFocused();
+  await next.click();
+  await expect(error).toContainText("first name");
+  await page.locator("#negosu-signup-first-name-input").fill("  ");
+  await next.click();
+  await expect(error).toContainText("first name");
+  await page.locator("#negosu-signup-first-name-input").fill("Alex");
+  await page.locator("#negosu-signup-last-name-input").fill("Owner");
+  await page.locator("#negosu-signup-email-input").fill("invalid");
+  await next.click();
+  await expect(error).toContainText("valid email");
+  await page.locator("#negosu-signup-email-input").fill("alex@example.test");
+  await page.locator("#negosu-signup-email-input").press("Enter");
+  await expect(title).toHaveText("Secure your account");
+  await page.locator("#negosu-signup-password-input").fill("test-password-123");
+  await page.locator("#negosu-signup-confirm-password-input").fill("different-password");
+  await page.locator("#negosu-signup-submit-button").click();
+  await expect(error).toHaveText("Passwords do not match.");
+  await back.click();
+  await expect(page.locator("#negosu-signup-email-input")).toHaveValue("alex@example.test");
+  await back.click();
+  await expect(page.locator("#negosu-business-type-salon")).toBeChecked();
+  await next.click();
+  await next.click();
+  await expect(page.locator("#negosu-signup-password-input")).toHaveValue("test-password-123");
+  await expect(page.locator("#negosu-signup-progress [aria-current=step]")).toContainText("Password");
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+});
+
+test("product signup preselects the business and preserves its sign-in link", async ({ page }) => {
+  await page.goto("/signup?industry=hospitality");
+  await expect(page.locator("#negosu-business-type-hospitality")).toBeChecked();
+  await expect(page.locator("#negosu-signup-login-link")).toHaveAttribute("href", "/login?industry=hospitality");
+  await page.locator("#negosu-signup-continue-button").click();
+  await expect(page.locator("#negosu-signup-first-name-input")).toBeVisible();
+});

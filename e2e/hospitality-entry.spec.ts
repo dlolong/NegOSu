@@ -43,9 +43,11 @@ test("ordinary local account signs up and creates an Apartelle & Inn workspace w
   const email = `qa.inn.signup.${Date.now()}@negosu.local.test`;
   const password = "NegOSu-Local-QA-2026!";
   await page.goto("/signup?industry=hospitality");
+  await page.locator("#negosu-signup-continue-button").click();
   await page.locator("#negosu-signup-first-name-input").fill("Local");
   await page.locator("#negosu-signup-last-name-input").fill("Inn Owner");
   await page.locator("#negosu-signup-email-input").fill(email);
+  await page.locator("#negosu-signup-continue-button").click();
   await page.locator("#negosu-signup-password-input").fill(password);
   await page.locator("#negosu-signup-confirm-password-input").fill(password);
   await page.locator("#negosu-signup-submit-button").click();
