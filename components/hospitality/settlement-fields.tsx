@@ -36,6 +36,6 @@ export function SettlementFields({ base, currency, prefix, closeHref, depositEna
     <Field label="Receipt number (optional)"><input id={`${prefix}-receipt-number`} name="receiptNumber" maxLength={80} className={fieldClass} placeholder="From the paper receipt"/></Field>
     </div></details>
     <p className="sm:col-span-2 text-xs text-slate-500">{recording ? "Enter the payment already received for this stay." : "Confirm only after receiving payment."}{depositEnabled && held && !recording ? " Return the refundable deposit at checkout." : ""}</p>
-    <FormActions id={`${prefix}-actions`} cancelHref={closeHref}><SubmitButton id={`${prefix}-submit`} disabled={!ready} pendingText="Saving payment…"><CreditCard size={16}/>{submitLabel ?? (depositEnabled ? "Pay & check in" : "Pay & extend stay")}</SubmitButton></FormActions>
+    <FormActions id={`${prefix}-actions`} cancelHref={closeHref}><SubmitButton variant={recording ? "primary" : depositEnabled ? "arrival" : "warning"} id={`${prefix}-submit`} disabled={!ready} pendingText="Saving payment…"><CreditCard size={16}/>{submitLabel ?? (depositEnabled ? "Pay & check in" : "Pay & extend stay")}</SubmitButton></FormActions>
   </>;
 }

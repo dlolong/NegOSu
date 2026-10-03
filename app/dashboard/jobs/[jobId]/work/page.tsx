@@ -107,7 +107,7 @@ export default async function JobWorkPage({ params, searchParams }: { params: Pr
 function ItemAction({ jobId, itemId, action }: { jobId: string; itemId: string; action: "approve" | "decline" }) {
   return <form id={`job-order-work-${action}-form-${itemId}`} action={transitionJobService}>
     <input type="hidden" name="jobId" value={jobId} /><input type="hidden" name="itemId" value={itemId} /><input type="hidden" name="action" value={action} />
-    <SubmitButton id={`job-order-work-${action}-button-${itemId}`} pendingText="Updating…" variant={action === "decline" ? "danger" : "secondary"}><XIcon aria-hidden="true" size={16} className="shrink-0"/>{action === "approve" ? "Approve" : "Decline"}</SubmitButton>
+    <SubmitButton id={`job-order-work-${action}-button-${itemId}`} pendingText="Updating…" variant={action === "decline" ? "danger" : "confirm"}><XIcon aria-hidden="true" size={16} className="shrink-0"/>{action === "approve" ? "Approve" : "Decline"}</SubmitButton>
   </form>;
 }
 

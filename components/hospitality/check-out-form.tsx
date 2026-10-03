@@ -22,7 +22,7 @@ export function CheckOutForm({ stayId, roomName, balance, deposit, currency, can
     <section id="hospitality-check-out-balance" className="sm:col-span-2 rounded-xl border border-slate-200 bg-slate-50 p-4">
       <h2 className="text-sm font-medium">1. Settle the stay</h2>
       <div className="mt-3 flex flex-wrap items-center justify-between gap-3"><p className="text-sm">{balance === null ? "Ask the cashier to confirm the bill." : balance > 0 ? <>Balance to collect <strong>{formatMoney(balance, currency)}</strong></> : "No outstanding balance."}</p>
-        {canWrite && balance !== null && balance > 0 ? <Button asChild variant="secondary" size="sm"><Link id="hospitality-check-out-payment-link" href={`${closeHref}?tab=charges&dialog=payment`}><CreditCard size={16}/>Record payment</Link></Button> : null}
+        {canWrite && balance !== null && balance > 0 ? <Button asChild size="sm" variant="payment"><Link id="hospitality-check-out-payment-link" href={`${closeHref}?tab=charges&dialog=payment`}><CreditCard size={16}/>Record payment</Link></Button> : null}
       </div>
       {balance !== null && balance > 0 ? <label className="mt-3 flex items-start gap-3 text-sm"><input id="hospitality-check-out-debt" name="acknowledgeDebt" type="checkbox" required className="mt-1"/>Check out with this balance unpaid. It will remain due.</label> : null}
     </section>
@@ -33,6 +33,6 @@ export function CheckOutForm({ stayId, roomName, balance, deposit, currency, can
     <h2 className="sm:col-span-2 text-sm font-medium">2. Confirm staff</h2>
     {staffError ? <LoadError>Staff could not be loaded. Close and reopen this form.</LoadError> : <ShiftStaffFields scope={staffScope} canManage={canManageStaff} options={staff} prefix="hospitality-check-out"/>}
     <p className="sm:col-span-2 text-sm text-slate-600">{roomName} will move to Cleaning. Mark it ready after housekeeping finishes.</p>
-    {(!refund || canWrite) && !staffError && staff.length > 0 ? <SaveActions id="hospitality-check-out" label="Confirm checkout" closeHref={closeHref}/> : null}
+    {(!refund || canWrite) && !staffError && staff.length > 0 ? <SaveActions variant="complete" id="hospitality-check-out" label="Confirm checkout" closeHref={closeHref}/> : null}
   </HospitalityActionForm>;
 }

@@ -210,3 +210,21 @@ Booking Requests uses Pending, Confirmed, Declined and All views. Search covers 
 Staff separates Directory and Invitations. My Work separates Working, Assigned and History; work controls still use the existing server actions, and history labels are batch-loaded within the active tenant and branch. Appointments uses Day/Week tabs with one date/status/search toolbar.
 
 Dashboard workspaces use `WorkspaceColumns`: website information, feature previews, quick actions, and the staff snapshot sit in an 18rem right column at xl. At the user’s request, this panel is sticky with a viewport-limited height and its own vertical scroll; it is keyboard-focusable and contains scroll chaining. Below xl, it returns to normal page flow below primary content with no separate scroll. Metrics start the main column; charts follow operational work. Settings navigation stays on the left.
+
+
+### Workflow action colors
+
+Use shared `Button` / `SubmitButton` variants for operational actions across Automotive, Salon, Pet Care, and Hospitality. Keep the same variant on an action’s entry button and confirmation submit button:
+
+| Variant | Color | Purpose |
+| --- | --- | --- |
+| `arrival` | Emerald | Check in / mark arrived |
+| `confirm` | Teal | Confirm / approve |
+| `start` | Blue | Start / resume work / call from queue |
+| `complete` | Violet | Complete / check out / collect |
+| `ready` | Cyan | Ready / quality check |
+| `warning` | Amber | Pause / stop / extend / mark no-show |
+| `payment` | Indigo | Review checkout charges / record payment |
+| `destructive` | Red | Cancel / decline / reverse |
+
+`components/ui/workflow-button-variant.ts` maps workflow action keys to presentation variants; it does not authorize transitions. Generic creation/saving keeps `primary`; navigation, search and dismiss actions keep neutral variants. Retain explicit labels/icons, keyboard focus, pending states and disabled treatment so color is never the only cue. Financial checkout uses `payment`; checking a guest out uses `complete`.
