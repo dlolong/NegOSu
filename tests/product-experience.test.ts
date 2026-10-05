@@ -62,8 +62,9 @@ test("high-traffic schedules and catalog avoid tablet-width overflow traps", () 
   const table = source("components/record-table.tsx");
   assert.match(services, /RecordTable/);
   assert.match(table, /table-fixed/);
-  assert.match(table, /hidden lg:table-cell/);
-  assert.match(table, /lg:hidden/);
+  assert.match(table, /hidden md:table-cell/);
+  assert.match(table, /block md:table md:table-fixed/);
+  assert.match(table, /md:hidden/);
   assert.match(table, /min-w-0/);
   assert.match(table, /overflow-wrap:anywhere/);
   assert.match(services, /-row-\$\{service\.id\}/);

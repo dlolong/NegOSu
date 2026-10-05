@@ -5,6 +5,8 @@ import { cloneElement, isValidElement, type ButtonHTMLAttributes, type MouseEven
 import { cn } from "@/lib/utils";
 
 const variants = {
+  publicShow: "border border-emerald-700 bg-emerald-700 text-white hover:bg-emerald-800 disabled:opacity-50",
+  publicHide: "border border-amber-300 bg-amber-100 text-amber-950 hover:bg-amber-200 disabled:opacity-50",
   arrival: "border border-transparent bg-emerald-700 text-white shadow-ui-sm hover:bg-emerald-800 disabled:bg-slate-300 disabled:text-slate-600 disabled:hover:bg-slate-300 aria-disabled:bg-slate-300 aria-disabled:text-slate-600 aria-disabled:hover:bg-slate-300",
   start: "border border-transparent bg-blue-700 text-white shadow-ui-sm hover:bg-blue-800 disabled:bg-slate-300 disabled:text-slate-600 disabled:hover:bg-slate-300 aria-disabled:bg-slate-300 aria-disabled:text-slate-600 aria-disabled:hover:bg-slate-300",
   complete: "border border-transparent bg-violet-700 text-white shadow-ui-sm hover:bg-violet-800 disabled:bg-slate-300 disabled:text-slate-600 disabled:hover:bg-slate-300 aria-disabled:bg-slate-300 aria-disabled:text-slate-600 aria-disabled:hover:bg-slate-300",

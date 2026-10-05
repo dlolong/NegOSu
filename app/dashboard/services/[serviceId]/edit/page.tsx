@@ -1,3 +1,4 @@
+import { PageTitle } from "@/components/page-title";
 import {RemoveRecordButton} from "@/components/remove-record-button";
 import { notFound } from "next/navigation";
 import { ServiceForm, type ServiceRecord } from "@/components/operations-forms";
@@ -21,5 +22,5 @@ export default async function Page({params,searchParams}:{params:Promise<{servic
   const prices=priceResult.data;
   const form=<ServiceForm currency={activeMembership.currency} automotivePricing={config.key==="automotive"} serviceLabel={config.terminology.service} idPrefix={config.key==="salon"?"salon-treatment":"service"} service={service as ServiceRecord} categories={categories??[]} branches={branches??[]} services={services??[]} prices={prices??[]} availableBranchIds={availability?.map(row=>row.branch_id)} error={query.error}/>;
   if(config.key==="salon") return <main id="salon-treatment-edit-page"><FormDialog id="salon-treatment-edit-dialog" title="Edit treatment" closeHref={`/dashboard/services/${serviceId}`} size="xl">{form}{["owner","manager"].includes(activeMembership.role)?<RemoveRecordButton kind="service" recordId={service.id} name={service.name}/>:null}</FormDialog></main>;
-  return <div className="mx-auto max-w-3xl"><p className="text-sm font-medium text-brand-primary">{config.terminology.service}s</p><h1 className="mt-1 text-3xl font-medium">Edit {config.terminology.service.toLowerCase()}</h1><div className="mt-6">{form}{["owner","manager"].includes(activeMembership.role)?<RemoveRecordButton kind="service" recordId={service.id} name={service.name}/>:null}</div></div>;
+  return <div className="mx-auto max-w-3xl"><p className="text-sm font-medium text-brand-primary">{config.terminology.service}s</p><PageTitle className="mt-1 text-3xl font-medium">Edit {config.terminology.service.toLowerCase()}</PageTitle><div className="mt-6">{form}{["owner","manager"].includes(activeMembership.role)?<RemoveRecordButton kind="service" recordId={service.id} name={service.name}/>:null}</div></div>;
 }

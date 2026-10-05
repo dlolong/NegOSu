@@ -1,3 +1,4 @@
+import { PageTitle } from "@/components/page-title";
 import { ServiceForm } from "@/components/operations-forms";
 import { FormDialog } from "@/components/management-ui";
 import { getDashboardContext } from "@/lib/auth/context";
@@ -14,5 +15,5 @@ export default async function Page({searchParams}:{searchParams:Promise<{error?:
   const config=resolveIndustryConfig(activeMembership.industry);
   const form=<ServiceForm currency={activeMembership.currency} automotivePricing={config.key==="automotive"} serviceLabel={config.terminology.service} idPrefix={config.key==="salon"?"salon-treatment":"service"} categories={categories??[]} branches={branches??[]} services={services??[]} error={params.error}/>;
   if(config.key==="salon") return <main id="salon-treatment-create-page"><FormDialog id="salon-treatment-create-dialog" title="Add treatment" closeHref="/dashboard/services" size="xl">{form}</FormDialog></main>;
-  return <div className="mx-auto max-w-3xl"><p className="text-sm font-medium text-brand-primary">{config.terminology.service}s</p><h1 className="mt-1 text-3xl font-medium">Add {config.terminology.service.toLowerCase()}</h1><div className="mt-6">{form}</div></div>;
+  return <div className="mx-auto max-w-3xl"><p className="text-sm font-medium text-brand-primary">{config.terminology.service}s</p><PageTitle className="mt-1 text-3xl font-medium">Add {config.terminology.service.toLowerCase()}</PageTitle><div className="mt-6">{form}</div></div>;
 }

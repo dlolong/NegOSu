@@ -1,3 +1,4 @@
+import { ListingFilters } from "@/components/listing-filters";
 import {RemoveRecordButton} from "@/components/remove-record-button";
 import { RecordTable } from "@/components/record-table";
 import { ListTabs } from "@/components/list-tabs";
@@ -35,6 +36,7 @@ import {
 } from "@/modules/core/staff/staff.runtime";
 
 type Params = {
+  q?: string; status?: string;
   tab?: string;
   dialog?: "create" | "edit" | "access" | "view";
   staffId?: string;
@@ -101,8 +103,9 @@ export default async function StaffPage({ searchParams }: { searchParams: Promis
     {!staffResult.error && !staffResult.data.supportsIndependentProfiles ? <Card id={`${prefix}-compatibility-notice`} className="mt-5 border-status-warning/25 bg-status-warning-tint p-4 text-sm text-status-warning">Staff records are available in read-only mode. An administrator needs to complete the workspace setup to enable profile changes. Existing staff and system access remain unchanged.</Card> : null}
     {parameters.invite ? <Card id={`${prefix}-invitation-link`} className="mt-5 border-brand-border bg-brand-tint p-5"><h2 className="font-medium">Secure invitation link</h2><p className="mt-1 text-sm text-slate-600">Send this link only to the login email entered for this invitation. It expires automatically and can be used once.</p><code id={`${prefix}-invitation-link-value`} className="mt-3 block break-all rounded-lg bg-white p-3 text-sm">{parameters.invite}</code></Card> : null}
 
+    <ListingFilters id="staff-directory-filters" action="/dashboard/settings/staff" query={{q:parameters.q,tab:parameters.tab,status:parameters.status}} searchLabel={parameters.tab === "invitations" ? "Search email or role" : "Search staff name or function"} options={parameters.tab === "invitations" ? [] : [{value:"all",label:"All staff"},{value:"active",label:"Active"},{value:"inactive",label:"Inactive"}]}/>
     <ListTabs id={`${prefix}-tabs`} baseHref="/dashboard/settings/staff" query={parameters} parameter="tab" value={parameters.tab==="invitations"?"invitations":"directory"} options={[{value:"directory",label:"Directory",count:staff.length},{value:"invitations",label:"Invitations",count:invitationResult.data?.length??0}]}/>
-    {parameters.tab!=="invitations" ? <section id={`${prefix}-directory`} className="mt-4 min-w-0"><div><h2 className="font-medium">Staff directory</h2><p className="text-sm text-slate-600">A staff profile records who works here. Use Manage access to give someone a login or change their permissions.</p></div>{staffResult.error ? <p id={`${prefix}-load-error`} role="alert" className="mt-4 text-sm text-slate-600">The Staff directory could not be loaded. <Link href="/dashboard/settings/staff" className="font-medium underline">Try again</Link></p> : <StaffDirectoryViews staff={staff} branches={branches} timezone={activeMembership.timezone} industry={industry} prefix={prefix} managementAvailable={profileManagementAvailable}/>}</section> : <InvitationHistory invitations={(invitationResult.data ?? []) as InvitationRow[]} timezone={activeMembership.timezone} industry={industry} prefix={prefix}/>}
+    {parameters.tab!=="invitations" ? <section id={`${prefix}-directory`} className="mt-4 min-w-0"><div><h2 className="font-medium">Staff directory</h2><p className="text-sm text-slate-600">A staff profile records who works here. Use Manage access to give someone a login or change their permissions.</p></div>{staffResult.error ? <p id={`${prefix}-load-error`} role="alert" className="mt-4 text-sm text-slate-600">The Staff directory could not be loaded. <Link href="/dashboard/settings/staff" className="font-medium underline">Try again</Link></p> : <StaffDirectoryViews staff={staff.filter(person=>(!parameters.q || `${person.fullName} ${person.jobFunction??""}`.toLowerCase().includes(parameters.q.trim().toLowerCase())) && (!parameters.status || parameters.status === "all" || (parameters.status === "active" ? person.isActive : !person.isActive)))} branches={branches} timezone={activeMembership.timezone} industry={industry} prefix={prefix} managementAvailable={profileManagementAvailable}/>}</section> : <InvitationHistory invitations={((invitationResult.data ?? []) as InvitationRow[]).filter(row=>!parameters.q || `${row.email} ${row.role}`.toLowerCase().includes(parameters.q.trim().toLowerCase()))} timezone={activeMembership.timezone} industry={industry} prefix={prefix}/>}
 
     <PermissionMatrix industry={industry} prefix={prefix}/>
 

@@ -4,8 +4,14 @@ export const customerMessageLimit = 3;
 export const customerMessageLength = 300;
 export const chatTokenSchema = z.string().regex(/^[a-f0-9]{64}$/);
 const slug = z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/).max(100);
+const customerPhone = z.string().trim().max(30).refine(value => !value || /^\+?[\d ()-]+$/.test(value) && value.replace(/\D/g, "").length >= 10 && value.replace(/\D/g, "").length <= 15, "Enter a valid mobile number.").transform(value => value.replace(/[ ()-]/g, ""));
+export const chatContactSchema = z.object({
+  customerName: z.string().trim().min(2, "Enter your name (at least 2 characters).").max(80),
+  customerPhone: customerPhone.optional().default(""),
+  customerEmail: z.union([z.literal(""), z.email("Enter a valid email address.").max(254)]).optional().default(""),
+}).refine(value => Boolean(value.customerPhone || value.customerEmail), { message: "Enter a mobile number or email address.", path: ["customerPhone"] });
 export const publicChatSchema = z.discriminatedUnion("operation", [
-  z.object({ operation: z.literal("start"), slug, token: chatTokenSchema, branchId: z.uuid(), customerName: z.string().trim().min(2).max(80), body: z.string().trim().min(1).max(customerMessageLength), requestId: z.uuid() }),
+  chatContactSchema.safeExtend({ operation: z.literal("start"), slug, token: chatTokenSchema, branchId: z.uuid(), body: z.string().trim().min(1).max(customerMessageLength), requestId: z.uuid() }),
   z.object({ operation: z.literal("send"), slug, token: chatTokenSchema, body: z.string().trim().min(1).max(customerMessageLength), requestId: z.uuid() }),
   z.object({ operation: z.literal("read"), slug, token: chatTokenSchema }),
 ]);

@@ -1,3 +1,5 @@
+import { PageTitle } from "@/components/page-title";
+import { AppointmentBackButton } from "@/components/appointment-back-button";
 import { workflowButtonVariant } from "@/components/ui/workflow-button-variant";
 import {CheckoutEntry} from "@/components/checkout-entry";
 import { AppointmentPromosSummary } from "@/components/appointment-promos-summary";
@@ -28,9 +30,9 @@ import { salonAppointmentActions,salonAppointmentActionLabels,type SalonAppointm
 
 type AppointmentDetail={id:string;vehicle_id?:string|null;status:string;source:string;starts_at:string|null;ends_at:string|null;expected_total_centavos:number;expected_duration_minutes:number|null;customer_note:string|null;internal_note:string|null;cancellation_reason:string|null;created_at:string;branches:{name:string;timezone:string}|{name:string;timezone:string}[]|null;customers:{id:string;full_name:string;phone:string|null}|{id:string;full_name:string;phone:string|null}[]|null;vehicles?:{id:string;make:string|null;model:string|null;plate_number:string|null}|{id:string;make:string|null;model:string|null;plate_number:string|null}[]|null;appointment_services:Array<{service_id:string;service_name_snapshot:string;unit_price_centavos:number;duration_minutes:number}>};
 
-export default async function Page({ params, searchParams }: { params: Promise<{ appointmentId: string }>; searchParams: Promise<{ message?: string; error?: string;dialog?:string;customerLink?:string }> }) {
+export default async function Page({ params, searchParams }: { params: Promise<{ appointmentId: string }>; searchParams: Promise<{ from?: string; message?: string; error?: string;dialog?:string;customerLink?:string }> }) {
   const [{ appointmentId }, query, { activeMembership }, supabase] = await Promise.all([params, searchParams, getDashboardContext(), createClient()]);
-  if(activeMembership.industry==="pet_care") redirect(`/dashboard/pet-care/appointments/${encodeURIComponent(appointmentId)}`);
+  if(activeMembership.industry==="pet_care") redirect(`/dashboard/pet-care/appointments/${encodeURIComponent(appointmentId)}${query.from === "clients" ? "?from=clients" : ""}`);
   const config=resolveIndustryConfig(activeMembership.industry),salon=config.key==="salon";
   const appointmentResult = salon
     ? await supabase.from("appointments").select("id,status,source,starts_at,ends_at,expected_total_centavos,expected_duration_minutes,customer_note,internal_note,cancellation_reason,created_at,branches(name,timezone),customers(id,full_name,phone),appointment_services(service_id,service_name_snapshot,unit_price_centavos,duration_minutes)").eq("id", appointmentId).eq("organization_id", activeMembership.organizationId).maybeSingle()
@@ -57,7 +59,7 @@ export default async function Page({ params, searchParams }: { params: Promise<{
 
   return <div id={salon?"salon-appointment-details":"appointment-details-page"} className="mx-auto max-w-5xl">
     <div id="appointment-details-header" className="flex flex-wrap justify-between gap-4 items-center min-w-0 [&>a]:ml-auto [&>button]:ml-auto [&>form]:ml-auto">
-      <div className="min-w-0 flex-1 basis-full sm:basis-64 [overflow-wrap:anywhere]"><p className="text-sm font-medium capitalize text-brand-primary">{appointment.source.replaceAll("_", " ")} · {appointment.status.replaceAll("_", " ")}</p><h1 id={salon?"salon-appointment-client":"appointment-vehicle-value"} className="mt-1 text-3xl font-medium">{salon?customer?.full_name:vehicleName}</h1><p className="mt-2 text-zinc-600">{salon?appointment.appointment_services.map(item=>item.service_name_snapshot).join(", "):`${customer?.full_name} · ${branch?.name}`}</p></div>
+      <div className="min-w-0 flex-1 basis-full sm:basis-64 [overflow-wrap:anywhere]"><p className="text-sm font-medium capitalize text-brand-primary">{appointment.source.replaceAll("_", " ")} · {appointment.status.replaceAll("_", " ")}</p><PageTitle back={<AppointmentBackButton from={query.from}/>} id={salon?"salon-appointment-client":"appointment-vehicle-value"} className="mt-1 text-3xl font-medium">{salon?customer?.full_name:vehicleName}</PageTitle><p className="mt-2 text-zinc-600">{salon?appointment.appointment_services.map(item=>item.service_name_snapshot).join(", "):`${customer?.full_name} · ${branch?.name}`}</p></div>
       {canWrite && editable && <Button className="ml-auto" asChild variant="secondary"><Link id={salon?"salon-appointment-edit-button":"appointment-edit-button"} href={`/dashboard/appointments/${appointment.id}/edit`}><PencilIcon aria-hidden="true" size={16} className="shrink-0"/>Edit</Link></Button>}
     </div>
     <AppointmentPromosSummary appointmentId={appointmentId}/>

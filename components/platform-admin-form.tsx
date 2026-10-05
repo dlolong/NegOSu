@@ -18,7 +18,7 @@ export function PlatformAdminForm({ section, row, plans, requestId, closeHref }:
   const field = "mt-1 block min-h-11 w-full rounded-lg border border-admin-border bg-admin-surface px-3 py-2 text-sm";
   const price = (value: unknown) => value == null ? "" : (Number(value) / 100).toFixed(2);
   return <FormDialog id="platform-admin-edit-dialog" title={title} closeHref={closeHref} size="md">
-    {state.success ? <div id="platform-admin-save-success" role="status"><p className="text-sm">{deleting ? "Record deleted." : "Changes saved."}</p><Link id="platform-admin-save-close" href={closeHref} className="mt-4 inline-block rounded-lg bg-brand-primary px-4 py-2 text-sm text-white">Back to directory</Link></div> : <form id="platform-admin-edit-form" action={action} className="space-y-4">
+    {state.success ? <div id="platform-admin-save-success" role="status"><p className="text-sm">{deleting ? "Record deleted." : "Changes saved."}</p></div> : <form id="platform-admin-edit-form" action={action} className="space-y-4">
       <input type="hidden" name="action" value={operation}/><input type="hidden" name="target" value={target}/><input type="hidden" name="requestId" value={requestId}/><input type="hidden" name="expected" value={String(section === "plans" ? row.admin_revision : row.updated_at ?? "")}/>
       <p className="break-words text-sm font-medium">{String(row.name ?? row.email ?? target)}</p>
       {state.error ? <p id="platform-admin-edit-error" role="alert" className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800">{state.error}</p> : null}

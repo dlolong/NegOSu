@@ -40,12 +40,15 @@ for (const industry of ["automotive", "salon", "pet_care"] as const) {
       expect(await page.locator("html").evaluate(element => getComputedStyle(element).overflowY)).not.toBe("hidden");
       await page.locator("#public-chat-open").click();
       await page.locator("#public-chat-branch").selectOption(branch.data!.id);
+      await page.locator("#public-chat-topic-services").click();
       await page.locator("#public-chat-service").selectOption(service.data!.id);
       await expect(page.locator("#public-chat-answer")).toContainText("minutes");
       await page.locator("#public-chat-topic-hours").click();
       await page.locator("#public-chat-topic-location").click();
       await page.locator("#public-chat-topic-message").click();
       await page.locator("#public-chat-name").fill("Chat Browser Customer");
+      await page.locator("#public-chat-contact").fill("09171234567");
+      await page.locator("#public-chat-contact-continue").click();
       await page.locator("#public-chat-suggestion-booking").click();
       await expect(page.locator("#public-chat-message")).toHaveValue(/I.d like to book/);
       await page.locator("#public-chat-message").fill("Can I book this service?");
@@ -71,6 +74,7 @@ for (const industry of ["automotive", "salon", "pet_care"] as const) {
       await expect(staff.locator("#dashboard-notification-dialog")).not.toBeVisible();
       await staff.locator(`#inbox-conversation-${conversation.data!.id}`).click();
       await expect(staff.locator("#inbox-messages")).toContainText("Can I book this service?");
+      await expect(staff.locator("#inbox-customer-phone")).toHaveAttribute("href", "tel:09171234567");
       await staff.locator("#inbox-reply").fill("Yes, choose your preferred time using Book an appointment.");
       await staff.locator("#inbox-send-reply").click();
       await expect(staff.locator("#inbox-messages")).toContainText("Yes, choose your preferred time");

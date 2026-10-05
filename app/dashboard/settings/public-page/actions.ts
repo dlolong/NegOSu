@@ -5,7 +5,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireIndustryFeature } from "@/lib/auth/industry-access";
 import { firstError, formValue } from "@/lib/crm";
-import { branchPublicSchema, publicGallerySchema, publicOpeningHoursFromFormData, publicPageSchema, publicServiceSchema, publicServiceThumbnailSchema } from "@/lib/public-booking";
+import { publicCatalogVisibilitySchema, branchPublicSchema, publicGallerySchema, publicOpeningHoursFromFormData, publicPageSchema, publicServiceSchema, publicServiceThumbnailSchema } from "@/lib/public-booking";
 import { roleHasPermission } from "@/lib/rbac";
 import { createClient } from "@/lib/supabase/server";
 
@@ -70,4 +70,17 @@ export async function saveServiceThumbnail(data: FormData) {
     .eq("id", parsed.data.serviceId).eq("organization_id", membership.organizationId).eq("is_active", true).select("id").maybeSingle();
   if (error || !updated) go("error", "Unable to save the service thumbnail.", "services");
   saved(membership.organizationSlug, "Service thumbnail saved.", "services");
+}
+
+export async function togglePublicCatalogItem(data: FormData) {
+  const membership = await settingsContext();
+  const parsed = publicCatalogVisibilitySchema.safeParse(Object.fromEntries(data));
+  if (!parsed.success) go("error", "Select a valid item and visibility.");
+  const value = parsed.data;
+  const tab = value.kind === "product" ? "products" : "promos";
+  if (!membership.branches.some(branch => branch.id === value.branchId)) go("error", "Branch access required.", tab);
+  const db = await createClient();
+  const { error } = await db.rpc("set_public_catalog_visibility", { p_org: membership.organizationId, p_branch: value.branchId, p_kind: value.kind, p_id: value.id, p_visible: value.isPublic === "true" });
+  if (error) go("error", error.code === "PGRST202" ? "Apply migration 0126 to enable catalog visibility settings." : "Unable to update visibility. Refresh and check the item is active and eligible for the public page.", tab);
+  saved(membership.organizationSlug, "Public visibility updated.", tab);
 }

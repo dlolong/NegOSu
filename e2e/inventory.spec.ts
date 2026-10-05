@@ -56,8 +56,10 @@ test("movement explains deductions and keeps an idempotency key when a retry is 
   await page.goto("https://forms.test/dashboard/inventory");
   await page.getByRole("link", { name: "Record movement", exact: true }).filter({ visible: true }).first().click();
   await page.locator("#inventory-item-movement-type").selectOption("usage");
-  await expect(page.getByText(/This quantity will be deducted/)).toBeVisible();
+  await expect(page.getByText(/2. Quantity to remove/)).toBeVisible();
   await page.locator("#inventory-item-movement-quantity").fill("1.25");
+  await expect(page.locator("#inventory-item-movement-preview")).toContainText("3.75 L");
+  await expect(page.locator("#inventory-item-movement-save")).toHaveText("Save stock removal");
   failure = "Insufficient available stock.";
   await page.locator("#inventory-item-movement-save").click();
   await expect(page.getByRole("alert")).toContainText("Insufficient");
@@ -74,6 +76,8 @@ test("pending movement disables Save and Cancel to prevent duplicate submissions
   await page.locator("#inventory-item-movement-note").fill("WAIT");
   await page.locator("#inventory-item-movement-save").click();
   await expect(page.locator("#inventory-item-movement-save")).toBeDisabled();
+  await expect(page.locator("#inventory-item-movement-type")).toBeDisabled();
+  await expect(page.locator("#inventory-item-movement-quantity")).toBeDisabled();
   await expect(page.getByRole("link", { name: "Cancel", exact: true })).toHaveAttribute("aria-disabled", "true");
   await expect.poll(() => calls.length).toBe(1);
   release?.();

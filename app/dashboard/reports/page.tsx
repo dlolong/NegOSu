@@ -1,3 +1,4 @@
+import { PageTitle } from "@/components/page-title";
 import { CompactFilters } from "@/components/compact-filters";
 import { Input } from "@/components/ui/input";
 import { PlanUpgradeNotice } from "@/components/plan-upgrade";
@@ -91,7 +92,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<Rec
       <header id="reports-page-header" className="flex flex-wrap items-center justify-between gap-4 min-w-0 [&>a]:ml-auto [&>button]:ml-auto [&>form]:ml-auto">
         <div className="min-w-0 flex-1 basis-full sm:basis-64 [overflow-wrap:anywhere]">
           <p className="text-sm font-medium text-brand-primary">Owner analytics</p>
-          <h1 className="mt-1 text-2xl font-medium sm:text-3xl">Reports</h1>
+          <PageTitle className="mt-1 text-2xl font-medium sm:text-3xl">Reports</PageTitle>
           <p className="mt-2 text-sm text-zinc-600 sm:text-base">Revenue, customers, workload, and branch trends from operational records.</p>
         </div>
         <nav id="reports-header-actions" aria-label="Report actions" className="flex max-w-full flex-wrap items-center gap-2 sm:ml-auto sm:justify-end">
@@ -173,7 +174,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<Rec
 }
 
 function ReportState({ title, description, retry, children }: { title: string; description: string; retry?: boolean; children?: ReactNode }) {
-  return <main id="reports-page" className="mx-auto w-full max-w-5xl"><header id="reports-page-header"><h1 className="text-2xl font-medium sm:text-3xl">Reports</h1></header><Card id="reports-state" className="mt-5 p-6 text-center"><h2 className="font-medium">{title}</h2><p className="mt-2 text-sm text-zinc-600">{description}</p>{retry ? <Button id="reports-retry-button" asChild className="mt-4" variant="secondary"><Link href="/dashboard/reports"><RefreshCwIcon aria-hidden="true" size={16} className="shrink-0"/>Try again</Link></Button> : null}{children}</Card></main>;
+  return <main id="reports-page" className="mx-auto w-full max-w-5xl"><header id="reports-page-header"><PageTitle className="text-2xl font-medium sm:text-3xl">Reports</PageTitle></header><Card id="reports-state" className="mt-5 p-6 text-center"><h2 className="font-medium">{title}</h2><p className="mt-2 text-sm text-zinc-600">{description}</p>{retry ? <Button id="reports-retry-button" asChild className="mt-4" variant="secondary"><Link href="/dashboard/reports"><RefreshCwIcon aria-hidden="true" size={16} className="shrink-0"/>Try again</Link></Button> : null}{children}</Card></main>;
 }
 
 function ReportList({ id, title, rows }: { id: string; title: string; rows: Array<[string, string]> }) {

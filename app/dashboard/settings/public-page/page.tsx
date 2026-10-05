@@ -1,13 +1,13 @@
+import { PublicVisibilityItem } from "@/components/public-catalog-visibility";
 import { SettingsFormSection } from "@/components/settings-form-section";
 import { ImageUploadField } from "@/components/image-upload-field";
-import { ServiceThumbnailForm } from "@/components/service-thumbnail-form";
 import { PlanUpgradeNotice } from "@/components/plan-upgrade";
 import { LocationMapField, PublicBranchForm } from "@/components/location-map-field";
 import { LocationMap } from "@/components/location-map";
 import { FormDialog } from "@/components/management-ui";
 import { ListTabs } from "@/components/list-tabs";
 
-import { ArrowRight as ArrowRightIcon, Eye as EyeIcon, Plus as PlusIcon, Save as SaveIcon, Pencil, MapPin } from "lucide-react";
+import { ArrowRight as ArrowRightIcon, Plus as PlusIcon, Save as SaveIcon, Pencil, MapPin } from "lucide-react";
 
 import { FormActions } from "@/components/form-actions";
 import Link from "next/link";
@@ -16,6 +16,7 @@ import {
   addGalleryImage,
   savePublicPage,
   togglePublicService,
+  togglePublicCatalogItem,
 } from "@/app/dashboard/settings/public-page/actions";
 import { FormMessage } from "@/components/form-message";
 import { PageHeader, StatusPill } from "@/components/page-patterns";
@@ -49,7 +50,7 @@ export default async function Page({
   ]);
 
   const hospitality = activeMembership.industry === "hospitality";
-  const [{ data: organization, error: organizationError }, { data: branches, error: branchesError }, { data: services, error: servicesError }, { data: gallery, error: galleryError }] =
+  const [{ data: organization, error: organizationError }, { data: branches, error: branchesError }, { data: services, error: servicesError }, { data: gallery, error: galleryError }, {data: products, error: productsError}, {data: promos, error: promosError}] =
     await Promise.all([
       supabase
         .from("organizations")
@@ -73,9 +74,11 @@ export default async function Page({
         .from("shop_gallery_images")
         .select("id,url,alt_text")
         .eq("organization_id", activeMembership.organizationId),
+      supabase.from("inventory_items").select("id,name,is_public,branch_id,thumbnail_url").eq("organization_id",activeMembership.organizationId).in("branch_id",activeMembership.branches.map(branch=>branch.id)).eq("is_active",true).in("product_purpose",["retail","both"]).not("sell_price_centavos","is",null).order("name"),
+      supabase.from("commerce_promos").select("id,name,is_public,branch_id,thumbnail_url:image_url").eq("organization_id",activeMembership.organizationId).in("branch_id",activeMembership.branches.map(branch=>branch.id)).eq("status","active").order("name"),
     ]);
 
-  if (organizationError || branchesError || servicesError || galleryError || !organization) {
+  if (organizationError || branchesError || servicesError || galleryError || productsError || promosError || !organization) {
     return <main id="public-page-settings-page" className="mx-auto min-w-0 max-w-6xl [overflow-wrap:anywhere]">
       <PageHeader id="public-page-settings-header" title={hospitality ? "Public website" : "Website and booking"} description={hospitality ? "Manage your property’s public website." : "Manage your public page and online booking."} />
       <Card id="public-page-settings-load-error" className="mt-6 p-6" role="alert">
@@ -86,7 +89,7 @@ export default async function Page({
     </main>;
   }
 
-  const tab=(hospitality ? ["profile","locations","gallery"] : ["profile","services","locations","gallery"]).includes(query.tab??"")?query.tab!:"profile";
+  const tab=(hospitality ? ["profile","products","locations","gallery"] : ["profile","services","products","promos","locations","gallery"]).includes(query.tab??"")?query.tab!:"profile";
   const publicServiceCount = services.filter(service => service.is_public).length;
   const bookingBranchCount = branches.filter(branch => {
     const openingHours = branch.opening_hours && typeof branch.opening_hours === "object"
@@ -116,7 +119,7 @@ export default async function Page({
         </div>
       </Card> : <Card id="public-website-readiness-card" className="mt-5 p-4"><h2 className="font-medium">{organization.public_page_enabled ? "Your website is published" : "Your website is private"}</h2><p className="mt-2 text-sm">Guests can view your photos, locations and contact details. Ask guests to contact the property for room rates and availability.</p></Card>}
 
-      <ListTabs id="website-settings-tabs" baseHref="/dashboard/settings/public-page" query={{}} parameter="tab" value={tab} options={[{value:"profile",label:"Business details"},...(!hospitality ? [{value:"services",label:"Services",count:publicServiceCount}] : []),{value:"locations",label:"Locations & hours",count:branches.length},{value:"gallery",label:"Gallery",count:gallery.length}]}/>
+      <ListTabs id="website-settings-tabs" baseHref="/dashboard/settings/public-page" query={{}} parameter="tab" value={tab} options={[{value:"profile",label:"Business details"},...(!hospitality ? [{value:"services",label:"Services",count:publicServiceCount}] : []),{value:"products",label:"Products",count:products.filter(item=>item.is_public).length},...(!hospitality ? [{value:"promos",label:"Promos",count:promos.filter(item=>item.is_public).length}] : []),{value:"locations",label:"Locations & hours",count:branches.length},{value:"gallery",label:"Gallery",count:gallery.length}]}/>
       <div id="public-page-settings-grid" className="mt-6 grid min-w-0 gap-5">
         {tab==="profile"?<Card id="public-page-profile-card" className="p-4 sm:p-6">
           <h2 className="text-lg font-medium text-admin-text">Business details</h2>
@@ -160,32 +163,20 @@ export default async function Page({
 
         {tab==="services"?<Card id="public-services-card" className="p-5">
           <h2 className="font-medium text-admin-text">Public services</h2>
-          <p className="mt-1 text-sm text-admin-text-muted">Choose which services customers can see and request. Save each photo separately from its visibility setting.</p>
-          <div id="public-services-list" className="mt-4 divide-y divide-admin-border">
-            {services?.map((service) => (
-              <div key={service.id}>
-              <form
-                id={`public-service-form-${service.id}`}
-                action={togglePublicService}
-                className="flex min-h-16 flex-wrap items-center justify-between gap-3 py-3"
-                key={service.id}
-              >
-                <input type="hidden" name="serviceId" value={service.id} />
-                <input type="hidden" name="isPublic" value={String(!service.is_public)} />
-                <span className="min-w-0 text-sm font-medium text-admin-text">
-                  {service.name}
-                  <small className="mt-1 block font-normal text-admin-text-muted">{service.is_public ? "Visible on your page and booking form" : "Hidden from customers"}</small>
-                </span>
-                <SubmitButton id={`public-service-toggle-button-${service.id}`} pendingText="Updating…" variant="secondary"><EyeIcon aria-hidden="true" size={16} className="shrink-0"/>
-                  {service.is_public ? "Hide service" : "Show service"}
-                </SubmitButton>
-              </form>
-              <ServiceThumbnailForm key={`${service.id}-${service.thumbnail_url ?? ""}`} service={service}/>
-              </div>
-            ))}
+          <p className="mt-1 text-sm text-admin-text-muted">Choose which services customers can see and request. Manage photos in the services or treatments catalog.</p>
+          <div id="public-services-list" className="mt-4 grid gap-3">
+            {services.map(service => <PublicVisibilityItem key={service.id} id={`public-service-${service.id}`} name={service.name} visible={service.is_public} detail="Visibility applies to your public page and booking form." action={togglePublicService} fields={{serviceId:service.id}} imageUrl={service.thumbnail_url}/>)}
             {!services?.length ? <p id="public-services-empty-state" className="py-4 text-sm text-admin-text-muted">No active services yet. Add services in your service catalog, then return here to publish them.</p> : null}
           </div>
         </Card>:null}
+
+        {tab === "products" || tab === "promos" ? <Card id={`public-${tab}-card`} className="p-5">
+          <h2 className="font-medium">Public {tab}</h2>
+          <p className="mt-1 text-sm text-admin-text-muted">{tab === "products" ? "Choose active retail products to display. Internal supplies stay private." : "Choose active promos to display. Promo dates, public services and booking location eligibility still apply."} Items appear only when your website is published.</p>
+          <div id={`public-${tab}-list`} className="mt-4 grid gap-3">{(tab === "products" ? products : promos).map(item => <PublicVisibilityItem key={item.id} id={`public-${tab === "products" ? "product" : "promo"}-${item.id}`} name={item.name} imageUrl={item.thumbnail_url} subject={tab === "products" ? "product" : "promo"} visible={item.is_public} detail={activeMembership.branches.find(branch=>branch.id===item.branch_id)?.name ?? "Branch"} action={togglePublicCatalogItem} fields={{kind:tab === "products" ? "product" : "promo",id:item.id,branchId:item.branch_id}}/>)}
+            {!(tab === "products" ? products : promos).length ? <p id={`public-${tab}-empty-state`} className="py-4 text-sm text-admin-text-muted">No eligible active {tab}. Add or activate items in your catalog first.</p> : null}
+          </div>
+        </Card> : null}
 
         {tab==="locations"?<section id="public-page-locations-section" className="min-w-0" aria-labelledby="public-page-locations-title">
           <div className="flex min-w-0 flex-wrap items-center justify-between gap-3"><div><h2 id="public-page-locations-title" className="text-lg font-medium text-admin-text">{hospitality ? "Locations" : "Booking locations"}</h2><p className="mt-1 text-sm text-admin-text-muted">{hospitality ? "Publish directions, property details and reception hours." : "Set where customers can request appointments and when each location is open."}</p></div><span className="text-sm font-medium text-admin-text-secondary">{hospitality ? `${branches.length} locations` : `${bookingBranchCount} of ${branches.length} enabled`}</span></div>

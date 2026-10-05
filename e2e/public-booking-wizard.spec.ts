@@ -13,7 +13,7 @@ test("wizard shows one step, validates details, reviews promo and preserves a re
  await page.locator("#public-booking-name-input").fill("Jane Client");await page.locator("#public-booking-phone-input").fill("09171234567");await page.locator("#public-booking-pet-name").fill("Milo");await page.locator("#public-booking-pet-species").selectOption("dog");await page.locator("#public-booking-next-step").click();
  await expect(page.locator("#public-booking-review")).toContainText("Haircut and shampoo");await expect(page.locator("#public-booking-review")).toContainText("Shampoo · 1 bottle");await expect(page.locator("#public-booking-customer-section")).toBeHidden();
  expect(submissions).toHaveLength(0);
- await page.locator("#public-booking-submit-button").click();await expect(page.getByRole("alert")).toContainText("This time was just taken.");
+ await page.locator("#public-booking-request-form").evaluate(form => { (form as HTMLFormElement).requestSubmit(); (form as HTMLFormElement).requestSubmit(); });await expect(page.getByRole("alert")).toContainText("This time was just taken.");
  expect(submissions).toHaveLength(1);expect(JSON.parse(Object.fromEntries(submissions[0]).promoSelections)[0].version).toBe(2);expect(Object.fromEntries(submissions[0]).customerName).toBe("Jane Client");
  await page.locator("#public-booking-previous-step").click();await expect(page.locator("#public-booking-name-input")).toHaveValue("Jane Client");
  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);

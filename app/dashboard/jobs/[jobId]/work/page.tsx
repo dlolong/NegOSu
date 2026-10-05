@@ -53,7 +53,7 @@ export default async function JobWorkPage({ params, searchParams }: { params: Pr
       eyebrow="Job order"
       title="Work and approvals"
       description="Assign service work, review approvals, and add authorized work without leaving the Job Order."
-      action={<Button id="job-order-work-back-button" asChild variant="secondary"><Link href={`/dashboard/jobs/${jobId}`}><ArrowLeftIcon aria-hidden="true" size={16} className="shrink-0"/>Back to job</Link></Button>}
+      back={<Button id="job-order-work-back-button" asChild variant="secondary"><Link href={`/dashboard/jobs/${jobId}`}><ArrowLeftIcon aria-hidden="true" size={16} className="shrink-0"/>Back to job</Link></Button>}
     />
     <FormMessage {...query} />
     {loaded.error || !loaded.job ? <ErrorState id="job-order-work-load-error" title="Unable to load work" description="Refresh the page and try again. If the problem continues, finish the pending development migrations." /> : <>

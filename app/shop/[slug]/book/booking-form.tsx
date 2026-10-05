@@ -1,4 +1,6 @@
 "use client";
+import { PageBack } from "@/components/page-back";
+import { ArrowLeft } from "lucide-react";
 
 import { promoServiceIds } from "@/modules/core/commerce/appointment-promos";
 import Link from "next/link";
@@ -16,10 +18,13 @@ import { submitBooking } from "@/app/shop/[slug]/actions";
 import { FormMessage } from "@/components/form-message";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import type { PublicBranch, PublicService, PublicShop } from "@/lib/public-booking";
+import type { PublicBranch, PublicService, PublicShop, PublicBookingState } from "@/lib/public-booking";
 
 export function BookingForm({ slug, industry, branch, services, selectedDate, slots, promos = [], backHref }: { promos?: PublicPromo[];backHref?:string;slug: string; industry: PublicShop["industry"]; branch: PublicBranch; services: PublicService[]; selectedDate: string; slots: Array<{ slot_at: string }> }) {
-  const [state, action, pending] = useActionState(submitBooking, {});
+  const submitting = useRef(false);
+  const [state, action, pending] = useActionState(async (previous: PublicBookingState, data: FormData) => {
+    try { return await submitBooking(previous, data); } finally { submitting.current = false; }
+  }, {});
   const [step,setStep]=useState(3);
   const formRef=useRef<HTMLFormElement>(null);
   const titleRef=useRef<HTMLHeadingElement>(null);
@@ -64,14 +69,16 @@ export function BookingForm({ slug, industry, branch, services, selectedDate, sl
   const total=regularServices.reduce((sum,s)=>sum+s.priceCentavos,0)+promos.reduce((sum,p)=>sum+p.priceCentavos,0);
   return <form ref={formRef} id="public-booking-request-form" action={action} noValidate onSubmit={event => {
     event.preventDefault();
-    if(pending)return;
+    if(pending || submitting.current)return;
     if(step<5){advance();return;}
+    submitting.current = true;
     const data = new FormData(event.currentTarget);
     try{sessionStorage.removeItem(draftKey);}catch{/* Storage is optional. */}
     startTransition(() => action(data));
   }} aria-busy={pending}>
+    <PageBack decorate={false}>{step===3?<Button asChild variant="secondary" disabled={pending}><Link id="public-booking-back-date" href={backHref??`/shop/${encodeURIComponent(slug)}/book`}><ArrowLeft aria-hidden="true" size={20}/>Back to date</Link></Button>:<Button id="public-booking-previous-step" type="button" variant="secondary" disabled={pending} onClick={()=>setStep(current=>current-1)}><ArrowLeft aria-hidden="true" size={20}/>Back</Button>}</PageBack>
     <PublicBookingProgress step={step}/>
-    <h2 ref={titleRef} tabIndex={-1} className="mb-4 text-xl font-medium outline-none">{step===3?"Choose a time":step===4?"Tell us about your visit":"Review your request"}</h2>
+    <div className="mb-4 flex min-w-0 flex-col items-start gap-3"><h2 ref={titleRef} tabIndex={-1} className="min-w-0 text-xl font-medium outline-none">{step===3?"Choose a time":step===4?"Tell us about your visit":"Review your request"}</h2></div>
     <fieldset disabled={pending}>
       <FormMessage error={state.error}/>
       <input type="hidden" name="slug" value={slug}/>
@@ -122,7 +129,7 @@ export function BookingForm({ slug, industry, branch, services, selectedDate, sl
 
       <label className="absolute -left-[9999px]" aria-hidden="true">Website<input name="website" tabIndex={-1} autoComplete="off"/></label>
       {step===5?<section id="public-booking-review" className="space-y-4 text-sm"><div className="rounded-ui-lg border border-admin-border p-4"><p className="font-medium">{branch.name}</p><p>{dateFormatter.format(new Date(`${selectedDate}T12:00:00Z`))} · {selectedTime?timeFormatter.format(new Date(selectedTime)):"Select a time"}</p></div><div className="rounded-ui-lg border border-admin-border p-4"><h3 className="font-medium">Services and promos</h3><ul className="mt-2 space-y-3">{services.filter(s=>!promos.some(p=>promoServiceIds(p).includes(s.id)) || promos.some(p=>promoServiceIds(p)[0]===s.id)).map(s=>{const p=promos.find(p=>promoServiceIds(p).includes(s.id));return <li key={s.id}><p className="flex justify-between gap-3"><span>{p?`Promo · ${p.name}`:s.name}</span><strong>{formatMoney(p?.priceCentavos??s.priceCentavos,p?.currency??s.currency)}</strong></p>{p?<ul className="mt-1 list-inside list-disc text-admin-text-secondary">{promoServiceIds(p).map(id=><li key={id}>{services.find(service=>service.id===id)?.name}</li>)}{p.inclusions.map((item,index)=><li key={index}>{item.name} · {item.quantity} {item.unit}</li>)}</ul>:null}</li>;})}</ul><p className="mt-3 flex justify-between border-t border-admin-border pt-3 font-medium"><span>{regularServices.length===0?"Total":"Estimated total"}</span><span>{formatMoney(total,promos[0]?.currency??services[0]?.currency)}</span></p></div><div className="rounded-ui-lg border border-admin-border p-4"><h3 className="font-medium">Contact details</h3><p className="mt-2">{fieldValue("customerName")} · {fieldValue("phone")}</p>{fieldValue("email")?<p>{fieldValue("email")}</p>:null}{industry==="pet_care"?<p className="mt-2">Pet: {fieldValue("petName")} · {fieldValue("species")}</p>:industry==="automotive"?<p className="mt-2">Vehicle: {fieldValue("vehicleMake")} {fieldValue("vehicleModel")} {fieldValue("plateNumber")}</p>:null}{fieldValue("customerNote")?<p className="mt-2 whitespace-pre-wrap">{fieldValue("customerNote")}</p>:null}</div><p className="text-admin-text-secondary">Check your details before sending. The business will review and confirm your requested time.</p></section>:null}
-      <div id="public-booking-request-actions" className="mt-6 flex flex-wrap justify-between gap-3">{step===3?<Button asChild variant="secondary" disabled={pending}><Link id="public-booking-back-date" href={backHref??`/shop/${encodeURIComponent(slug)}/book`}>Back to date</Link></Button>:<Button id="public-booking-previous-step" type="button" variant="secondary" disabled={pending} onClick={()=>setStep(current=>current-1)}>Back</Button>}{step<5?<Button key="continue" id="public-booking-next-step" type="button" disabled={pending||(step===3&&!selectedTime)} onClick={event=>{event.preventDefault();advance();}}>Continue</Button>:<Button key="submit" id="public-booking-submit-button" type="submit" disabled={pending} aria-busy={pending}><SendIcon aria-hidden="true" size={16}/>{pending?"Submitting request…":"Submit booking request"}</Button>}</div>
+      <div id="public-booking-request-actions" className="mt-6 flex flex-wrap justify-end gap-3">{step<5?<Button key="continue" id="public-booking-next-step" type="button" disabled={pending||(step===3&&!selectedTime)} onClick={event=>{event.preventDefault();advance();}}>Continue</Button>:<Button key="submit" id="public-booking-submit-button" type="submit" disabled={pending} aria-busy={pending}><SendIcon aria-hidden="true" size={16}/>{pending?"Submitting request…":"Submit booking request"}</Button>}</div>
     </fieldset>
   </form>;
 }

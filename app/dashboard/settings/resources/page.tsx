@@ -1,3 +1,4 @@
+import { ListingFilters } from "@/components/listing-filters";
 import { SearchableSelect } from "@/components/searchable-select";
 
 import { RecordTable } from "@/components/record-table";
@@ -22,7 +23,7 @@ type ResourceRow={id:string;name:string;branch_id:string;resource_type:string;ca
 type Branch={id:string;name:string};
 const branchName=(resource:ResourceRow)=>{const branch=Array.isArray(resource.branches)?resource.branches[0]:resource.branches;return branch?.name??"Unknown branch";};
 
-export default async function SchedulingResourcesPage({ searchParams }: { searchParams: Promise<{ error?: string; message?: string; create?: string; resourceId?: string; status?: string }> }) {
+export default async function SchedulingResourcesPage({ searchParams }: { searchParams: Promise<{ error?: string; message?: string; create?: string; resourceId?: string; q?: string; status?: string }> }) {
   const [params, { activeMembership }, supabase] = await Promise.all([searchParams, getDashboardContext(), createClient()]);
   const salon = activeMembership.industry !== "automotive",prefix = salon ? "salon-resource" : "scheduling-resource";
   const { data, error } = await supabase.from("scheduling_resources").select("id,name,branch_id,resource_type,capacity,is_active,branches(name)").eq("organization_id", activeMembership.organizationId).order("name");
@@ -33,8 +34,9 @@ export default async function SchedulingResourcesPage({ searchParams }: { search
   return <main id={salon ? "salon-resources-page" : "scheduling-resources-page"} className="mx-auto min-w-0 max-w-6xl">
     <PageHeader id={salon ? "salon-resources-page-header" : "scheduling-resources-page-header"} eyebrow="Settings" title={salon ? "Stations and resources" : "Service bays and resources"} description={salon ? "Set up the spaces and equipment used for appointments, such as a station, treatment room or grooming table." : "Set up the bays and equipment used for appointments. Each resource belongs to a branch."} action={canManage?<Button asChild><Link id={`${prefix}-create-button`} href="/dashboard/settings/resources?create=1"><PlusIcon aria-hidden="true" size={16} className="shrink-0"/>Add resource</Link></Button>:undefined}/>
     <FormMessage {...params} error={params.error??(error?"Unable to load scheduling resources.":undefined)}/>
+    <ListingFilters id="resources-filters" action="/dashboard/settings/resources" query={params} searchLabel="Search resource or branch" options={[{value:"all",label:"All statuses"},{value:"active",label:"Active"},{value:"inactive",label:"Inactive"}]}/>
     <ListTabs id="resources-tabs" baseHref="/dashboard/settings/resources" query={params} value={params.status??"all"} options={[{value:"all",label:"All",count:resources.length},{value:"active",label:"Active",count:resources.filter(resource=>resource.is_active).length},{value:"inactive",label:"Inactive",count:resources.filter(resource=>!resource.is_active).length}]}/>
-    <ResourceViews resources={resources.filter(resource=>!params.status||params.status==="all"||(params.status==="active"?resource.is_active:!resource.is_active))} canManage={canManage} salon={salon}/>
+    <ResourceViews resources={resources.filter(resource=>!params.q || `${resource.name} ${branchName(resource)} ${resource.resource_type}`.toLowerCase().includes(params.q.trim().toLowerCase())).filter(resource=>!params.status||params.status==="all"||(params.status==="active"?resource.is_active:!resource.is_active))} canManage={canManage} salon={salon}/>
     {canManage&&params.create?<FormDialog id={`${prefix}-create-dialog`} title={salon ? "Add resource" : "Add service bay or resource"} description="Give it a recognizable name and choose the branch where it is available." closeHref="/dashboard/settings/resources">{form}</FormDialog>:null}
     {selected ? <FormDialog id={`${prefix}-details-dialog`} title={selected.name} closeHref="/dashboard/settings/resources" size="md"><dl className="grid grid-cols-2 gap-4 text-sm">{[["Branch", branchName(selected)], ["Type", selected.resource_type], ["Capacity", selected.capacity], ["Status", selected.is_active ? "Active" : "Inactive"]].map(([label,value])=><div key={label}><dt className="text-admin-text-muted">{label}</dt><dd className="[overflow-wrap:anywhere]">{value}</dd></div>)}</dl></FormDialog> : null}
   </main>;

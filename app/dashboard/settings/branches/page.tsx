@@ -1,3 +1,4 @@
+import { ListingFilters } from "@/components/listing-filters";
 import { FormDialog } from "@/components/management-ui";
 
 import { RecordTable } from "@/components/record-table";
@@ -15,7 +16,7 @@ import { Button } from "@/components/ui/button";
 import { getDashboardContext } from "@/lib/auth/context";
 import { createClient } from "@/lib/supabase/server";
 
-export default async function Page({ searchParams }: { searchParams: Promise<{ message?: string; error?: string; branchId?: string; status?: string }> }) {
+export default async function Page({ searchParams }: { searchParams: Promise<{ message?: string; error?: string; branchId?: string; q?: string; status?: string }> }) {
   const [params, { activeMembership }, supabase] = await Promise.all([searchParams, getDashboardContext(), createClient()]);
   const { data, error } = await supabase.from("branches")
     .select("id,name,address_line,barangay,city,province,is_active,is_primary,phone,email")
@@ -28,9 +29,10 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ m
   return <main id="branches-page" className="mx-auto min-w-0 max-w-6xl">
     <PageHeader id="branches-page-header" eyebrow="Settings" title="Branches" description="Keep each location’s address and contact details up to date. Choose one active branch as the business default." action={canManage ? <Button asChild><Link id="branch-create-button" href="/dashboard/settings/branches/new"><PlusIcon aria-hidden="true" size={16} className="shrink-0"/>Add branch</Link></Button> : undefined}/>
     <FormMessage {...params} error={params.error ?? (error ? "Unable to load branches." : undefined)}/>
+    <ListingFilters id="branches-filters" action="/dashboard/settings/branches" query={params} searchLabel="Search branch or contact" options={[{value:"all",label:"All statuses"},{value:"active",label:"Active"},{value:"inactive",label:"Inactive"}]}/>
     <ListTabs id="branches-tabs" baseHref="/dashboard/settings/branches" query={params} value={params.status??"all"} options={[{value:"all",label:"All",count:data?.length??0},{value:"active",label:"Active",count:data?.filter(branch=>branch.is_active).length??0},{value:"inactive",label:"Inactive",count:data?.filter(branch=>!branch.is_active).length??0}]}/>
     <p id="branches-status-help" className="mt-3 text-sm text-admin-text-secondary">Deactivate a location when it is no longer in use. You can activate it again later.</p>
-    <section id="branches-list" className="mt-4"><RecordTable id="branches-table" caption="Business branches" empty="No branches in this view. Choose another filter or add a branch to get started." columns={[{key:"branch",label:"Branch"},{key:"contact",label:"Contact",secondary:true},...(canManage?[{key:"status",label:"Status",secondary:true}]:[]),{key:"actions",label:canManage?"Actions":"Status",align:"right"}]} rows={(data??[]).filter(branch=>!params.status||params.status==="all"||(params.status==="active"?branch.is_active:!branch.is_active)).map(branch=>({id:`branch-card-${branch.id}`,cells:{
+    <section id="branches-list" className="mt-4"><RecordTable id="branches-table" caption="Business branches" empty="No branches in this view. Choose another filter or add a branch to get started." columns={[{key:"branch",label:"Branch"},{key:"contact",label:"Contact",secondary:true},...(canManage?[{key:"status",label:"Status",secondary:true}]:[]),{key:"actions",label:canManage?"Actions":"Status",align:"right"}]} rows={(data??[]).filter(branch=>!params.q || `${branch.name} ${branch.phone??""} ${branch.email??""} ${branch.city??""}`.toLowerCase().includes(params.q.trim().toLowerCase())).filter(branch=>!params.status||params.status==="all"||(params.status==="active"?branch.is_active:!branch.is_active)).map(branch=>({id:`branch-card-${branch.id}`,cells:{
       branch:<><RecordLink id={`branch-link-${branch.id}`} href={canManage?`/dashboard/settings/branches/${branch.id}/edit`:`/dashboard/settings/branches?branchId=${branch.id}`}>{branch.name}</RecordLink>{branch.is_primary&&<span className="ml-2 text-xs text-brand-primary">Default</span>}<p className="mt-1 text-xs text-admin-text-secondary">{[branch.address_line,branch.barangay,branch.city,branch.province].filter(Boolean).join(", ")}</p></>,contact:branch.phone||branch.email||"No contact details",status:<StatusPill active={branch.is_active}/>,actions:canManage ? <div className="ml-auto flex max-w-full flex-wrap justify-end gap-2">
             <Button id={`branch-edit-button-${branch.id}`} asChild variant="secondary" size="sm"><Link href={`/dashboard/settings/branches/${branch.id}/edit`}><PencilIcon aria-hidden="true" size={16} className="shrink-0"/>Edit</Link></Button>
             {branch.is_active && !branch.is_primary ? <form id={`branch-default-form-${branch.id}`} action={setPrimaryBranch}><input type="hidden" name="id" value={branch.id}/><SubmitButton id={`branch-default-button-${branch.id}`} variant="secondary" pendingText="Updating…" size="sm"><StarIcon aria-hidden="true" size={16} className="shrink-0"/>Make default</SubmitButton></form> : null}

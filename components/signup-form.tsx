@@ -1,4 +1,6 @@
 "use client";
+import { PageBack } from "@/components/page-back";
+import { ArrowLeft } from "lucide-react";
 
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { useFormStatus } from "react-dom";
@@ -17,10 +19,12 @@ const steps = [
   { label: "Password", title: "Secure your account", fields: ["password", "confirmPassword"] },
 ];
 
-function Navigation({ step, back }: { step: number; back: () => void }) {
+function SignupBack({ back }: { back: () => void }) {
   const { pending } = useFormStatus();
+  return <Button id="negosu-signup-back-button" type="button" variant="ghost" disabled={pending} onClick={back}><ArrowLeft aria-hidden="true" size={20}/>Back</Button>;
+}
+function Navigation({ step }: { step: number }) {
   return <div className="flex gap-3 pt-2">
-    {step > 0 ? <Button id="negosu-signup-back-button" variant="secondary" disabled={pending} onClick={back}>Back</Button> : null}
     <SubmitButton id={step === 2 ? "negosu-signup-submit-button" : "negosu-signup-continue-button"} className="flex-1" pendingText="Creating account…">
       {step === 2 ? "Create account" : "Continue"}
     </SubmitButton>
@@ -66,12 +70,13 @@ export function SignupForm({ action, initialIndustry }: { action: (data: FormDat
   return <form id="negosu-signup-form" action={async data => {
     try { await action(data); } finally { submitting.current = false; }
   }} noValidate onSubmit={submit} className="mt-6 space-y-5">
+    {step>0 ? <PageBack decorate={false}><SignupBack back={() => move(step-1)}/></PageBack> : null}
     <ol id="negosu-signup-progress" aria-label="Signup progress" className="grid grid-cols-3 gap-2">
       {steps.map((item, index) => <li key={item.label} aria-current={step === index ? "step" : undefined} className={`border-t-2 pt-2 text-xs ${index <= step ? "border-brand-primary font-medium text-brand-primary-strong" : "border-slate-200 text-slate-500"}`}>
         <span className="block">Step {index + 1}</span><span>{item.label}</span>
       </li>)}
     </ol>
-    <h2 id="negosu-signup-step-title" ref={heading} tabIndex={-1} className="text-base font-medium focus:outline-none">{steps[step].title}</h2>
+    <div className="flex min-w-0 flex-col items-start gap-3">    <h2 id="negosu-signup-step-title" ref={heading} tabIndex={-1} className="text-base font-medium focus:outline-none">{steps[step].title}</h2></div>
     {error ? <p id="negosu-signup-step-error" role="alert" className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-800">{error}</p> : null}
     <div hidden={step !== 0}>
       <BusinessTypeSelector idPrefix="negosu" initialIndustry={initialIndustry} />
@@ -87,6 +92,6 @@ export function SignupForm({ action, initialIndustry }: { action: (data: FormDat
       <PasswordFields idPrefix="negosu-signup" />
       <p className="text-xs leading-5 text-zinc-500">After creating your account, you’ll continue to email verification or business setup.</p>
     </div>
-    <Navigation step={step} back={() => move(step - 1)} />
+    <Navigation step={step} />
   </form>;
 }

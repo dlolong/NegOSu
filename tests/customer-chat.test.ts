@@ -1,10 +1,10 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { publicChatSchema, staffChatSchema, chatBookingNote, chatStorageKey, type ChatSnapshot } from "../modules/core/chat/contracts";
+import { chatContactSchema, publicChatSchema, staffChatSchema, chatBookingNote, chatStorageKey, type ChatSnapshot } from "../modules/core/chat/contracts";
 import { resolveIndustryConfig } from "../modules/platform/industry";
 import { navigationForIndustry } from "../modules/platform/navigation";
 
-const start = { operation: "start", slug: "test-business", token: "a".repeat(64), branchId: "40800000-0000-4000-8000-000000000001", customerName: "Jane Doe", body: "Do you offer this service?", requestId: "50800000-0000-4000-8000-000000000001" };
+const start = { operation: "start", slug: "test-business", token: "a".repeat(64), branchId: "40800000-0000-4000-8000-000000000001", customerName: "Jane Doe", customerPhone: "09171234567", body: "Do you offer this service?", requestId: "50800000-0000-4000-8000-000000000001" };
 test("customer chat validates bounded messages and opaque tokens", () => {
  assert.ok(publicChatSchema.safeParse(start).success);
  for (const overrides of [{ body: "x".repeat(301) }, { body: "  " }, { token: "not-a-token" }, { branchId: "other" }, { requestId: "invalid" }, { customerName: "J" }, { slug: "../private" }]) assert.equal(publicChatSchema.safeParse({ ...start, ...overrides }).success, false);
@@ -26,4 +26,19 @@ test("all industries offer the same permission-scoped customer inbox", () => {
   const inbox = navigationForIndustry(resolveIndustryConfig(industry)).find(item => item.key === "inbox");
   assert.equal(inbox?.href, "/dashboard/inbox"); assert.equal(inbox?.permission, "appointments.manage");
  }
+});
+
+test("new conversations require valid contact and normalize mobile formatting", () => {
+ for (const contact of [{ customerPhone: "" }, { customerPhone: undefined }, { customerPhone: "abc09171234567" }, { customerPhone: "123" }, { customerPhone: "1".repeat(16) }, { customerPhone: "", customerEmail: "bad@" }, { customerPhone: "", customerEmail: "a@b.test\nInjected" }]) {
+  assert.equal(publicChatSchema.safeParse({ ...start, ...contact }).success, false);
+ }
+ const phone = chatContactSchema.parse({ customerName: " Jane ", customerPhone: "+63 (917) 123-4567" });
+ assert.equal(phone.customerPhone, "+639171234567");
+ assert.equal(phone.customerName, "Jane");
+ assert.ok(publicChatSchema.safeParse({ ...start, customerPhone: "", customerEmail: "jane@example.test" }).success);
+ assert.ok(publicChatSchema.safeParse({ ...start, customerEmail: "jane@example.test" }).success);
+});
+test("existing conversations remain readable and sendable without new contact fields", () => {
+ assert.ok(publicChatSchema.safeParse({ operation: "send", slug: start.slug, token: start.token, requestId: start.requestId, body: "Follow-up" }).success);
+ assert.ok(publicChatSchema.safeParse({ operation: "read", slug: start.slug, token: start.token }).success);
 });

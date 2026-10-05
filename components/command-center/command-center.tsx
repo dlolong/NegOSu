@@ -1,3 +1,4 @@
+import { PageTitle } from "@/components/page-title";
 import { WorkspaceColumns } from "@/components/workspace-columns";
 import type { ReactNode } from "react";
 import { DashboardChart } from "@/components/dashboard-chart";
@@ -49,22 +50,8 @@ export function CommandCenter({
   const secondaryActions = quickActions.filter(action => !action.primary);
   const branchNames = new Map(branches.map(({ id, name }) => [id, name]));
   const attentionCount = snapshot.metrics.find(({ key }) => key === "attention")?.value ?? snapshot.actions.length;
-  return <main id="negosu-command-center-page" className="mx-auto min-w-0 max-w-7xl pb-5">
-    <header id="negosu-command-center-header" className="flex flex-wrap items-center justify-between gap-3 border-b border-admin-border pb-4 min-w-0 [&>a]:ml-auto [&>button]:ml-auto [&>form]:ml-auto">
-      <div className="min-w-0 flex-1 basis-full sm:basis-64 [overflow-wrap:anywhere]"><h1 className="mt-0.5 text-2xl font-medium tracking-tight text-admin-text sm:text-3xl">Command Center</h1><p id="negosu-command-center-operational-date" className="mt-0.5 text-xs font-medium text-slate-500">{operationalDate(snapshot)} · {snapshot.scope.label}</p><p className="mt-0.5 text-sm text-slate-600">Good day, {firstName}. Here&apos;s what needs attention today.</p></div>
-      {branches.length > 1 ? <form id="negosu-command-center-branch-selector-form" action="/dashboard/branch-context" className="ml-auto flex w-full items-end gap-2 sm:w-auto" method="get"><input type="hidden" name="next" value="/dashboard"/>
-        <label className="min-w-0 flex-1 text-xs font-medium normal-case tracking-wide text-slate-500 sm:min-w-48">View
-          <select id="negosu-command-center-branch-selector" name="branch" defaultValue={snapshot.scope.mode === "all" ? "all" : snapshot.scope.selectedBranchId ?? ""} className="mt-1 min-h-10 w-full rounded-xl border border-admin-border bg-white px-3 text-sm font-medium normal-case text-admin-text">
-            {branches.length > 1 ? <option value="all">All Branches</option> : null}
-            {branches.map((branch) => <option key={branch.id} value={branch.id}>{branch.name}</option>)}
-          </select>
-        </label>
-        <Button id="negosu-command-center-branch-apply" type="submit" size="sm" variant="secondary"><SearchIcon aria-hidden="true" size={16} className="shrink-0"/>Apply</Button>
-      </form> : null}
-      {primaryActions.length ? <div id="dashboard-primary-actions" className="ml-auto flex w-full flex-wrap gap-2 sm:w-auto sm:justify-end">{primaryActions.map(action=><Button asChild key={action.id} variant={action.id === "add-walk-in" ? "secondary" : "primary"}><Link id={`negosu-command-center-quick-action-${action.id}`} href={action.href}>{action.id === "new-appointment" ? <CalendarDays size={16} aria-hidden="true"/> : <Plus size={16} aria-hidden="true"/>}{action.label}</Link></Button>)}</div> : null}
-    </header>
-
-    <WorkspaceColumns id="command-center-workspace" sidebar={<>
+  return <main id="negosu-command-center-page" className="min-w-0 pb-5">
+    <WorkspaceColumns layout="command-center" id="command-center-workspace" sidebar={<>
       {discovery}
       {secondaryActions.length || snapshot.scope.mode === "all" ? <section id="negosu-command-center-quick-actions" className="min-w-0 rounded-xl border border-admin-border bg-admin-surface p-4">
         <h2 className="font-medium text-admin-text">Quick Actions</h2>
@@ -82,7 +69,20 @@ export function CommandCenter({
         })}</div>{!snapshot.staff.length && !sectionErrors.staff ? <p id="negosu-staff-snapshot-empty" className="mt-3 rounded-xl bg-slate-50 px-4 py-4 text-center text-sm text-slate-500">No active Staff are available in this view.</p> : null}
       </section>
     </>}>
-    <section id="negosu-command-center-metrics" aria-label="Business metrics" className="mb-3 grid grid-cols-2 gap-2 md:grid-cols-3 2xl:grid-cols-5">
+    <header id="negosu-command-center-header" className="flex flex-wrap items-center justify-between gap-3 border-b border-admin-border pb-4 min-w-0 [&>a]:ml-auto [&>button]:ml-auto [&>form]:ml-auto">
+      <div className="min-w-0 flex-1 basis-full sm:basis-64 [overflow-wrap:anywhere]"><PageTitle className="mt-0.5 text-2xl font-medium tracking-tight text-admin-text sm:text-3xl">Command Center</PageTitle><p id="negosu-command-center-operational-date" className="mt-0.5 text-xs font-medium text-slate-500">{operationalDate(snapshot)} · {snapshot.scope.label}</p><p className="mt-0.5 text-sm text-slate-600">Good day, {firstName}. Here&apos;s what needs attention today.</p></div>
+      {branches.length > 1 ? <form id="negosu-command-center-branch-selector-form" action="/dashboard/branch-context" className="ml-auto flex w-full items-end gap-2 sm:w-auto" method="get"><input type="hidden" name="next" value="/dashboard"/>
+        <label className="min-w-0 flex-1 text-xs font-medium normal-case tracking-wide text-slate-500 sm:min-w-48">View
+          <select id="negosu-command-center-branch-selector" name="branch" defaultValue={snapshot.scope.mode === "all" ? "all" : snapshot.scope.selectedBranchId ?? ""} className="mt-1 min-h-10 w-full rounded-xl border border-admin-border bg-white px-3 text-sm font-medium normal-case text-admin-text">
+            {branches.length > 1 ? <option value="all">All Branches</option> : null}
+            {branches.map((branch) => <option key={branch.id} value={branch.id}>{branch.name}</option>)}
+          </select>
+        </label>
+        <Button id="negosu-command-center-branch-apply" type="submit" size="sm" variant="secondary"><SearchIcon aria-hidden="true" size={16} className="shrink-0"/>Apply</Button>
+      </form> : null}
+      {primaryActions.length ? <div id="dashboard-primary-actions" className="ml-auto flex w-full flex-wrap gap-2 sm:w-auto sm:justify-end">{primaryActions.map(action=><Button asChild key={action.id} variant={action.id === "add-walk-in" ? "secondary" : "primary"}><Link id={`negosu-command-center-quick-action-${action.id}`} href={action.href}>{action.id === "new-appointment" ? <CalendarDays size={16} aria-hidden="true"/> : <Plus size={16} aria-hidden="true"/>}{action.label}</Link></Button>)}</div> : null}
+    </header>
+    <section id="negosu-command-center-metrics" aria-label="Business metrics" className="my-3 grid grid-cols-2 gap-2 md:grid-cols-3 2xl:grid-cols-5">
       {snapshot.metrics.map((metric) => {
         const content = <><span className="text-[11px] font-medium normal-case tracking-wide text-slate-500 sm:text-xs">{metric.label}</span><strong className="mt-1 block text-xl font-medium tracking-tight text-admin-text sm:text-2xl">{metric.valueKind === "currency" ? formatCurrency(metric.value, snapshot.scope.currency) : metric.value.toLocaleString("en-PH")}</strong>{metric.helperText ? <small className="mt-0.5 hidden text-xs text-slate-500 sm:block">{metric.helperText}</small> : null}</>;
         const id = metricId(metric.key);
@@ -115,7 +115,7 @@ export function CommandCenter({
 
 
     {snapshot.scope.mode === "all" && snapshot.branchPerformance.length > 1 ? <section id="negosu-branch-performance" className="mt-3 min-w-0 rounded-xl border border-admin-border bg-admin-surface p-4"><h2 className="font-medium text-admin-text">Branch Performance</h2><div className="mt-3 hidden overflow-hidden rounded-xl border border-slate-200 2xl:block"><table id="negosu-branch-performance-table" className="w-full text-left text-sm"><thead className="bg-slate-50 text-xs normal-case text-slate-500"><tr><th className="px-3 py-2">Branch</th><th className="px-3 py-2 text-right">Collected today</th><th className="px-3 py-2 text-right">Appointments</th><th className="px-3 py-2 text-right">Outstanding</th><th className="px-3 py-2 text-right">Attention</th></tr></thead><tbody className="divide-y">{snapshot.branchPerformance.map((branch) => <RecordRow id={`negosu-branch-performance-${branch.branchId}`} key={branch.branchId}><th scope="row" className="px-3 py-2.5"><RecordLink id={`branch-performance-link-${branch.branchId}`} prefetch={false} href={`/dashboard/branch-context?branch=${branch.branchId}&next=/dashboard`}>{branch.branchName}</RecordLink></th><td className="px-3 py-2.5 text-right font-medium">{formatCurrency(branch.revenueTodayCentavos, snapshot.scope.currency)}</td><td className="px-3 py-2.5 text-right">{branch.appointmentsToday}</td><td className="px-3 py-2.5 text-right">{formatCurrency(branch.outstandingCentavos, snapshot.scope.currency)}</td><td className="px-3 py-2.5 text-right font-medium">{branch.attentionCount}</td></RecordRow>)}</tbody></table></div><div id="negosu-branch-performance-mobile" className="mt-3 grid gap-2 2xl:hidden">{snapshot.branchPerformance.map((branch) => <RecordItem id={`negosu-branch-performance-card-${branch.branchId}`} key={branch.branchId} className="rounded-xl border border-slate-200 p-3"><div className="flex justify-between gap-3"><RecordLink id={`branch-performance-link-mobile-${branch.branchId}`} prefetch={false} href={`/dashboard/branch-context?branch=${branch.branchId}&next=/dashboard`}>{branch.branchName}</RecordLink><Badge>{branch.attentionCount} attention</Badge></div><dl className="mt-2 grid grid-cols-3 gap-2 text-xs"><div><dt className="text-slate-500">Collected today</dt><dd className="font-medium">{formatCurrency(branch.revenueTodayCentavos, snapshot.scope.currency)}</dd></div><div><dt className="text-slate-500">Appointments</dt><dd className="font-medium">{branch.appointmentsToday}</dd></div><div><dt className="text-slate-500">Outstanding</dt><dd className="font-medium">{formatCurrency(branch.outstandingCentavos, snapshot.scope.currency)}</dd></div></dl></RecordItem>)}</div></section> : null}
-    <div className="grid min-w-0 gap-3 2xl:grid-cols-2">
+    <div id="command-center-charts" className="grid min-w-0 gap-3 xl:grid-cols-2 [&>section]:mb-0">
       <DashboardChart id="command-center-activity-chart" title="Operations at a glance" description={`${snapshot.scope.label} · Current dashboard counts; categories may overlap.`} points={snapshot.metrics.filter(metric => metric.valueKind === "count").map(metric => ({ label: metric.label, value: metric.value }))}/>
       {snapshot.metrics.some(metric => metric.valueKind === "currency") ? <DashboardChart id="command-center-finance-chart" title="Financial snapshot" description={`${snapshot.scope.label} · Today's collections and current balances, as labeled.`} currency={snapshot.scope.currency} points={snapshot.metrics.filter(metric => metric.valueKind === "currency").map(metric => ({ label: metric.label, value: metric.value }))}/> : null}
     </div>

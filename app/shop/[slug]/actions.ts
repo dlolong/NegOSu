@@ -1,7 +1,7 @@
 "use server";
 
 import { readAppointmentPromos } from "@/modules/core/commerce/appointment-promos";
-import { createHash } from "node:crypto";
+import { publicRequestRateKey, publicBookingProtectionError } from "@/lib/public-request-protection";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { formValue, firstError } from "@/lib/crm";
@@ -36,14 +36,15 @@ export async function submitBooking(_previous: PublicBookingState, data: FormDat
   try { promos=readAppointmentPromos(data); } catch { return fail("Refresh and select your promo again."); }
   if(promos.length>10)return fail("Select no more than 10 promos.");
   const h = await headers();
-  const fingerprint = `${h.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "local"}|${h.get("user-agent") ?? "unknown"}`;
-  const rateKey = createHash("sha256").update(fingerprint).digest("hex");
+  const rateKey = publicRequestRateKey(h.get("x-forwarded-for"));
   const common={p_slug:parsed.data.slug,p_branch_id:parsed.data.branchId,p_service_ids:parsed.data.serviceIds,p_preferred_at:parsed.data.preferredAt,p_customer_name:parsed.data.customerName,p_phone:parsed.data.phone,p_email:parsed.data.email||null,p_customer_note:parsed.data.customerNote||null,p_rate_key_hash:rateKey,p_honeypot:parsed.data.website};
   const vehicle={p_vehicle_make:parsed.data.vehicleMake||null,p_vehicle_model:parsed.data.vehicleModel||null,p_vehicle_year:parsed.data.vehicleYear||null,p_vehicle_type:parsed.data.vehicleType||null,p_plate_number:parsed.data.plateNumber||null};
   const pet={p_pet_name:values.petName.trim()||null,p_species:values.species||null,p_breed:values.breed.trim()||null};
   const {data:result,error}=promos.length
     ?await supabase.rpc("submit_public_promo_booking",{...common,...vehicle,...pet,p_promos:promos})
     :await supabase.rpc(industry==="pet_care"?"submit_pet_public_booking":"submit_public_booking",{...common,...(industry==="pet_care"?pet:vehicle)});
+  const protectionError = error ? publicBookingProtectionError(error) : null;
+  if (protectionError) return fail(protectionError);
   if(promos.length&&error?.code==="22023")return fail("A selected promo changed or is unavailable for this date. Go back to services and select it again.");
   if(promos.length&&["PGRST202","42P01","42883"].includes(error?.code??""))return fail("Promo booking is temporarily unavailable. Please contact the business or choose a regular service.");
   if (error || !result) return fail(reportActionError("public_booking.submit", error, "Unable to submit this request. The opening may no longer be available. Please refresh the openings or try again."));

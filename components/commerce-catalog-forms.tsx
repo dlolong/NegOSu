@@ -49,7 +49,6 @@ export function ProductCatalogForm({ product, currency, requestKey }: { product?
 
 export function PromoCatalogForm({ promo, products, services, hospitality, currency, requestKey }: { promo?: CatalogPromo; products: CatalogProduct[]; services: { id: string; name: string }[]; hospitality: boolean; currency: string; requestKey: string }) {
   const [state, action] = useActionState(savePromo, {});
-  const [isPublic,setIsPublic] = useState(promo?.is_public ?? false);
   const [draft, setDraft] = useState({ name: promo?.name ?? "", price: ((promo?.price_centavos ?? 0) / 100).toFixed(2), description: promo?.description ?? "", validFrom: promo?.valid_from ?? "", validThrough: promo?.valid_through ?? "", status: promo?.status ?? "draft" });
   const field = (name: keyof typeof draft) => ({ value: draft[name], onChange: (event: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => setDraft(current => ({ ...current, [name]: event.target.value })) });
   const [components, setComponents] = useState<PromoComponent[]>(promo?.components ?? [{ kind: hospitality ? "accommodation" : "service", referenceId: null, quantity: "1", unit: "service" }, { kind: "product", referenceId: null, quantity: "1", unit: "piece" }]);
@@ -62,10 +61,9 @@ export function PromoCatalogForm({ promo, products, services, hospitality, curre
     <label>Fixed price ({currency})<Input id="promo-price" name="price" inputMode="decimal" required {...field("price")}/></label>
     <label className="col-span-full">Description<Input id="promo-description" name="description" maxLength={1000} {...field("description")}/></label>
     </SettingsFormSection>
-    <SettingsFormSection id="promo-presentation-section" title="Photo & visibility">
+    <SettingsFormSection id="promo-presentation-section" title="Photo">
     <div className="col-span-full"><ImageUploadField id="promo-image-url" name="imageUrl" label="Promo image (optional)" value={promo?.image_url}/><p className="mt-2 text-sm text-admin-text-secondary">Image URLs work on any plan; uploads require an eligible plan.</p></div>
-    {!hospitality?<label className="col-span-full flex min-h-11 items-center gap-2"><input id="promo-public" name="isPublic" type="checkbox" checked={isPublic} onChange={event=>setIsPublic(event.target.checked)}/>Show on public website</label>:null}
-    {!hospitality?<p className="col-span-full text-xs font-normal leading-5 text-admin-text-secondary">Public promos need Active status, a published service, and a branch accepting online bookings. Internal supplies stay private.</p>:null}
+    {!hospitality?<p className="col-span-full text-xs font-normal leading-5 text-admin-text-secondary">Manage public visibility in Website and booking → Promos.</p>:null}
     </SettingsFormSection>
     <SettingsFormSection id="promo-availability-section" title="Dates & status">
     <label>Valid from (optional)<Input id="promo-valid-from" type="date" name="validFrom" {...field("validFrom")}/></label>

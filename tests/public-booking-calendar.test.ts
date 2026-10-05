@@ -76,7 +76,7 @@ test("availability calendar RPC is bounded and delegates slot authority", () => 
 });
 
 test("public shop exposes a complete responsive customer journey", () => {
-  const shop = source("app/shop/[slug]/page.tsx");
+  const shop = source("app/shop/[slug]/page.tsx") + source("components/public-shop-navigation.tsx");
   for (const id of ["public-shop-header", "public-shop-hero-media", "public-shop-quick-details", "public-shop-services-title", "public-shop-locations-title", "public-shop-social-links"]) {
     assert.match(shop, new RegExp(id));
   }

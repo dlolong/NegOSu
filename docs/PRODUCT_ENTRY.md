@@ -102,13 +102,13 @@ Public websites include a Contact us section with the business and published bra
 
 ## Guided website chat and customer inbox
 
-All business public websites include a Chat button. Quick choices use the existing published services, prices, locations and opening hours. Booking help and service-question suggestions can fill a short message for the customer to review before sending. Custom conversations go to **Customer Inbox** in the selected branch; owners, managers and advisors with appointment-management permission can read, reply, close and reopen them. The inbox has Needs reply, Open and Closed tabs and updates every 15 seconds while visible. Customers receive replies in the same browser tab, checked every 10 seconds while chat is open. This does not send email or SMS.
+All business public websites include a Chat button. Quick choices use the existing published services, prices, locations and opening hours. Booking help and service-question suggestions can fill a short message for the customer to review before sending. Before composing a personal message, customers provide their name and either a mobile number or email. Quick answers remain separate from messaging. Contact details are saved with the first message and shown only in the authorized staff inbox. Custom conversations go to **Customer Inbox** in the selected branch; owners, managers and advisors with appointment-management permission can read, reply, close and reopen them. The inbox has Needs reply, Open and Closed tabs and updates every 15 seconds while visible. Customers receive replies in the same browser tab, checked every 10 seconds while chat is open. This does not send email or SMS.
 
 Customers can send three messages of up to 300 characters per conversation. A server-derived visitor fingerprint limits new conversations to five per business in a rolling 24-hour window. Staff replies allow up to 1,000 characters, with at most 50 replies per thread. Customer access expires after seven days; expired conversations remain in the staff inbox. The browser tab retains an opaque conversation key in session storage; closing the tab or clearing that storage can lose access to replies. No public inbox listing is available.
 
 The chat's Book an appointment action retains the selected public location and service. For a conversation in that location, booking prefills the customer name and customer messages as an editable note; business replies are not copied. Availability, final pricing, contact/vehicle/pet details and business confirmation continue through the existing booking flow.
 
-Deployment requires migration `0080_customer_chat.sql` and the existing server-only `SUPABASE_SERVICE_ROLE_KEY`. Apply through the normal reviewed Supabase migration process; no external chat provider or new dependency is required. Guided answers and booking links remain usable if chat persistence is temporarily unavailable. With no published service or bookable location, the chat offers questions/contact information without promising appointment availability.
+Deployment requires migrations `0080_customer_chat.sql` and `0124_customer_chat_contact.sql` and the existing server-only `SUPABASE_SERVICE_ROLE_KEY`. Apply through the normal reviewed Supabase migration process; no external chat provider or new dependency is required. Guided answers and booking links remain usable if chat persistence is temporarily unavailable. With no published service or bookable location, the chat offers questions/contact information without promising appointment availability.
 
 The admin header includes a Notifications bell for outstanding work in the active branch. Depending on permissions and industry, it shows customer conversations needing replies, pending public booking requests, appointments awaiting confirmation, low/out-of-stock items, and overdue Automotive jobs. Appointment/job alerts open the next relevant record; other alerts open their working lists. The count represents unresolved tasks, so opening the bell does not clear it. It refreshes every 30 seconds while the page is visible, when returning to the window, on page navigation, and when opened/refreshed manually. Missing sources show a partial-update warning rather than an all-clear result. Chat counts depend on migration 0080; the bell adds no new migration.
 
@@ -117,3 +117,31 @@ Open dialogs lock background scrolling on public pages and the admin workspace (
 The workspace menu prioritizes daily operations: Automotive starts with Queue, Job Orders, and My Work; Salon and Pet Care start with Appointments and Booking Requests. Payments sits within Operations. Customer records follow, then Inventory, Reports, Services/Treatments, and Staff; resources, branches, and settings stay under More. Automotive maintenance reminders sit with customer and vehicle records. Mobile shows the first three accessible destinations in this same order, including Dashboard, and keeps all remaining destinations in More. Existing role and industry access rules continue to apply.
 
 Reports are available on every plan for users with reporting permission. Free includes a rolling 30-day overview for the active branch: sales, receipts, outstanding balances, completed work, daily totals, and customer metrics. Starter and higher plans add custom date filters, revenue and team breakdowns, branch comparisons, and CSV exports. Migration `0081_reports_every_plan.sql` enforces the limits in the reporting RPCs and enables advanced reports on Starter. Effective subscription status still controls access after cancellation or the end of a grace period.
+
+
+## Staff details and completed work
+
+Owners can open a staff name from Settings → Staff to see a profile and searchable, date-filtered completed-work history for the active branch. Edit remains a separate action. History includes completed salon/pet visits, completed automotive jobs, and recorded hospitality check-in/check-out duties. Inactive staff and staff without login accounts retain recorded history. Change the active branch to inspect work at another authorized location.
+
+Service and promo histories display all recorded contributors, combining repeated sessions for the same staff member. Labels distinguish service assignments, visit teams, job leads, and recorded work sessions; a whole-visit/job team does not prove who performed each individual service. Automotive completion snapshots take precedence over later assignment changes when available. Missing attribution is shown explicitly, never guessed. Migration `0125_staff_work_history.sql` adds the read-only history views.
+
+Public business website menus now share this order: Services/Treatments, Products, Promos, Locations, Contact, Gallery. Unavailable sections are omitted. The header stays pinned and gains a subtle shadow after scrolling. Tablet navigation has its own row; section links clear the measured header height. Sections reveal once as they enter view, while reduced-motion preferences disable animation and content remains visible without JavaScript.
+
+Public Page settings now includes Services, Products and Promos visibility lists.
+Public items use green rows; hidden items use gray rows. Show is green and Hide is
+amber, with explicit status text. Product and promo lists cover active eligible
+items in accessible branches. Internal supplies are excluded; promo dates,
+service eligibility and public booking location rules still determine public
+availability. Service details retain operational Activate/Deactivate only.
+
+Apply `supabase/migrations/0126_public_catalog_visibility.sql` before using the
+new product/promo controls. Its narrow RPC authorizes owners/managers and branch
+access, and updates only visibility; existing promo validation/versioning and
+RLS remain intact. No migration was applied automatically.
+
+The visibility lists show read-only thumbnails for services, products and promos,
+with a fallback for missing photos. Edit photos in their catalog pages. Promo
+editing no longer offers a public visibility checkbox: new promos start private,
+and existing promos retain their stored visibility when details are saved. The
+existing promo version check rejects concurrent edits; visibility is managed in
+Website and booking → Promos. This adjustment needs no additional migration.

@@ -1,0 +1,21 @@
+import {test,expect} from "@playwright/test";
+import {renderFormFixture} from "./fixtures/form-browser";
+test("visibility controls distinguish states and submit the intended value",async({page})=>{
+ const html=await renderFormFixture("e2e/fixtures/public-catalog-visibility.tsx");
+ await page.setViewportSize({width:390,height:844});
+ await page.route("https://forms.test/**",route=>route.fulfill({contentType:"text/html",body:html}));
+ await page.goto("https://forms.test/visibility");
+ await expect(page.locator("#shown-item")).toContainText("Available to public");
+ await expect(page.locator("#hidden-item")).toContainText("Hidden from public");
+ await expect(page.locator("#shown-thumbnail")).toBeVisible();
+ await expect(page.locator("#hidden-thumbnail")).toBeVisible();
+ await expect(page.locator('input[type="file"]')).toHaveCount(0);
+ const color=(id:string)=>page.locator(id).evaluate(el=>getComputedStyle(el).backgroundColor);
+ expect(await color("#shown-item")).not.toBe(await color("#hidden-item"));
+ expect(await color("#shown-toggle-button")).not.toBe(await color("#hidden-toggle-button"));
+ await page.locator("#hidden-toggle-button").click();
+ await expect(page.locator("body")).toHaveAttribute("data-visibility","true");
+ await page.locator("#shown-toggle-button").click();
+ await expect(page.locator("body")).toHaveAttribute("data-visibility","false");
+ expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+});

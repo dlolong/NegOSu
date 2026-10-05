@@ -341,3 +341,10 @@ Admin attention counts use `/api/dashboard/notifications`, an authenticated, pri
 ## Apartelle & Inn
 
 The Hospitality domain owns rooms, immutable stay snapshots, check-in/out and the tenant/branch-safe stay-to-invoice association. Core owns neutral manual invoices, exact charge totals, idempotent collections and existing payment reversals. Application routes compose Hospitality screens with shared Customers, Staff, Inventory, report helpers and Command Center. No Core module imports Hospitality and no stay creates a fake appointment or job. See [the Hospitality contract and local setup](HOSPITALITY.md).
+
+
+## Staff work attribution
+
+Migration 0125 adds security-invoker views `staff_work_participation` and `staff_completed_work`. They read existing appointment assignments, automotive job/item assignments and work sessions, automotive completion snapshots, and hospitality shift records under source RLS. There are no new write paths or public grants. Shared loaders in `modules/core/staff/work-history.ts` enforce explicit organization/active-branch scope, paginate completed work before rendering, and batch contributor lookups for each catalog page. Staff detail contact/access data remains owner-only through the existing management directory RPC; catalog attribution uses only operational display names.
+
+Migration 0124 adds nullable phone/email columns to customer conversations, validates their formats and requires at least one contact on new conversations. Existing null-contact conversations remain usable. Server validation, service-role-only RPC execution, token/visitor locks, request idempotency, message limits, and staff tenant/branch RLS remain authoritative. Contact details are not added to public chat snapshots, and no outbound SMS/email is sent.

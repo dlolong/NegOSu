@@ -1,10 +1,13 @@
+import { PageTitle } from "@/components/page-title";
 import type { ReactNode } from "react";
 
 import { cn } from "@/lib/utils";
 
-export function PageHeader({ id, eyebrow, title, description, action }: { id: string; eyebrow?: string; title: string; description?: string; action?: ReactNode }) {
-  return <header id={id} className="flex min-w-0 flex-wrap items-center justify-between gap-3">
-    <div id={`${id}-content`} className="min-w-0 flex-1 basis-full sm:basis-64 [overflow-wrap:anywhere]">{eyebrow ? <p className="text-xs font-medium tracking-[0.12em] text-brand-primary">{eyebrow}</p> : null}<h1 className="mt-0.5 text-2xl font-medium tracking-tight text-admin-text sm:text-3xl">{title}</h1>{description ? <p className="mt-1 max-w-3xl text-sm text-admin-text-secondary">{description}</p> : null}</div>{action ? <div id={`${id}-actions`} className="ml-auto flex min-w-0 max-w-full flex-wrap items-center justify-end gap-2 [&>div]:flex-wrap [&>div]:items-center [&>div]:justify-end">{action}</div> : null}
+export function PageHeader({ id, eyebrow, title, description, action, back, close }: { id: string; eyebrow?: string; title: string; description?: string; action?: ReactNode; back?: ReactNode; close?: ReactNode }) {
+  return <header id={id} className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-start gap-3">
+    <div id={`${id}-content`} className="min-w-0 [overflow-wrap:anywhere]">{eyebrow ? <p className="text-xs font-medium tracking-[0.12em] text-brand-primary">{eyebrow}</p> : null}<PageTitle back={back} className="mt-0.5 text-2xl font-medium tracking-tight text-admin-text sm:text-3xl">{title}</PageTitle>{description ? <p className="mt-1 max-w-3xl text-sm text-admin-text-secondary">{description}</p> : null}</div>
+    {close ? <div id={`${id}-close`} data-page-close-slot className="col-start-2 row-start-1 justify-self-end">{close}</div> : null}
+    {action ? <div id={`${id}-actions`} className={`col-span-2 flex min-w-0 max-w-full flex-wrap items-center justify-end gap-2 [&>div]:flex-wrap [&>div]:items-center [&>div]:justify-end ${close ? "" : "sm:col-span-1 sm:col-start-2 sm:row-start-1 sm:self-center"}`}>{action}</div> : null}
   </header>;
 }
 

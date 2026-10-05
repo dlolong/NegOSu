@@ -1,9 +1,10 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { OrganizationMembership } from "@/lib/auth/context";
+import { reportActionError } from "@/lib/errors/action-error";
 import { roleHasPermission } from "@/lib/rbac";
 import { automotiveActiveJobStatuses } from "@/modules/automotive/command-center/automotive-command-center";
 
-export type AttentionKind = "messages" | "bookings" | "appointments" | "stock" | "jobs";
+export type AttentionKind = "messages" | "bookings" | "appointments" | "stock" | "jobs" | "orders";
 export type AttentionItem = { id: AttentionKind; title: string; description: string; count: number; href: string };
 export type AttentionSnapshot = {
   organizationId: string; branchId: string; branchName: string;
@@ -28,11 +29,18 @@ export async function loadAdminAttention(db: SupabaseClient, membership: Members
     query: db.from("job_orders").select("id", { count: "exact" }).eq("organization_id", organizationId).eq("branch_id", branchId).in("status", [...automotiveActiveJobStatuses]).lt("promised_at", now.toISOString()).order("promised_at").limit(1), recordHref: "/dashboard/jobs/" });
   if (roleHasPermission(role, "inventory.manage")) sources.push({ item: { id: "stock", title: "Stock needs replenishing", description: "Review low-stock and out-of-stock items.", href: "/dashboard/inventory" }, query: count("inventory_stock").eq("low_stock", true) });
 
+  if (["owner", "manager", "cashier"].includes(role)) sources.push({ item: { id: "orders", title: "Public product orders", description: "Confirm new website orders and arrange payment.", href: "/dashboard/products/orders" }, query: db.from("public_product_orders").select("id", { count: "exact" }).eq("organization_id", organizationId).eq("branch_id", branchId).eq("status", "requested").limit(1) });
+
   const results = await Promise.allSettled(sources.map(source => source.query));
   const items: AttentionItem[] = [], unavailable: string[] = [];
   results.forEach((result, index) => {
     const source = sources[index];
-    if (result.status === "rejected" || result.value.error || result.value.count === null) { unavailable.push(source.item.title); return; }
+    if (result.status === "rejected" || result.value.error || result.value.count === null) {
+      // Keep diagnostics on the server. HEAD requests can omit the error body;
+      // the order source uses a bounded GET so missing-migration codes survive.
+      reportActionError(`dashboard.notifications.${source.item.id}`, result.status === "rejected" ? result.reason : result.value.error, "Notification source unavailable.");
+      unavailable.push(source.item.title); return;
+    }
     const total = result.value.count;
     if (total > 0) {
       const recordId = result.value.data?.[0]?.id;

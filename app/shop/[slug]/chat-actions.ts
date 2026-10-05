@@ -8,7 +8,7 @@ import { publicChatSchema, type ChatResult, type ChatSnapshot } from "@/modules/
 
 export async function customerChat(input: unknown): Promise<ChatResult> {
   const parsed = publicChatSchema.safeParse(input);
-  if (!parsed.success) return { error: "Enter your name and a message of up to 300 characters." };
+  if (!parsed.success) return { error: "Enter your name, a valid mobile number or email, and a message of up to 300 characters." };
   const data = parsed.data;
   try {
     const db = createAdminClient();
@@ -17,7 +17,7 @@ export async function customerChat(input: unknown): Promise<ChatResult> {
     const result = data.operation === "read"
       ? await db.rpc("read_customer_chat", { p_slug: data.slug, p_token: data.token })
       : await db.rpc("send_customer_chat", { p_slug: data.slug, p_token: data.token, p_request_id: data.requestId, p_body: data.body,
-        ...(data.operation === "start" ? { p_branch_id: data.branchId, p_customer_name: data.customerName, p_visitor_hash: fingerprint } : {}) });
+        ...(data.operation === "start" ? { p_branch_id: data.branchId, p_customer_name: data.customerName, p_customer_phone: data.customerPhone || null, p_customer_email: data.customerEmail || null, p_visitor_hash: fingerprint } : {}) });
     if (result.error) {
       if (result.error.code === "P0002") return { error: "This conversation is unavailable or has expired. You can still book an appointment or contact the business.", unavailable: true };
       if (result.error.code === "P0003") return { error: "This conversation is closed or its message limit has been reached. Continue to booking or contact the business." };

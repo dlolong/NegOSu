@@ -1,3 +1,4 @@
+import { AppointmentBackButton } from "@/components/appointment-back-button";
 import { workflowButtonVariant } from "@/components/ui/workflow-button-variant";
 import {CheckoutEntry} from "@/components/checkout-entry";
 import { AppointmentPromosSummary } from "@/components/appointment-promos-summary";
@@ -19,7 +20,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { formatMoney, formatDuration } from "@/lib/operations";
-export default async function Page({ params, searchParams }: { params: Promise<{ appointmentId: string }>; searchParams: Promise<{ error?: string; link?: string; dialog?: string }> }) {
+export default async function Page({ params, searchParams }: { params: Promise<{ appointmentId: string }>; searchParams: Promise<{ from?: string; error?: string; link?: string; dialog?: string }> }) {
  const [{ appointmentId }, query, { db, activeMembership, enabled, branchTimezone }] = await Promise.all([params,searchParams,petContext()]);
  if (!z.uuid().safeParse(appointmentId).success) notFound();
  const { data: a } = await db.from("appointments").select("id,customer_id,branch_id,branches(name,timezone),status,source,starts_at,expected_duration_minutes,customer_note,internal_note,expected_total_centavos,appointment_services(service_name_snapshot,unit_price_centavos,duration_minutes)").eq("id",appointmentId).eq("organization_id",activeMembership.organizationId).single();
@@ -43,9 +44,9 @@ export default async function Page({ params, searchParams }: { params: Promise<{
  const actions = groomingActions(a.status,d.pickup_status);
  const schedule = new Intl.DateTimeFormat("en-PH", {timeZone:timezone,dateStyle:"medium",timeStyle:"short"});
  return <main id="pet-appointment-detail" className="mx-auto min-w-0 max-w-5xl [overflow-wrap:anywhere]">
- <PageHeader id="pet-appointment-header" eyebrow={`${a.source.replaceAll("_"," ")} · ${groomingStatus(a.status,d.pickup_status)}`} title={d.pet_name_snapshot} description={`${customer?.full_name ?? "Pet owner"} · ${appointmentBranch?.name ?? activeMembership.branchName}`} action={<>
+ <PageHeader close={<Button asChild variant="ghost"><Link id="pet-appointment-close-button" href="/dashboard/pet-care/appointments"><X size={16} aria-hidden="true"/>Close</Link></Button>} back={<AppointmentBackButton from={query.from} pet/>} id="pet-appointment-header" eyebrow={`${a.source.replaceAll("_"," ")} · ${groomingStatus(a.status,d.pickup_status)}`} title={d.pet_name_snapshot} description={`${customer?.full_name ?? "Pet owner"} · ${appointmentBranch?.name ?? activeMembership.branchName}`} action={<>
  {canManage && editable?<Button asChild variant="secondary"><Link id="pet-appointment-reschedule-button" href={`${href}?dialog=reschedule`}><Calendar size={16} aria-hidden="true"/>Reschedule</Link></Button>:null}
- <Button asChild variant="ghost"><Link id="pet-appointment-close-button" href="/dashboard/pet-care/appointments"><X size={16} aria-hidden="true"/>Close</Link></Button></>}/><FormMessage error={query.error}/>
+ </>}/><FormMessage error={query.error}/>
  <Card id="pet-appointment-scheduling-assignments" className="mt-6 p-5"><h2 className="font-medium">Scheduling assignments</h2>{staff.error||resources.error?<p role="alert" className="mt-3 text-sm">Scheduling assignments could not be loaded.</p>:<dl className="mt-3 grid gap-3 text-sm sm:grid-cols-2"><div><dt className="text-admin-text-secondary">Scheduled groomer</dt><dd className="font-medium">{staff.data?.map(row=>valueName(row.organization_staff_profiles,"full_name")).filter(Boolean).join(", ")||"Unassigned"}</dd></div><div><dt className="text-admin-text-secondary">Grooming resource</dt><dd className="font-medium">{resources.data?.map(row=>valueName(row.scheduling_resources,"name")).filter(Boolean).join(", ")||"Unassigned"}</dd></div></dl>}</Card>
  <div className="mt-6 grid min-w-0 items-start gap-5 lg:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)]">
  <div className="grid min-w-0 gap-5">

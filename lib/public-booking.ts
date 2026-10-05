@@ -62,3 +62,5 @@ export const publicServiceSchema = z.object({ serviceId: z.uuid(), isPublic: z.e
 export const publicGallerySchema = z.object({ url: httpUrl, alt: z.string().trim().min(2).max(200) });
 
 export const publicServiceThumbnailSchema = z.object({ serviceId: z.uuid(), thumbnailUrl: businessLogoUrlSchema });
+
+export const publicCatalogVisibilitySchema = z.object({ kind: z.enum(["product", "promo"]), id: z.uuid(), branchId: z.uuid(), isPublic: z.enum(["true", "false"]) });

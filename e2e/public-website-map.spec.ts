@@ -74,9 +74,15 @@ for(const industry of ["automotive","salon","pet_care"] as const) {
     if(width<640) {
      await expect(page.locator("#public-shop-section-navigation")).toBeHidden();
      await expect(page.locator("#public-shop-mobile-actions")).toBeVisible();
+     await expect(page.locator("#public-shop-mobile-actions").getByRole("link", {name:"Book now",exact:true})).toHaveCount(0);
+     if(await page.locator("#public-shop-products").count()) {
+      await expect(page.locator("#public-mobile-products-button")).toHaveAttribute("href","#public-shop-products");
+      await page.locator("#public-mobile-products-button").click();
+      await expect(page).toHaveURL(/#public-shop-products$/);
+     }
      await page.locator("#public-mobile-contact-button").click();
      await expect(page).toHaveURL(/#public-shop-contact$/);
-     await expect(page.locator("#public-shop-header-book-button")).toBeHidden();
+     await expect(page.locator("#public-shop-header-book-button")).toBeVisible();
      await expect.poll(async()=> (await page.locator("#public-shop-contact-title").boundingBox())!.y).toBeLessThan(180);
      const header=await page.locator("#public-shop-header").boundingBox();
      const contact=await page.locator("#public-shop-contact-title").boundingBox();
@@ -86,12 +92,19 @@ for(const industry of ["automotive","salon","pet_care"] as const) {
     } else {
      await expect(page.locator("#public-shop-section-navigation")).toBeVisible();
      await expect(page.locator("#public-shop-mobile-actions")).toBeHidden();
+     const logo=await page.locator("#public-shop-home-link").boundingBox();
+     const menu=await page.locator("#public-shop-section-navigation").boundingBox();
+     const book=await page.locator("#public-shop-header-book-button").boundingBox();
+     if(width>=1024) {
+      expect(menu!.x).toBeGreaterThanOrEqual(logo!.x+logo!.width);
+      expect(menu!.x+menu!.width).toBeLessThanOrEqual(book!.x);
+     } else expect(menu!.y).toBeGreaterThanOrEqual(logo!.y+logo!.height);
     }
-    if(width===320){await expect(page.locator("#public-mobile-book-button")).toBeVisible();await page.locator("#public-mobile-location-button").click();await expect(page).toHaveURL(/#public-automotive-shop-branches$/);}
+    if(width===320){await expect(page.locator("#public-mobile-book-button")).toHaveCount(0);await page.locator("#public-mobile-location-button").click();await expect(page).toHaveURL(/#public-automotive-shop-branches$/);}
     if(width===320||width===1440) await page.screenshot({path:`/private/tmp/negosu-public-${industry}-${width}.png`,fullPage:true});
    }
    await page.setViewportSize({width:320,height:900});await page.goto(website);
-   await page.locator("#public-mobile-book-button").click();await expect(page.locator("#public-booking-page")).toBeVisible();
+   await page.locator("#public-shop-header-book-button").click();await expect(page.locator("#public-booking-page")).toBeVisible();
    await expect(page.locator("#public-booking-availability-error")).toHaveCount(0);
    await expect(page.locator("#public-booking-progress")).toContainText("Step 1 of 5");
    await expect(page.locator("#public-booking-calendar-section")).toHaveCount(0);

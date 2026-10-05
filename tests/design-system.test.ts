@@ -119,11 +119,11 @@ test("record and settings layouts use shared path-aware Tabs with semantic IDs",
     read("app/dashboard/settings/layout.tsx"),
     read("components/settings-navigation.tsx"),
     read("app/dashboard/vehicles/[vehicleId]/layout.tsx"),
-    read("app/dashboard/customers/[customerId]/layout.tsx"),
+    read("app/dashboard/customers/[customerId]/page.tsx"),
     read("app/dashboard/jobs/[jobId]/layout.tsx"),
   ].join("\n");
   assert.equal((sources.match(/<Tabs/g) ?? []).length, 4);
-  for (const id of ["settings-sections-navigation", "vehicle-sections-navigation", "customer-sections-navigation", "job-order-sections-navigation"]) assert.match(sources, new RegExp(id));
+  for (const id of ["settings-sections-navigation", "vehicle-sections-navigation", "client-detail-tabs", "job-order-sections-navigation"]) assert.match(sources, new RegExp(id));
   assert.match(sources, /job-order-work-tab-/);
   assert.match(sources, /print:hidden/);
   assert.doesNotMatch(sources, /rounded-xl border bg-white px-4 py-2/);
