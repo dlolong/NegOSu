@@ -12,9 +12,9 @@ for (const industry of ["automotive", "salon"] as const) {
       await expect(page.locator("#dashboard-app-shell")).toBeVisible();
     }
     await page.locator(industry === "salon" ? "#salon-appointments-filter-form-filters-button" : "#appointments-filter-form-filters-button").click();
-    await page.locator(industry === "salon" ? "#salon-appointments-date-input" : "#appointments-date-input").fill("2026-09-17");
+    await page.locator("#appointments-from-date").fill("2026-09-17");
     await page.locator(industry === "salon" ? "#salon-appointments-filter-button" : "#appointments-filter-button").click();
     await expect(page.locator("#dashboard-main-content").getByRole("alert")).toHaveCount(0);
-    await expect(page).toHaveURL(/date=2026-09-17/);
+    await expect(page).toHaveURL(/from=2026-09-17/);
   });
 }

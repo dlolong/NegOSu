@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { ChevronRight } from "lucide-react";
 import type { ComponentProps, HTMLAttributes, MouseEvent } from "react";
 import { Card, type CardProps } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
@@ -20,15 +21,15 @@ function openRecord(event: MouseEvent<HTMLElement>) {
   else link.click();
 }
 const interaction = "has-[[data-record-link]]:cursor-pointer has-[[data-record-link]]:hover:bg-brand-tint/30 has-[[data-record-link]]:focus-within:ring-2 has-[[data-record-link]]:focus-within:ring-inset has-[[data-record-link]]:focus-within:ring-brand-primary transition-colors";
-export function RecordLink({ className, ...props }: ComponentProps<typeof Link>) {
-  return <Link data-record-link className={cn("rounded-sm font-medium hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary [overflow-wrap:anywhere]", className)} {...props}/>;
+export function RecordLink({ className, children, ...props }: ComponentProps<typeof Link>) {
+  return <Link data-record-link className={cn("rounded-sm font-medium hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary [overflow-wrap:anywhere]", className)} {...props}>{children}{props["aria-disabled"] !== true && props["aria-disabled"] !== "true" ? <ChevronRight data-record-title-arrow aria-hidden="true" size={14} className="ml-1 inline-block shrink-0 align-[-0.125em] text-brand-primary-strong"/> : null}</Link>;
 }
 export function RecordRow({ className, ...props }: HTMLAttributes<HTMLTableRowElement>) {
   return <tr {...props} data-record-item className={cn(interaction, className)} onClick={openRecord} onAuxClick={openRecord}/>;
 }
 export function RecordItem({ as: Tag = "article", className, ...props }: HTMLAttributes<HTMLElement> & { as?: "article" | "li" | "div" }) {
-  return <Tag {...props} data-record-item className={cn(interaction, "min-w-0", className)} onClick={openRecord} onAuxClick={openRecord}/>;
+  return <Tag {...props} data-record-item className={cn(interaction, "min-w-0 has-[[data-record-link]]:hover:border-brand-primary", className)} onClick={openRecord} onAuxClick={openRecord}/>;
 }
 export function RecordCard({ className, ...props }: CardProps) {
-  return <Card {...props} data-record-item className={cn(interaction, "min-w-0", className)} onClick={openRecord} onAuxClick={openRecord}/>;
+  return <Card {...props} data-record-item className={cn(interaction, "min-w-0 has-[[data-record-link]]:hover:border-brand-primary", className)} onClick={openRecord} onAuxClick={openRecord}/>;
 }

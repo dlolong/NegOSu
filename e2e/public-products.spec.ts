@@ -8,6 +8,8 @@ test("public products show customer details and branch with an order entry", asy
   await page.goto("https://forms.test/products");
   await expect(page.getByAltText("Take-home shampoo product")).toBeVisible();
   await expect(page.locator("#public-shop-products")).toContainText("Take-home shampoo");
+  await expect(page.locator("#public-product-order-product-example [data-record-title-arrow]")).toBeVisible();
+  await expect(page.locator("#public-product-order-product-example")).toHaveAccessibleName("Take-home shampoo");
   await expect(page.locator("#public-product-product-example")).toContainText("125.00");
   await expect(page.locator("#public-product-product-example")).toContainText("bottle");
   await expect(page.locator("#public-product-location-product-example")).toHaveAttribute("href", "#public-automotive-shop-branch-branch-example");
@@ -33,3 +35,9 @@ for (const width of [390, 1440]) {
     expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
   });
 }
+test("product card content opens details without a separate details button",async({page})=>{
+ await page.goto("https://forms.test/products");
+ await expect(page.getByRole("button",{name:"Product details"})).toHaveCount(0);
+ await page.locator("#public-product-product-example").getByText("For daily care",{exact:true}).click();
+ await expect(page).toHaveURL("https://forms.test/shop/test-shop/products/product-example");
+});

@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { RecordLink } from "@/components/record-item";
 import { WorkContributors } from "@/components/work-contributors";
 import { groupWorkContributors, loadWorkParticipation, type WorkContributor } from "@/modules/core/staff/work-history";
 import type { SupabaseClient } from "@supabase/supabase-js";
@@ -51,7 +51,7 @@ export async function CatalogHistory({ db, scope, kind, recordId, query, timezon
         else { href = appointmentHref(row.id); name = row.customers?.full_name ?? "Customer unavailable"; when = row.starts_at ?? row.created_at; status = row.status; detail = row.starts_at ? "Appointment time" : "Recorded (unscheduled)"; }
         const people: WorkContributor[] = contributors.get(workKey(row) ?? "") ?? [];
         const staff = <WorkContributors people={people} canOpenStaff={scope.role === "owner"} error={staffError}/>;
-        return { id: `${kind}-history-${row.id}`, cells: { customer: <Link id={`${kind}-history-open-${row.id}`} href={href} className="font-medium underline">{name}</Link>, detail, staff, date: date(when), status: status.replaceAll("_", " ") }, mobile: <><p>{detail}</p>{staff}<p>{date(when)}</p></> };
+        return { id: `${kind}-history-${row.id}`, cells: { customer: <RecordLink id={`${kind}-history-open-${row.id}`} href={href} className="font-medium underline">{name}</RecordLink>, detail, staff, date: date(when), status: status.replaceAll("_", " ") }, mobile: <><p>{detail}</p>{staff}<p>{date(when)}</p></> };
       })}/>
 
       {!rows.length ? <p id={`${kind}-history-empty`} className="mt-4 text-sm">No {tab === "usage" ? "appointments" : "purchases"} recorded{page > 1 ? " on this page" : " yet"}.</p> : null}

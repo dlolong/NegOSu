@@ -17,3 +17,11 @@ test("public order errors give safe retry guidance without raw database messages
   assert.match(publicOrderError("54000"), /try again later/);
   assert.equal(publicOrderError("private database diagnostic"), publicOrderError());
 });
+
+test("basket validation requires contact, bounded distinct products and price snapshots", async()=>{
+ const {publicBasketOrderSchema}=await import("../modules/core/commerce/public-product-orders");
+ const line={productId:valid.productId,quantity:"2",expectedPrice:12500,expectedCurrency:"PHP",expectedUnit:"bottle"};
+ const basket={...valid,lines:[line,{...line,productId:"10000000-0000-4000-8000-000000000003"}]};
+ assert.ok(publicBasketOrderSchema.safeParse(basket).success);
+ for(const patch of [{lines:[]},{lines:[line,line]},{lines:Array(21).fill(line)},{phone:""},{customerName:""},{lines:[{...line,quantity:"0"}]}]) assert.equal(publicBasketOrderSchema.safeParse({...basket,...patch}).success,false);
+});

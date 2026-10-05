@@ -20,3 +20,9 @@ test("history distinguishes empty and failed loads", async ({ page }) => {
   await expect(page.locator("#staff-history-error")).toBeVisible();
   await expect(page.locator("#staff-history-table")).toHaveCount(0);
 });
+test("clicking history row content opens its underlying appointment", async ({page})=>{
+  await page.setViewportSize({width:1280,height:900});
+  await page.goto("https://forms.test/history");
+  await page.locator("#staff-work-appointment-visit td").last().click();
+  await expect(page).toHaveURL("https://forms.test/dashboard/appointments/visit");
+});

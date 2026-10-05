@@ -145,3 +145,23 @@ editing no longer offers a public visibility checkbox: new promos start private,
 and existing promos retain their stored visibility when details are saved. The
 existing promo version check rejects concurrent edits; visibility is managed in
 Website and booking → Promos. This adjustment needs no additional migration.
+
+Appointment lists default to the previous 30 branch-local calendar days plus
+upcoming appointments. From/Through filters accept older periods; Through is
+inclusive. Existing day/week links remain supported. History rows for services,
+promos, staff and product purchases open their source records; product stock
+movement rows open a read-only movement details dialog. Tenant/branch filters
+and source-page authorization remain unchanged. No database update is required.
+
+Public product ordering uses a basket saved on the visitor’s device, scoped to the
+shop. Customers add products, review current prices, change quantities or remove
+items, then supply their name and phone (email and notes optional). Orders allow
+up to 20 distinct products from one pickup branch. Contact details are not stored
+in the browser basket. Unavailable products must be removed before submission.
+
+Apply `supabase/migrations/0127_public_product_basket.sql` before deploying the
+basket UI. One request stores all item snapshots and consumes one submission
+allowance. Staff confirms the whole order into one checkout; existing product,
+price, stock, branch, role, and retry checks still apply. Submission does not
+reserve inventory or collect payment. Legacy single-product requests remain
+supported. Database regression coverage is in `supabase/tests/public_product_basket.sql`.

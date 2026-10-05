@@ -1,0 +1,23 @@
+import {expect,test} from "@playwright/test";
+import {renderFormFixture} from "./fixtures/form-browser";
+let html:string;
+test.beforeAll(async()=>{html=await renderFormFixture("e2e/fixtures/public-basket.tsx");});
+test("basket persists products and requires contact before one submission",async({page})=>{
+ await page.route("https://forms.test/**",route=>route.fulfill({contentType:"text/html",body:html}));
+ await page.addInitScript(()=>{Object.assign(window,{recordFormAction:async(_name:string,entries:[string,string][])=>{Object.assign(window,{submitted:entries});return {reference:"40000000-0000-4000-8000-000000000001"};}});});
+ await page.goto("https://forms.test/shop/test-shop");
+ await page.locator('[id^="public-product-add-"]').first().click();
+ await page.locator('[id^="public-product-add-"]').last().click();
+ await expect(page.locator("#public-basket-link")).toContainText("(2)");
+ await page.locator("#public-basket-link").click();
+ await expect(page.locator('[id^="basket-item-"]')).toHaveCount(2);
+ await page.reload();
+ await expect(page.locator('[id^="basket-item-"]')).toHaveCount(2);
+ await page.locator("#public-product-order-submit").click();
+ await expect(page.locator("#public-product-order-success")).toHaveCount(0);
+ await page.locator("#public-product-order-name").fill("Test Customer");
+ await page.locator("#public-product-order-phone").fill("09171234567");
+ await page.locator("#public-product-order-submit").click();
+ await expect(page.locator("#public-product-order-success")).toBeVisible();
+ expect(await page.evaluate(()=>JSON.parse(localStorage.getItem("negosu-basket:test-shop")??"[]").length)).toBe(0);
+});

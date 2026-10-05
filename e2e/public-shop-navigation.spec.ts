@@ -82,3 +82,15 @@ test("sections reveal once on scroll and reduced motion keeps content visible", 
   expect(await page.locator("#public-shop-products").evaluate(el => el.getAnimations().length)).toBe(0);
   expect(await page.locator("#public-shop-products").evaluate(el => getComputedStyle(el).opacity)).toBe("1");
 });
+test("small-screen booking and basket fit together with a saved product count", async ({page})=>{
+ await page.setViewportSize({width:320,height:800});
+ await page.goto("https://forms.test/navigation");
+ await page.evaluate(()=>{localStorage.setItem("negosu-basket:test-shop",JSON.stringify([{productId:"10000000-0000-4000-8000-000000000001",branchId:"20000000-0000-4000-8000-000000000001",quantity:"1"}]));window.dispatchEvent(new Event("negosu-basket-change"));});
+ await expect(page.locator("#public-header-basket-link")).toHaveAccessibleName("View basket, 1 product");
+ await expect(page.locator("#public-shop-header-book-button")).toHaveAccessibleName("Book");
+ const book=(await page.locator("#public-shop-header-book-button").boundingBox())!;
+ const basket=(await page.locator("#public-header-basket-link").boundingBox())!;
+ expect(Math.abs(book.y-basket.y)).toBeLessThan(2);
+ expect(basket.x).toBeGreaterThanOrEqual(book.x+book.width);
+ expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+});

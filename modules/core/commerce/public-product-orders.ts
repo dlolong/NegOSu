@@ -18,3 +18,8 @@ export function publicOrderError(code?: string) {
   if (code === "54000") return "Too many order requests. Please try again later or contact the business.";
   return "Unable to submit this order. The product may be unavailable. Please try again or contact the business.";
 }
+
+export const publicBasketLineSchema = publicProductOrderSchema.pick({productId:true,quantity:true,expectedPrice:true,expectedCurrency:true,expectedUnit:true});
+export const publicBasketOrderSchema = publicProductOrderSchema.omit({productId:true,quantity:true,expectedPrice:true,expectedCurrency:true,expectedUnit:true}).extend({
+  lines: z.array(publicBasketLineSchema).min(1,"Add a product to your basket.").max(20,"Choose up to 20 products.").refine(lines=>new Set(lines.map(line=>line.productId)).size===lines.length,"Each product may appear only once."),
+});

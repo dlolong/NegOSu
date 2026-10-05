@@ -22,3 +22,18 @@ export async function submitProductOrder(_previous: PublicProductOrderState, for
   revalidatePath("/dashboard/products/orders");
   return { reference: result.data.reference };
 }
+
+export async function submitProductBasket(_previous: PublicProductOrderState, form: FormData): Promise<PublicProductOrderState> {
+  let lines: unknown;
+  try { lines = JSON.parse(String(form.get("lines"))); } catch { return {error:"Check your basket and try again."}; }
+  const { publicBasketOrderSchema } = await import("@/modules/core/commerce/public-product-orders");
+  const parsed=publicBasketOrderSchema.safeParse({...Object.fromEntries(form),lines});
+  if(!parsed.success) return {error:parsed.error.issues[0]?.message??"Check your order."};
+  const v=parsed.data,h=await headers(),db=await createClient();
+  const {data,error}=await db.rpc("submit_public_product_basket",{p_slug:v.slug,p_lines:v.lines,p_request:v.requestKey,p_name:v.customerName,p_phone:v.phone,p_email:v.email,p_note:v.note,p_rate_key:publicRequestRateKey(h.get("x-forwarded-for")),p_honeypot:v.website});
+  if(error) return {error:publicOrderError(error.code)};
+  const result=z.object({reference:z.uuid()}).safeParse(data);
+  if(!result.success)return {error:"Your order status could not be retrieved. Contact the business before submitting again."};
+  revalidatePath("/dashboard/products/orders");
+  return {reference:result.data.reference};
+}
