@@ -8,7 +8,6 @@ test("public products show customer details and branch with an order entry", asy
   await page.goto("https://forms.test/products");
   await expect(page.getByAltText("Take-home shampoo product")).toBeVisible();
   await expect(page.locator("#public-shop-products")).toContainText("Take-home shampoo");
-  await expect(page.locator("#public-product-order-product-example [data-record-title-arrow]")).toBeVisible();
   await expect(page.locator("#public-product-order-product-example")).toHaveAccessibleName("Take-home shampoo");
   await expect(page.locator("#public-product-product-example")).toContainText("125.00");
   await expect(page.locator("#public-product-product-example")).toContainText("bottle");

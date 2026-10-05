@@ -23,13 +23,13 @@ async function assertContained(page: Page) {
   }
 }
 
-test("category list has top Add and row Edit/Delete controls without inline edit forms or overflow", async ({ page }) => {
+test("category list has top Add and detail links and row Delete controls without inline edit forms or overflow", async ({ page }) => {
   await page.goto("https://forms.test/fixture");
   await expect(page.locator("#service-category-list tbody tr")).toHaveCount(2);
   await expect(page.locator("input:visible")).toHaveCount(0);
   const add = page.locator("#service-category-add-button");
   expect((await add.boundingBox())!.y).toBeLessThan((await page.locator("#service-category-list").boundingBox())!.y);
-  await expect(page.getByRole("link", { name: "Edit", exact: true })).toHaveCount(2);
+  await expect(page.getByRole("link", { name: "Edit", exact: true })).toHaveCount(0);
   await expect(page.getByRole("link", { name: "Delete", exact: true })).toHaveCount(2);
   await assertContained(page);
   await page.screenshot({ path: test.info().outputPath("categories.png"), fullPage: true });
@@ -51,7 +51,8 @@ test("Add validates inputs and Cancel closes the category dialog without saving"
 test("Edit preserves entered values when the server rejects a duplicate name", async ({ page }) => {
   failure = "That category already exists.";
   await page.goto("https://forms.test/fixture");
-  await page.getByRole("link", { name: "Edit", exact: true }).first().click();
+  await page.locator("#service-category-link-72000000-0000-4000-8000-000000000001").click();
+  await page.getByRole("link", {name:"Edit category",exact:true}).click();
   await expect(page.locator("#service-category-edit-name-input")).toHaveValue("Hair and Beauty");
   await page.locator("#service-category-edit-name-input").fill("Taken category");
   await page.locator("#service-category-edit-save-button").click();

@@ -61,8 +61,9 @@ for(const industry of ["automotive","salon","pet_care"]){
   await page.goto("/dashboard/services");const service=page.locator('table a[data-record-link]').first();
   if(await service.count()){const href=await service.getAttribute("href");await service.click();await expect(page).toHaveURL(new RegExp(`${href}$`));await page.goBack();}
   await page.goto("/dashboard/settings/staff");const staffPrefix=salon?"salon-staff":"staff";
-  const edit=page.locator(`[id^="${staffPrefix}-edit-"]`).first();if(await edit.count()){
-   await edit.click();await expect(page.locator(`#${staffPrefix}-edit-dialog`)).toBeVisible();await page.getByRole("link",{name:"Cancel",exact:true}).click();await expect(page.locator("dialog[open]")).toHaveCount(0);
+  await expect(page.locator(`table [id^="${staffPrefix}-edit-"]`)).toHaveCount(0);
+  const staff=page.locator(`[id^="${staffPrefix}-link-"]`).first();if(await staff.count()){
+   await staff.click();const edit=page.locator("#staff-detail-edit");if(await edit.count()){await edit.click();await expect(page.locator(`#${staffPrefix}-edit-dialog`)).toBeVisible();await page.getByRole("link",{name:"Cancel",exact:true}).click();await expect(page.locator("dialog[open]")).toHaveCount(0);}
   }
  });
 }

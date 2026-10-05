@@ -3,7 +3,7 @@ import {RemoveRecordButton} from "@/components/remove-record-button";
 import { CompactFilters } from "@/components/compact-filters";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { Pencil, Plus, Search } from "lucide-react";
+import { Plus, Search } from "lucide-react";
 import { z } from "zod";
 import { hospitalityContext } from "@/modules/hospitality/runtime";
 import { canHospitality, stayPackages, type Room } from "@/modules/hospitality/contracts";
@@ -43,10 +43,10 @@ export default async function RoomsPage({ searchParams }: { searchParams: Promis
     <div id="hospitality-rooms-workspace" className="mt-4 min-w-0">
     <div id="hospitality-rooms-content" className="min-w-0">
     <CompactFilters id="hospitality-room-search-form" searchLabel="Search rooms" search={<input id="hospitality-room-search"  name="q" defaultValue={q.q} placeholder="Room name or number" type="search" enterKeyHint="search" className="min-h-11 w-full min-w-0 rounded-ui-md border border-admin-border bg-admin-surface px-3 py-2 text-sm"/>} searchValue={q.q} hiddenFields={<><input type="hidden" name="tab" value={tab}/></>}><Button id="hospitality-room-search-button" type="submit" variant="secondary"><Search size={16}/><span className="sr-only sm:not-sr-only">Search</span></Button></CompactFilters>
-    {rooms.error ? <LoadError/> : <RecordTable id="hospitality-room-grid" caption="Room setup and maintenance" empty="No rooms found." columns={[{ key: "room", label: "Room" }, { key: "period", label: "Room rate", secondary: true }, { key: "capacity", label: "Capacity", secondary: true }, { key: "actions", label: "Actions", align: "right", className: "w-36 sm:w-56" }]} rows={rows.map(r => {
+    {rooms.error ? <LoadError/> : <RecordTable id="hospitality-room-grid" caption="Room setup and maintenance" empty="No rooms found." columns={[{ key: "room", label: "Room" }, { key: "period", label: "Room rate", secondary: true }, { key: "capacity", label: "Capacity", secondary: true }]} rows={rows.map(r => {
       const href = `${base}/${r.id}`;
       const period = price(r);
-      return { id: `hospitality-room-${r.id}`, cells: { room: <><RecordLink href={href}>{r.name}</RecordLink>{r.room_type ? <p className="mt-1 text-xs text-slate-500">{r.room_type}</p> : null}</>, period, capacity: r.capacity, actions: <div className="flex flex-wrap justify-end gap-2">{manage ? <Button asChild size="sm" variant="secondary"><Link href={`${base}?tab=all&dialog=room&room=${r.id}`} aria-label={`Edit ${r.name}`}><Pencil size={15}/></Link></Button> : null}</div> }, mobile: <><p>{period}</p><p>Capacity {r.capacity}</p></> };
+      return { id: `hospitality-room-${r.id}`, cells: { room: <><RecordLink href={href}>{r.name}</RecordLink>{r.room_type ? <p className="mt-1 text-xs text-slate-500">{r.room_type}</p> : null}</>, period, capacity: r.capacity }, mobile: <><p>{period}</p><p>Capacity {r.capacity}</p></> };
     })}/>}
     <PageLinks page={page} count={rooms.count ?? 0} href={p => `${base}?tab=${tab}&page=${p}&q=${encodeURIComponent(term)}`}/>
     </div>

@@ -17,13 +17,12 @@ export const promoSchema = z.object({
   priceCentavos: z.number().int().min(0).max(10_000_000_000),
   status: z.enum(["draft", "active", "archived"]),
   validFrom: z.iso.date().nullable(), validThrough: z.iso.date().nullable(),
-  components: z.array(componentSchema).min(2).max(30),
+  components: z.array(componentSchema).min(1,"Add at least one component.").max(30),
 }).superRefine((value, context) => {
   if (value.validFrom && value.validThrough && value.validFrom > value.validThrough) context.addIssue({ code: "custom", message: "End date must be on or after start date." });
-  if (!value.components.some(c => c.kind === "service") && !value.components.some(c => c.kind === "accommodation")) context.addIssue({ code: "custom", message: "Include at least one service or accommodation." });
   if (value.components.some(c => c.kind === "accommodation") && value.components.some(c => c.kind === "service")) context.addIssue({ code: "custom", message: "Accommodation cannot be combined with appointment services." });
   if (value.isPublic && value.components.filter(c => c.kind === "service").length > 10) context.addIssue({ code: "custom", message: "Public booking supports up to 10 services per promo." });
-  const keys = value.components.map(c => `${c.kind}:${c.referenceId}`);
+  const keys = value.components.map(c => `${c.kind === "product" || c.kind === "supply" ? "inventory" : c.kind}:${c.referenceId?.toLowerCase()}`);
   if (new Set(keys).size !== keys.length) context.addIssue({ code: "custom", message: "Combine duplicate component quantities." });
 });
 export type PromoDefinition = z.infer<typeof promoSchema>;

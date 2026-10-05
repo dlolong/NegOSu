@@ -51,6 +51,16 @@ select lives_ok($$update inventory_items set stock_tracked=true where id='c05000
 select lives_ok($$select record_inventory_movement('c0500000-0000-4000-8000-000000000001','opening',1,null,'catalog-opening-test')$$,'tracked products keep the existing ledger operation');
 select throws_ok($$update inventory_items set unit='bottle' where id='c0500000-0000-4000-8000-000000000001'$$,'22023','Stock history exists; unit and stock identity cannot change','historical units cannot silently change');
 
+-- Flexible definitions still enforce unique catalog identities.
+create function pg_temp.flexible_promo(parts jsonb) returns uuid language sql as $$
+ select public.save_commerce_promo('c0200000-0000-4000-8000-000000000001','c0300000-0000-4000-8000-000000000001',null,null,'Flexible promo','',100,'draft',null,null,parts,gen_random_uuid());
+$$;
+select lives_ok($$select pg_temp.flexible_promo('[{"kind":"product","referenceId":"c0500000-0000-4000-8000-000000000001","quantity":"2","unit":"ml"}]')$$,'product-only promo accepted');
+select lives_ok($$select pg_temp.flexible_promo('[{"kind":"supply","referenceId":"c0500000-0000-4000-8000-000000000001","quantity":"2","unit":"ml"}]')$$,'supply-only promo accepted');
+select lives_ok($$select pg_temp.flexible_promo('[{"kind":"service","referenceId":"c0400000-0000-4000-8000-000000000001","quantity":"1","unit":"service"}]')$$,'service-only promo accepted');
+select throws_ok($$select pg_temp.flexible_promo('[]')$$,'22023','A promo needs between 1 and 30 components','empty promo rejected');
+select throws_ok($$select pg_temp.flexible_promo('[{"kind":"product","referenceId":"c0500000-0000-4000-8000-000000000001","quantity":"1","unit":"ml"},{"kind":"supply","referenceId":"C0500000-0000-4000-8000-000000000001","quantity":"1","unit":"ml"}]')$$,'22023','Duplicate promo component','same inventory item cannot be repeated under another kind or UUID casing');
+
 set local "request.jwt.claims"='{"sub":"c0100000-0000-4000-8000-000000000002","role":"authenticated"}';
 select is((select count(*) from commerce_promos)::bigint,0::bigint,'other tenant cannot read definitions');
 select throws_ok($$select pg_temp.save_promo()$$,'42501','Promo management access required','other tenant cannot invoke writes');

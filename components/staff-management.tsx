@@ -3,7 +3,7 @@ import { StaffJobFunctionField } from "@/components/staff-job-function-field";
 
 import { RecordTable } from "@/components/record-table";
 import { RecordLink } from "@/components/record-item";
-import { Plus as PlusIcon, Save as SaveIcon, KeyRound, Pencil, Info } from "lucide-react";
+import { Plus as PlusIcon, Save as SaveIcon, KeyRound, Info } from "lucide-react";
 
 import { FormActions } from "@/components/form-actions";
 import Link from "next/link";
@@ -167,7 +167,7 @@ function RoleSelect({ id, name, defaultValue, industry }: { id: string; name: st
 function StaffActions({ profile, prefix, managementAvailable }: { profile: StaffProfileRow; prefix: string; managementAvailable: boolean }) {
   const owner = profile.role === "owner";
   if (!managementAvailable) return <span id={`${prefix}-read-only-${profile.id}`} className="inline-flex min-h-9 items-center px-2 text-xs font-medium text-slate-500">Temporarily read-only</span>;
-  return <div className="flex flex-wrap justify-end gap-2"><Button id={`${prefix}-edit-${profile.id}`} asChild size="sm" variant="secondary"><Link href={`/dashboard/settings/staff?dialog=edit&staffId=${profile.id}`}><Pencil size={14}/>Edit</Link></Button>{owner ? <span className="inline-flex min-h-9 items-center px-2 text-xs font-medium text-slate-500">Owner access protected</span> : <Button id={`${prefix}-access-${profile.id}`} asChild size="sm" variant="secondary"><Link href={`/dashboard/settings/staff?dialog=access&staffId=${profile.id}`}><KeyRound size={14}/>{profile.membershipId ? "Access" : "Grant access"}</Link></Button>}</div>;
+  return <div className="flex flex-wrap justify-end gap-2">{owner ? <span className="inline-flex min-h-9 items-center px-2 text-xs font-medium text-slate-500">Owner access protected</span> : <Button id={`${prefix}-access-${profile.id}`} asChild size="sm" variant="secondary"><Link href={`/dashboard/settings/staff?dialog=access&staffId=${profile.id}`}><KeyRound size={14}/>{profile.membershipId ? "Access" : "Grant access"}</Link></Button>}</div>;
 }
 
 function AccessStatus({ id, profile, industry }: { id: string; profile: StaffProfileRow; industry: StaffManagementIndustry }) {

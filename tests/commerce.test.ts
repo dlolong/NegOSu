@@ -20,7 +20,7 @@ test("commerce rejects ambiguous or inexact quantities", () => {
 test("fixed-price promos validate bounded components without changing service duration", () => {
   assert.ok(promoSchema.safeParse(promo).success);
   assert.equal(promoSchema.safeParse({ ...promo, components: [...promo.components, promo.components[1]] }).success, false);
-  assert.equal(promoSchema.safeParse({ ...promo, components: [promo.components[1]] }).success, false);
+  assert.equal(promoSchema.safeParse({ ...promo, components: [promo.components[1]] }).success, true);
   assert.equal(promoSchema.safeParse({ ...promo, components: [{ ...promo.components[0], quantity: "2" }, promo.components[1]] }).success, false);
   assert.equal(promoSchema.safeParse({ ...promo, validThrough: "2026-08-31" }).success, false);
   assert.equal(promoSchema.safeParse({ ...promo, priceCentavos: 0.1 }).success, false);
@@ -46,4 +46,9 @@ test("promos allow distinct services with optional products and reject duplicate
  assert.equal(promoSchema.safeParse({...promo,components:[promo.components[0],promo.components[0]]}).success,false);
  assert.equal(promoSchema.safeParse({...promo,components:[promo.components[0],{kind:"accommodation",referenceId:null,quantity:"1",unit:"service"}]}).success,false);
  assert.equal(promoSchema.safeParse({...promo,components:[promo.components[1],{...promo.components[1],kind:"supply"}]}).success,false);
+});
+
+test("promos accept nonempty combinations without requiring a service",()=>{
+ for(const components of [[promo.components[0]],[promo.components[1]],[{...promo.components[1],kind:"supply"}],[promo.components[1],{...promo.components[1],referenceId:service}],[{kind:"accommodation",referenceId:null,quantity:"1",unit:"service"}]]) assert.ok(promoSchema.safeParse({...promo,components}).success);
+ assert.equal(promoSchema.safeParse({...promo,components:[]}).success,false);
 });
