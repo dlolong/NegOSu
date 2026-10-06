@@ -20,9 +20,9 @@ function StockBadge({ item }: { item: InventoryStock }) {
   const status = stockStatus(item);
   return <span className={`inline-flex max-w-full rounded-full px-2.5 py-1 text-xs font-medium ${status === "out" ? "bg-red-50 text-red-700" : status === "low" ? "bg-amber-50 text-amber-800" : "bg-emerald-50 text-emerald-700"}`}>{stockStatusLabels[status]}</span>;
 }
-export function InventoryWorkspace({ stock, movements, branches, services, branchId, branchName, salon, canManage, query = {}, loadError, timezone = "Asia/Manila", currency = "PHP" }: {
+export function InventoryWorkspace({ canViewConsumption = false, stock, movements, branches, services, branchId, branchName, salon, canManage, query = {}, loadError, timezone = "Asia/Manila", currency = "PHP" }: {
   stock: InventoryStock[]; movements: InventoryMovement[]; branches: { id: string; name: string }[]; services: { id: string; name: string }[];
-  branchId: string; branchName: string; salon: boolean; canManage: boolean; query?: InventoryQuery; loadError?: string; timezone?: string; currency?: string;
+  canViewConsumption?: boolean; branchId: string; branchName: string; salon: boolean; canManage: boolean; query?: InventoryQuery; loadError?: string; timezone?: string; currency?: string;
 }) {
   const prefix = salon ? "salon-inventory" : "inventory", productPrefix = salon ? "salon-product" : "inventory-item";
   const branchStock = stock.filter(item => item.branch_id === branchId);
@@ -53,6 +53,7 @@ export function InventoryWorkspace({ stock, movements, branches, services, branc
         <Tabs id={`${prefix}-tabs`} ariaLabel="Inventory views" className="min-w-0 flex-1" items={[
           {id:`${prefix}-stock-tab`,label:"Stock",href:href({view:undefined,page:undefined}),active:!history,count:branchStock.length},
           {id:`${prefix}-history-tab`,label:"History",href:href({view:"history",page:undefined}),active:history},
+          ...(canViewConsumption ? [{id:`${prefix}-consumption-tab`,label:"Consumption",href:"/dashboard/inventory/consumption",active:false}] : []),
         ]}/>
         {canManage && !salon ? <Button asChild size="sm" variant="ghost"><Link id="inventory-recipe-open-button" href={href({ dialog: "recipe" })}><ClipboardList size={16} aria-hidden="true"/>Service recipes</Link></Button> : null}
       </div>

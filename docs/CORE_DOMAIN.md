@@ -102,3 +102,21 @@ The active vertical supplies current actions, operational rows, staff context, t
 Migration `0128_flexible_promo_components.sql` allows 1–30 supported components without requiring a service or accommodation. Product-only, supply-only, service-only and mixed definitions are valid. Each service or inventory item appears once; product and supply selections share an inventory identity, so quantities must be combined rather than duplicated. Existing business-type, branch, unit, purpose and authorization checks still apply. Accommodation remains hospitality-only.
 
 This changes catalog definitions, not redemption workflows: appointment booking still requires service components and a scheduling duration. Apply the migration before using the relaxed form. Regression coverage is in `tests/commerce.test.ts` and `supabase/tests/commerce_catalog.sql`.
+
+### Inventory and consumption reports
+
+Reports → Inventory & consumption uses migration `0129_inventory_consumption_report.sql`. Owner, manager and viewer roles can read ledger-based product balances within their accessible branches. The RPC runs with invoker rights and existing RLS, with explicit organization and branch filtering.
+
+Day, Monday-based week, month and year are calendar periods anchored to the selected date. Each branch's timezone determines movement boundaries. Opening is the balance before the period; closing includes movements through the end of the period. Consumption is signed usage/consume outflow (including checkout fulfillment), waste is separate, and stock in includes opening entries, purchases, returns and inbound transfers. Other net covers adjustments and outbound transfers. Opening + stock in − consumed − waste + other net = closing.
+
+All products, including inactive and non-stock items, remain listed. Non-stock items have no displayed stock quantities. Totals include tracked products across all pages and are grouped by unit, not added across unlike units. This operational report does not change paid analytics entitlements or stock. Apply the migration before opening it. Database regression coverage is in `supabase/tests/inventory_consumption_report.sql`; period validation is in `tests/inventory-report.test.ts`.
+
+Migration `0130_inventory_daily_consumption.sql` adds branch-local daily consumption totals across all products, grouped by unit and including zero-activity days. Month view uses a month/year picker; each daily date links to the corresponding day report. Older databases retain the original report with a setup notice until this migration is applied.
+
+Migration `0131_inventory_product_daily_consumption.sql` adds sparse daily quantities for the current product page. Month view presents products as rows and calendar days as horizontally scrolling columns, with sticky product and monthly-total columns. Missing daily entries display zero; non-stock products display dashes. Pagination still applies to products, and the right-hand total covers the full selected month.
+
+Inventory & consumption now defaults to the current calendar month and uses From/To date filters instead of period tabs. The daily matrix supports inclusive ranges across months and years (maximum 367 days, matching the existing RPC limit). Product pagination preserves both dates and branch; fixed totals cover the selected range. No additional migration is required.
+
+Migration `0132_inventory_report_search.sql` adds the six-argument report RPC with literal case-insensitive name/SKU search before pagination and totals aggregation; the five-argument RPC remains available. Inventory reports use shared compact search/date/branch filters and individual summary cards.
+
+The consumption workspace now lives at `/dashboard/inventory/consumption`, titled **Stock consumption**, alongside the Inventory Stock and History tabs. Reports navigation no longer links to it. Legacy `/dashboard/reports/inventory` URLs redirect with query filters preserved. Existing report-role and database permissions remain unchanged.

@@ -1,3 +1,4 @@
+import { roleHasPermission } from "@/lib/rbac";
 import { redirect } from "next/navigation";
 import { InventoryWorkspace } from "@/components/inventory-workspace";
 import { getDashboardContext } from "@/lib/auth/context";
@@ -16,7 +17,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<Inv
     salon || !canManage ? Promise.resolve({ data: [], error: null }) : supabase.from("services").select("id,name").eq("organization_id", activeMembership.organizationId).eq("is_active", true).order("name"),
   ]);
   const loadError = [stock, movements, branches, services].some(result => result.error) ? "Unable to load inventory. Try again to see current stock and movements." : undefined;
-  return <InventoryWorkspace stock={stock.data ?? []} movements={(movements.data ?? []).map(movement => {
+  return <InventoryWorkspace canViewConsumption={roleHasPermission(activeMembership.role, "reports.view")} stock={stock.data ?? []} movements={(movements.data ?? []).map(movement => {
     const item = Array.isArray(movement.inventory_items) ? movement.inventory_items[0] : movement.inventory_items;
     return { id: movement.id, itemId: movement.inventory_item_id, name: item?.name ?? "Inventory item", unit: item?.unit ?? "", type: movement.movement_type, quantity: movement.quantity_delta, note: movement.note, createdAt: movement.created_at };
   })} branches={branches.data ?? []} services={services.data ?? []} branchId={activeMembership.branchId} branchName={activeMembership.branchName} salon={salon} canManage={canManage} query={query} loadError={loadError} timezone={activeMembership.timezone} currency={activeMembership.currency}/>;
