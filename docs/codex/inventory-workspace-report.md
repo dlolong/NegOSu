@@ -37,3 +37,13 @@ Reviewed diffs and new files for tenant/branch scope, server authority, missing 
 Browser tests use real components/CSS with stubbed server actions; database behavior was exercised separately in local rollback-only tests. A logged-in browser-to-database persistence run and native Safari testing were not performed. High-volume inventory performance was not benchmarked. Ledger editing, product deletion, and Salon treatment consumption remain outside this UI improvement.
 
 Recommended next step: review the local Inventory page using a test owner/manager account, then follow the normal release workflow. No production deployment is included.
+
+## Consumption views update
+
+Inventory now groups monthly product cards, the daily consumption table, and movement history under **Consumption & history**. **Overview** holds the report totals by unit. Cards aggregate the existing branch-local daily report by calendar month; partial months include only filtered dates. Non-stock products do not display misleading zero consumption. The daily matrix also identifies each product's branch.
+
+Consumption CSV exports use the existing authenticated, invoker-rights report RPC and the same date/search/category/branch filters. Exports include all matching report pages, product IDs, stock balances, and daily consumption columns. Formula-like text is escaped using the shared CSV helper. More than 10,000 matching products returns an explicit filter-required error. Multi-page exports are separate database reads, so concurrent inventory edits can affect consistency across pages; no database snapshot guarantee is provided.
+
+No migration, RLS policy, ledger mutation, or production operation is introduced. Legacy history URLs remain usable, including roles without report access. Movement history retains the latest 30 movements in the active branch; report filters apply to monthly/daily views and exports.
+
+Added unit coverage for monthly aggregation, partial periods, zero/non-stock usage, and CSV escaping; added desktop/mobile browser fixtures for cards, daily detail, and empty results. Manual review should check Stock → Overview → Consumption & history, filtered monthly cards, daily table scrolling, movement history, and CSV downloads across more than 50 products.

@@ -20,7 +20,7 @@ function StockBadge({ item }: { item: InventoryStock }) {
   const status = stockStatus(item);
   return <span className={`inline-flex max-w-full rounded-full px-2.5 py-1 text-xs font-medium ${status === "out" ? "bg-red-50 text-red-700" : status === "low" ? "bg-amber-50 text-amber-800" : "bg-emerald-50 text-emerald-700"}`}>{stockStatusLabels[status]}</span>;
 }
-export function InventoryWorkspace({ canViewConsumption = false, stock, movements, branches, services, branchId, salon, canManage, query = {}, loadError, timezone = "Asia/Manila", currency = "PHP" }: {
+export function InventoryWorkspace({ canViewConsumption = false, stock, movements, branches, services, branchId, branchName, salon, canManage, query = {}, loadError, timezone = "Asia/Manila", currency = "PHP" }: {
   stock: InventoryStock[]; movements: InventoryMovement[]; branches: { id: string; name: string }[]; services: { id: string; name: string }[];
   canViewConsumption?: boolean; branchId: string; branchName: string; salon: boolean; canManage: boolean; query?: InventoryQuery; loadError?: string; timezone?: string; currency?: string;
 }) {
@@ -45,19 +45,24 @@ export function InventoryWorkspace({ canViewConsumption = false, stock, movement
     </> : undefined}/>
     <FormMessage error={loadError ?? query.error} message={query.message}/>
     {!loadError ? <>
-      <section id={`${prefix}-metrics`} aria-label="Inventory summary" className="mt-5 grid min-w-0 grid-cols-2 gap-3 lg:grid-cols-4">
+      {!history ? <section id={`${prefix}-metrics`} aria-label="Inventory summary" className="mt-5 grid min-w-0 grid-cols-2 gap-3 lg:grid-cols-4">
         {[{ label: "Products", value: branchStock.length, status: "", id: "products" }, { label: "Low stock", value: branchStock.filter(item => stockStatus(item) === "low").length, status: "low", id: "low-stock" }, { label: "Out of stock", value: branchStock.filter(item => stockStatus(item) === "out").length, status: "out", id: "out-of-stock" }].map(metric => <Link key={metric.id} id={`${prefix}-${metric.id}`} href={inventoryHref({ status: metric.status })} className="min-w-0 rounded-xl border border-admin-border bg-white p-4 transition-colors hover:bg-admin-surface focus-visible:ring-2 focus-visible:ring-brand-primary"><span className="text-xs font-medium text-admin-text-muted">{metric.label}</span><strong className={`mt-2 block text-2xl font-medium ${metric.status === "out" ? "text-red-700" : metric.status === "low" ? "text-amber-800" : ""}`}>{metric.value}</strong><span className="mt-1 inline-flex items-center gap-1 text-xs text-admin-text-muted">View products<ArrowRight aria-hidden="true" size={12}/></span></Link>)}
         <Card id={`${prefix}-valuation`} elevation="none" className="min-w-0 p-4"><p className="text-xs font-medium text-admin-text-muted">Stock value at cost</p><strong className="mt-2 block text-xl font-medium [overflow-wrap:anywhere]">{formatMoney(branchStock.reduce((sum, item) => sum + Number(item.valuation_centavos), 0), currency)}</strong><p className="mt-1 text-xs text-admin-text-muted">Based on stock on hand</p></Card>
-      </section>
+      </section> : null}
       <div className="my-5 flex min-w-0 flex-wrap items-center justify-between gap-3">
         <Tabs id={`${prefix}-tabs`} ariaLabel="Inventory views" className="min-w-0 flex-1" items={[
           {id:`${prefix}-stock-tab`,label:"Stock",href:href({view:undefined,page:undefined}),active:!history,count:branchStock.length},
-          {id:`${prefix}-history-tab`,label:"History",href:href({view:"history",page:undefined}),active:history},
-          ...(canViewConsumption ? [{id:`${prefix}-consumption-tab`,label:"Consumption",href:"/dashboard/inventory/consumption",active:false}] : []),
+          ...(canViewConsumption ? [{id:`${prefix}-consumption-tab`,label:"Overview",href:"/dashboard/inventory/consumption?view=overview",active:false}] : []),
+          {id:`${prefix}-history-tab`,label:canViewConsumption ? "Consumption & history" : "History",href:canViewConsumption ? "/dashboard/inventory/consumption" : href({view:"history",page:undefined}),active:history},
         ]}/>
         {canManage && !salon ? <Button asChild size="sm" variant="ghost"><Link id="inventory-recipe-open-button" href={href({ dialog: "recipe" })}><ClipboardList size={16} aria-hidden="true"/>Service recipes</Link></Button> : null}
       </div>
-      {history ? <Card id={`${prefix}-history`} elevation="none" className="min-w-0 p-4 sm:p-5"><h2 className="font-medium">Recent movements</h2><p className="mt-1 text-sm text-admin-text-muted">Latest 30 movements. Times shown in {timezone}.</p>
+      {history && canViewConsumption ? <Tabs id="inventory-activity-views" ariaLabel="Consumption and history views" className="mb-4" items={[
+        {id:"inventory-monthly-view",label:"Monthly products",href:"/dashboard/inventory/consumption",active:false},
+        {id:"inventory-daily-view",label:"Daily table",href:"/dashboard/inventory/consumption?view=daily",active:false},
+        {id:"inventory-history-view",label:"Movement history",href:href({view:"history"}),active:true},
+      ]}/> : null}
+      {history ? <Card id={`${prefix}-history`} elevation="none" className="min-w-0 p-4 sm:p-5"><h2 className="font-medium">Recent movements</h2><p className="mt-1 text-sm text-admin-text-muted">Latest 30 movements in {branchName}. Times shown in {timezone}.</p>
         <RecordTable id={`${prefix}-movements-table`} className="mt-4" caption="Recent stock movements" empty="No movements yet. Recorded stock changes will appear here." columns={[{key:"product",label:"Product"},{key:"type",label:"Movement",secondary:true},{key:"date",label:"Recorded on",secondary:true},{key:"quantity",label:"Change",align:"right"}]} rows={movements.map(movement=>({id:`${prefix}-movement-${movement.id}`,cells:{
           product:<>{movement.itemId?<RecordLink id={`${prefix}-movement-link-${movement.id}`} href={href({dialog:"details",itemId:movement.itemId})}>{movement.name}</RecordLink>:movement.name}{movement.note&&<p className="mt-1 text-xs text-admin-text-secondary">{movement.note}</p>}</>,
           type:<span className="capitalize">{movement.type.replaceAll("_"," ")}</span>,date:<time dateTime={movement.createdAt}>{new Intl.DateTimeFormat("en-PH",{dateStyle:"medium",timeStyle:"short",timeZone:timezone}).format(new Date(movement.createdAt))}</time>,quantity:<strong className={Number(movement.quantity)<0?"text-red-700":"text-emerald-700"}>{Number(movement.quantity)>0?"+":""}{quantityLabel(movement.quantity,movement.unit)}</strong>,

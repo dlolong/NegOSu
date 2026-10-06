@@ -1,5 +1,6 @@
 import { z } from "zod";
 export const inventoryReportQuery = z.object({
+  view: z.enum(["cards", "daily", "overview"]).default("cards"),
   period: z.enum(["day", "week", "month", "year"]).default("month"),
   date: z.preprocess(value => typeof value === "string" && /^\d{4}-\d{2}$/.test(value) ? `${value}-01` : value, z.iso.date().optional()),
   category: z.string().trim().max(80).default(""),
@@ -41,3 +42,14 @@ export type InventoryReport = {
   daily?: Array<{ day: string; unit: string; consumed: number }>;
   totals: Array<Omit<InventoryReportRow, "id" | "name" | "branch_name" | "stock_tracked">>;
 };
+
+export function inventoryMonthlyConsumption(report: InventoryReport, start: string, end: string) {
+  const months = [...new Set(inventoryReportDays(start, end).map(day => day.slice(0, 7)))];
+  const totals = new Map<string, number>();
+  for (const row of report.product_daily ?? []) {
+    if (row.day < start || row.day > end) continue;
+    const key = `${row.inventory_item_id}:${row.day.slice(0, 7)}`;
+    totals.set(key, (totals.get(key) ?? 0) + Number(row.consumed));
+  }
+  return report.rows.map(product => ({ product, months: months.map(month => ({ month, consumed: product.stock_tracked ? totals.get(`${product.id}:${month}`) ?? 0 : null })) }));
+}

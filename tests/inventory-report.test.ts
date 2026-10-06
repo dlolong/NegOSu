@@ -35,3 +35,27 @@ test("category filter trims values and limits length", () => {
  assert.equal(inventoryReportQuery.parse({}).category,"");
  assert.equal(inventoryReportQuery.safeParse({category:"x".repeat(81)}).success,false);
 });
+
+test("monthly summaries separate products and months, include zero usage and exclude out-of-range days", async () => {
+  const { inventoryMonthlyConsumption } = await import("../lib/inventory-report");
+  const product = { id: "one", name: "Soap", branch_name: "Main", unit: "L", stock_tracked: true, opening: 5, received: 0, consumed: 1.75, waste: 0, other: 0, closing: 3.25 };
+  const report = { count: 2, rows: [product, { ...product, id: "two", stock_tracked: false }], totals: [], product_daily: [
+    { inventory_item_id: "one", day: "2026-09-30", consumed: 1.25 },
+    { inventory_item_id: "one", day: "2026-10-01", consumed: 0.5 },
+    { inventory_item_id: "one", day: "2026-09-01", consumed: 99 },
+  ] };
+  const result = inventoryMonthlyConsumption(report, "2026-09-30", "2026-11-01");
+  assert.deepEqual(result[0].months, [{ month: "2026-09", consumed: 1.25 }, { month: "2026-10", consumed: 0.5 }, { month: "2026-11", consumed: 0 }]);
+  assert.ok(result[1].months.every(month => month.consumed === null));
+});
+
+test("consumption CSV escapes names, prevents formulas and preserves numeric quantities and non-stock blanks", async () => {
+  const { inventoryConsumptionCsvHeader, inventoryConsumptionCsvRows } = await import("../lib/inventory-report-export");
+  const product = { id: "one", name: '=SUM(1,2)"\nSoap', category: "Care", branch_name: "Main", unit: "L", stock_tracked: true, opening: 5, received: 0, consumed: 1.25, waste: 0, other: -1, closing: 2.75 };
+  const report = { count: 2, rows: [product, { ...product, id: "two", name: "Nonstock", stock_tracked: false }], totals: [], product_daily: [{ inventory_item_id: "one", day: "2026-10-01", consumed: 1.25 }] };
+  assert.ok(inventoryConsumptionCsvHeader("2026-10-01", "2026-10-02").endsWith("2026-10-01,2026-10-02"));
+  const csv = inventoryConsumptionCsvRows(report, "2026-10-01", "2026-10-02");
+  assert.ok(csv.includes('"\'=SUM(1,2)""\nSoap"'));
+  assert.ok(csv.includes(",5,0,1.25,0,-1,2.75,1.25,0"));
+  assert.ok(csv.endsWith("two,Nonstock,Care,Main,L,No,2026-10-01,2026-10-02,,,,,,,,"));
+});
