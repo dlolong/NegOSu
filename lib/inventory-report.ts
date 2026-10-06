@@ -32,7 +32,7 @@ export function inventoryReportRange(period: "day" | "week" | "month" | "year", 
   return { start: start.toISOString().slice(0, 10), end: end.toISOString().slice(0, 10) };
 }
 export type InventoryReportRow = {
-  id: string; name: string; category?: string; branch_name: string; unit: string; stock_tracked: boolean;
+  thumbnail_url?: string | null; id: string; name: string; category?: string; branch_name: string; unit: string; stock_tracked: boolean;
   opening: number; received: number; consumed: number; waste: number; other: number; closing: number;
 };
 export type InventoryReport = {

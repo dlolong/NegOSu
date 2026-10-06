@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 export type AppointmentPromoChoice = {
-  id: string; name: string; description: string; branchId: string; serviceId: string;
+  imageUrl?: string | null; id: string; name: string; description: string; branchId: string; serviceId: string;
   serviceIds?: string[]; version: number; priceCentavos: number; currency: string;
   validFrom: string | null; validThrough: string | null;
 };

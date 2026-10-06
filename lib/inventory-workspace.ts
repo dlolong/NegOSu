@@ -1,9 +1,9 @@
 export type InventoryStock = {
-  id: string; branch_id: string; name: string; sku: string | null; category: string | null; unit: string;
+  thumbnail_url?: string | null; id: string; branch_id: string; name: string; sku: string | null; category: string | null; unit: string;
   description?: string | null; lot_number?: string | null; expires_on?: string | null;
   quantity_on_hand: number | string; reorder_level: number | string; valuation_centavos: number | string;
 };
-export type InventoryMovement = { id: string; itemId?: string; name: string; unit: string; type: string; quantity: number | string; note: string | null; createdAt: string };
+export type InventoryMovement = { thumbnail_url?: string | null; id: string; itemId?: string; name: string; unit: string; type: string; quantity: number | string; note: string | null; createdAt: string };
 export type InventoryQuery = { q?: string; category?: string; status?: string; view?: string; page?: string; dialog?: string; itemId?: string; message?: string; error?: string };
 export type InventoryActionState = { error?: string };
 export function stockStatus(item: InventoryStock) {

@@ -1,3 +1,4 @@
+import { withProductPhotos } from "@/modules/core/catalog/product-photos";
 import { InventoryConsumptionCards } from "@/components/inventory-consumption-cards";
 import { Tabs } from "@/components/ui/tabs";
 import { requireIndustryFeature } from "@/lib/auth/industry-access";
@@ -27,6 +28,7 @@ export default async function InventoryReportPage({ searchParams }: { searchPara
     p_start: range.start, p_end: range.end, p_page: query.page, p_search: query.q, p_category: query.category,
   });
   const report = data as InventoryReport | null;
+  if (report && !error) report.rows = await withProductPhotos(db, m.organizationId, report.rows);
   const href = (page = 1, view = query.view) => `/dashboard/inventory/consumption?${new URLSearchParams({ start: range.start, end: range.end, branch, q: query.q, category: query.category, view, page: String(page) })}`;
   const number = (value: number) => new Intl.NumberFormat("en", { maximumFractionDigits: 3 }).format(value);
   return <main id="inventory-report-page" className="mx-auto min-w-0 max-w-7xl">

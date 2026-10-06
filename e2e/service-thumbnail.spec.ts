@@ -12,9 +12,11 @@ test("service previews handle images, failures and removal without overflow", as
   await expect(page.locator("#public-valid-photo img")).toBeVisible();
   await expect(page.locator("#public-empty-photo")).toContainText("Service preview");
   await expect(page.locator("#public-broken-photo")).toContainText("Photo unavailable");
-  await page.locator(`#service-thumbnail-clear-${id}`).click();
-  await expect(page.locator(`#service-thumbnail-url-${id}`)).toHaveValue("");
-  await expect(page.locator(`#service-thumbnail-preview-${id}`)).toContainText("Service preview");
+  await page.locator(`#service-thumbnail-${id}-edit`).click();
+  await page.locator(`#service-thumbnail-${id}-clear`).click();
+  await expect(page.locator(`#service-thumbnail-${id}-url`)).toHaveValue("");
+  await page.locator(`#service-thumbnail-${id}-save`).click();
+  await expect(page.locator(`#service-thumbnail-${id}-preview`)).toContainText("Service preview");
   await page.locator(`#service-thumbnail-save-${id}`).click();
   await expect.poll(() => submissions.length).toBe(1);
   expect(submissions[0]).toEqual({ name: "saveServiceThumbnail", entries: [["serviceId", id], ["thumbnailUrl", ""]] });

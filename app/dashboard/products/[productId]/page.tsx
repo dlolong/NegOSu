@@ -1,3 +1,4 @@
+import { CatalogDetailPhoto } from "@/components/catalog-detail-photo";
 import { FormDialog } from "@/components/management-ui";
 import { RecordLink } from "@/components/record-item";
 import { RecordTable } from "@/components/record-table";
@@ -13,7 +14,6 @@ import { loadProductHistory, productHistoryTab, PRODUCT_HISTORY_SIZE, type Produ
 import { PageHeader } from "@/components/page-patterns";
 import { ListTabs } from "@/components/list-tabs";
 import { HistoryNavigation } from "@/components/client-reminder-rows";
-import { ServiceThumbnail } from "@/components/service-thumbnail";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 type Query = { movement?: string; q?: string; from?: string; to?: string; tab?: string; page?: string };
@@ -40,7 +40,7 @@ export default async function Page({ params, searchParams }: { params: Promise<{
     
     <PageHeader back={<Button asChild variant="ghost" ><Link id="product-detail-back" href="/dashboard/products">Back to Products</Link></Button>} id="product-detail-header" title={product.name} description={`${product.category || "Uncategorized"}`} action={<Button asChild variant="secondary"><Link id="product-detail-edit" href={`/dashboard/products?dialog=edit&id=${product.id}`}>Edit product</Link></Button>}/>
     <Card id="product-details" className="mt-4 grid min-w-0 gap-4 p-4 sm:grid-cols-[minmax(0,1fr)_minmax(0,2fr)] sm:p-5">
-      <div className="min-w-0"><ServiceThumbnail id="product-detail-photo" name={product.name} url={product.thumbnail_url} subject="product"/></div>
+      <div className="min-w-0"><CatalogDetailPhoto key={product.thumbnail_url} id="product-detail-photo" recordId={product.id} name={product.name} url={product.thumbnail_url} subject="product"/></div>
       <div className="min-w-0"><dl className="grid gap-3 text-sm sm:grid-cols-2">{[
         ["Selling price", `${formatMoney(product.sell_price_centavos ?? 0, m.currency)} / ${product.unit}`],
         ["Product code", product.sku || "Not set"], ["Purpose", product.product_purpose],

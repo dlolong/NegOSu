@@ -1,0 +1,21 @@
+import { expect, test } from "@playwright/test";
+import { renderFormFixture } from "./fixtures/form-browser";
+let html: string;
+test.beforeAll(async () => { html = await renderFormFixture("e2e/fixtures/login-password.tsx"); });
+test("password eye toggles with mouse and keyboard without changing the value or submitting", async ({ page }) => {
+  await page.route("https://forms.test/**", route => route.fulfill({ contentType: "text/html", body: html }));
+  await page.goto("https://forms.test/login");
+  const input = page.getByLabel("Password", { exact: true });
+  await expect(input).toHaveAttribute("type", "password");
+  await input.fill("test-password");
+  await page.getByRole("button", { name: "Show password" }).click();
+  await expect(input).toHaveAttribute("type", "text");
+  await expect(input).toHaveValue("test-password");
+  const hide = page.getByRole("button", { name: "Hide password" });
+  await expect(hide).toHaveAttribute("aria-pressed", "true");
+  await hide.press("Space");
+  await expect(input).toHaveAttribute("type", "password");
+  await expect(input).toHaveValue("test-password");
+  await expect(page.locator("#login-submissions")).toHaveText("0");
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+});

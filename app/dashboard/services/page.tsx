@@ -30,7 +30,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<Cat
   const categoryTab = params.tab === "categories";
   const prefix = salon ? "salon-treatment-category" : "service-category";
   const canManage = ["owner", "manager"].includes(activeMembership.role);
-  let serviceQuery = supabase.from("services").select("id,name,currency,short_description,duration_minutes,base_price_centavos,is_active,is_add_on,service_categories(name),service_branch_availability(is_available,branches(name))").eq("organization_id", activeMembership.organizationId).order("name");
+  let serviceQuery = supabase.from("services").select("id,name,thumbnail_url,currency,short_description,duration_minutes,base_price_centavos,is_active,is_add_on,service_categories(name),service_branch_availability(is_available,branches(name))").eq("organization_id", activeMembership.organizationId).order("name");
   if (search) serviceQuery = serviceQuery.ilike("name", `%${search}%`);
   // Only canonical UUID filters reach the database; malformed queries never become raw SQL errors.
   const safeFilter = new URL(servicesCatalogHref({ category: params.category }), "https://catalog.invalid").searchParams.get("category");

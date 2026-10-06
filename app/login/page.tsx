@@ -1,3 +1,4 @@
+import { LoginPasswordField } from "@/components/login-password-field";
 
 import { LogIn as LogInIcon } from "lucide-react";
 import Link from "next/link";
@@ -27,7 +28,7 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
         <input type="hidden" name="next" value={next} />
         {entry ? <input type="hidden" name="industry" value={entry.industry} /> : null}
         <label className="block text-sm font-medium" htmlFor="negosu-login-email-input">Email address<Input id="negosu-login-email-input" required autoComplete="email" name="email" type="email" inputMode="email" className="mt-2" /></label>
-        <label className="block text-sm font-medium" htmlFor="negosu-login-password-input">Password<Input id="negosu-login-password-input" required autoComplete="current-password" name="password" type="password" className="mt-2" /></label>
+        <LoginPasswordField/>
         <div className="text-right"><Link id="negosu-login-forgot-password-link" href={`/forgot-password${contextQuery}`} className="text-sm font-medium text-brand-primary-strong">Forgot password?</Link></div>
         <SubmitButton id="negosu-login-submit-button" className="w-full" pendingText="Signing in…"><LogInIcon aria-hidden="true" size={16} className="shrink-0"/>Sign in</SubmitButton>
       </form>

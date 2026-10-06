@@ -6,12 +6,12 @@ import type { AppointmentPromoChoice } from "./appointment-promos";
 
 export async function getAppointmentPromos(organizationId: string) {
   const db = await createClient();
-  const { data, error } = await db.from("commerce_promos").select("id,name,description,branch_id,version,price_centavos,currency,valid_from,valid_through,components").eq("organization_id", organizationId).eq("status", "active").order("name");
+  const { data, error } = await db.from("commerce_promos").select("id,name,image_url,description,branch_id,version,price_centavos,currency,valid_from,valid_through,components").eq("organization_id", organizationId).eq("status", "active").order("name");
   const choices: AppointmentPromoChoice[] = [];
   for (const p of data ?? []) {
     const services = (p.components as { kind: string; referenceId: string }[]).filter(c => c.kind === "service");
     const service = services[0];
-    if (service) choices.push({ id: p.id, name: p.name, description: p.description, branchId: p.branch_id, serviceId: service.referenceId, serviceIds: services.map(s => s.referenceId), version: p.version, priceCentavos: Number(p.price_centavos), currency: p.currency, validFrom: p.valid_from, validThrough: p.valid_through });
+    if (service) choices.push({ imageUrl: p.image_url, id: p.id, name: p.name, description: p.description, branchId: p.branch_id, serviceId: service.referenceId, serviceIds: services.map(s => s.referenceId), version: p.version, priceCentavos: Number(p.price_centavos), currency: p.currency, validFrom: p.valid_from, validThrough: p.valid_through });
   }
   return { choices, error: error ? "Promos could not be loaded. Ask an administrator to check commerce setup." : undefined };
 }

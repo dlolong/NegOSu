@@ -3,7 +3,7 @@ import { z } from "zod";
 import { formatMoney } from "@/lib/operations";
 import type { VisitEntityActor, VisitEntityResult } from "@/lib/visit-entities";
 export type RecordKind = "customer" | "vehicle" | "service" | "category";
-export type RecordChoice = { id: string; name: string; keywords?: string; description?: string };
+export type RecordChoice = { thumbnail_url?: string | null; subject?: "service"; id: string; name: string; keywords?: string; description?: string };
 const schema = z.object({ kind: z.enum(["customer", "vehicle", "service", "category"]), query: z.string().trim().max(160), scopeId: z.uuid().optional() });
 export async function searchRecords(input: unknown, actor: VisitEntityActor, db: SupabaseClient): Promise<VisitEntityResult<RecordChoice[]>> {
   const parsed = schema.safeParse(input);
@@ -36,13 +36,13 @@ export async function searchRecords(input: unknown, actor: VisitEntityActor, db:
   for (const term of terms) categoryQuery = categoryQuery.ilike("name", `%${term}%`);
   const categories = await categoryQuery.limit(100);
   if (categories.error) return { error: "Unable to search service categories. Please try again." };
-  let request = db.from("services").select("id,name,currency,base_price_centavos,duration_minutes,service_categories(name)").eq("organization_id", actor.organizationId).eq("is_active", true);
+  let request = db.from("services").select("id,name,thumbnail_url,currency,base_price_centavos,duration_minutes,service_categories(name)").eq("organization_id", actor.organizationId).eq("is_active", true);
   const categoryIds = (categories.data ?? []).map(row => row.id);
   for (const term of terms) request = request.or(`name.ilike.%${term}%${categoryIds.length ? `,category_id.in.(${categoryIds.join(",")})` : ""}`);
   const result = await request.order("name").limit(50);
   if (result.error) return { error: "Unable to search services. Please try again." };
   return { data: (result.data ?? []).map(row => {
     const category = Array.isArray(row.service_categories) ? row.service_categories[0] : row.service_categories;
-    return { id: row.id, name: row.name, keywords: category?.name ?? "", description: `${category?.name ? `${category.name} · ` : ""}${formatMoney(row.base_price_centavos, row.currency)} · ${row.duration_minutes} min` };
+    return { id: row.id, name: row.name, thumbnail_url: row.thumbnail_url, subject: "service" as const, keywords: category?.name ?? "", description: `${category?.name ? `${category.name} · ` : ""}${formatMoney(row.base_price_centavos, row.currency)} · ${row.duration_minutes} min` };
   }) };
 }

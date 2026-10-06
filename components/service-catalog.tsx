@@ -1,3 +1,4 @@
+import { CatalogItemThumbnail } from "@/components/catalog-item-thumbnail";
 
 import { RecordLink } from "@/components/record-item";
 import Link from "next/link";
@@ -11,7 +12,7 @@ import { servicesCatalogHref } from "@/lib/service-categories";
 import type { CategoryRecord } from "@/components/service-category-form";
 
 export type CatalogService = {
-  currency?: string; id: string; name: string; short_description: string | null; duration_minutes: number; base_price_centavos: number; is_active: boolean; is_add_on: boolean;
+  thumbnail_url?: string | null; currency?: string; id: string; name: string; short_description: string | null; duration_minutes: number; base_price_centavos: number; is_active: boolean; is_add_on: boolean;
   service_categories: { name: string } | { name: string }[] | null;
   service_branch_availability?: Array<{ is_available: boolean; branches: { name: string } | { name: string }[] | null }>;
 };
@@ -28,7 +29,7 @@ export function ServiceCatalogList({ services, salon, currency = "PHP" }: { curr
     {key:"service",label:salon?"Treatment":"Service"},{key:"category",label:"Category",secondary:true},{key:"status",label:"Status",secondary:true},
     {key:"price",label:"Price / duration",align:"right"},
   ]} rows={services.map(service => ({id:`${prefix}-row-${service.id}`,cells:{
-    service:<><RecordLink id={`${prefix}-link-${service.id}`} href={`/dashboard/services/${service.id}`}>{service.name}</RecordLink>{service.short_description && <p className="mt-1 line-clamp-2 text-xs text-admin-text-muted">{service.short_description}</p>}<p className="mt-1 text-xs text-admin-text-muted">{availabilityLabel(service)}</p></>,
+    service:<div className="flex min-w-0 items-start gap-3"><CatalogItemThumbnail id={`${prefix}-photo-${service.id}`} url={service.thumbnail_url} name={service.name}/><div className="min-w-0"><RecordLink id={`${prefix}-link-${service.id}`} href={`/dashboard/services/${service.id}`}>{service.name}</RecordLink>{service.short_description && <p className="mt-1 line-clamp-2 text-xs text-admin-text-muted">{service.short_description}</p>}<p className="mt-1 text-xs text-admin-text-muted">{availabilityLabel(service)}</p></div></div>,
     category:categoryName(service),price:<><strong>{formatMoney(service.base_price_centavos, service.currency ?? currency)}</strong><p className="mt-1 text-xs">{formatDuration(service.duration_minutes)}</p></>,status:<StatusPill active={service.is_active}/>,
   },mobile:<><p>{categoryName(service)}{service.is_add_on?" · Add-on":""}</p><p>{formatMoney(service.base_price_centavos, service.currency ?? currency)} · {formatDuration(service.duration_minutes)}</p><StatusPill active={service.is_active}/></>}))}/>;
 }

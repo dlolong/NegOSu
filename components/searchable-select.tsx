@@ -1,11 +1,12 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { CatalogItemThumbnail } from "@/components/catalog-item-thumbnail";
 import { Check, Plus, X } from "lucide-react";
 import { lookupRecords } from "@/app/dashboard/appointments/entity-actions";
 import type { RecordKind } from "@/lib/record-lookup";
 
-export type SelectOption = { id: string; name: string; keywords?: string; description?: string };
+export type SelectOption = { thumbnail_url?: string | null; subject?: "service" | "product" | "promo"; id: string; name: string; keywords?: string; description?: string };
 export function SearchableSelect({ id, name, options, value, defaultValue = "", onValueChange, placeholder = "Search and select…", required = false, disabled = false, lookup, scopeId, onCreate, createLabel = "record", preserveValueOnReset = false }: {
   preserveValueOnReset?: boolean; id: string; name?: string; options: SelectOption[]; value?: string; defaultValue?: string;
   onValueChange?: (value: string, option?: SelectOption) => void; placeholder?: string; required?: boolean; disabled?: boolean;
@@ -68,7 +69,7 @@ export function SearchableSelect({ id, name, options, value, defaultValue = "", 
       {loading ? <p role="status" className="p-3 text-slate-500">Searching…</p> : null}
       {error ? <p id={`${id}-error`} role="alert" className="p-3 text-status-danger">{error}</p> : null}
       <div id={`${id}-options`} role="listbox" aria-label="Matching records" className="max-h-56 overflow-y-auto">
-        {visible.map((option, index) => <div id={`${id}-option-${option.id}`} key={option.id} role="option" aria-selected={option.id === selectedId} onMouseDown={event => event.preventDefault()} onClick={event => { event.preventDefault(); event.stopPropagation(); choose(option); }} className={`flex min-h-11 cursor-pointer items-center gap-2 rounded-lg px-3 py-2 [overflow-wrap:anywhere] ${index === active ? "bg-brand-tint" : "hover:bg-slate-50"}`}><span className="min-w-0 flex-1">{option.name}{option.description ? <span className="block text-xs text-slate-500">{option.description}</span> : null}</span>{option.id === selectedId ? <Check size={16} aria-hidden="true" className="shrink-0"/> : null}</div>)}
+        {visible.map((option, index) => <div id={`${id}-option-${option.id}`} key={option.id} role="option" aria-selected={option.id === selectedId} onMouseDown={event => event.preventDefault()} onClick={event => { event.preventDefault(); event.stopPropagation(); choose(option); }} className={`flex min-h-11 cursor-pointer items-center gap-2 rounded-lg px-3 py-2 [overflow-wrap:anywhere] ${index === active ? "bg-brand-tint" : "hover:bg-slate-50"}`}>{(lookup === "service" || option.subject) ? <CatalogItemThumbnail id={`${id}-option-photo-${option.id}`} url={option.thumbnail_url} name={option.name} subject={option.subject ?? "service"}/> : null}<span className="min-w-0 flex-1">{option.name}{option.description ? <span className="block text-xs text-slate-500">{option.description}</span> : null}</span>{option.id === selectedId ? <Check size={16} aria-hidden="true" className="shrink-0"/> : null}</div>)}
       </div>
       {!loading && !error && !visible.length ? <p role="status" className="p-3 text-slate-500">No matching records.</p> : null}
       {canCreate ? <button id={`${id}-create`} type="button" className="flex min-h-11 w-full items-center gap-2 rounded-lg p-3 text-left font-medium text-brand-primary hover:bg-brand-tint [overflow-wrap:anywhere]" onClick={() => { onCreate(query.trim()); setOpen(false); }}><Plus size={16} aria-hidden="true" className="shrink-0"/><span>Add “{query.trim()}” as a new {createLabel}…</span></button> : null}

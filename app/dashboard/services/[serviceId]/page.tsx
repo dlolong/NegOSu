@@ -1,3 +1,4 @@
+import { CatalogDetailPhoto } from "@/components/catalog-detail-photo";
 import { z } from "zod";
 import { CatalogHistory } from "@/components/catalog-history";
 import { PageHeader } from "@/components/page-patterns";
@@ -115,7 +116,7 @@ export default async function Page({
       action={canManage ? <Button id={isSalon ? "salon-treatment-edit-button" : "service-detail-edit-button"} asChild variant="secondary"><Link href={`/dashboard/services/${service.id}/edit`}><PencilIcon aria-hidden="true" size={16}/>Edit {serviceLabel}</Link></Button> : undefined}/>
     <FormMessage {...messageParams}/>
     <Card id="service-details" className="mt-4 grid min-w-0 gap-4 p-4 sm:grid-cols-[minmax(0,1fr)_minmax(0,2fr)] sm:p-5">
-      <div className="min-w-0"><ServiceThumbnail id="service-detail-photo" url={service.thumbnail_url} name={service.name}/></div>
+      <div className="min-w-0">{canManage ? <CatalogDetailPhoto key={service.thumbnail_url} id="service-detail-photo" recordId={service.id} name={service.name} url={service.thumbnail_url} subject="service"/> : <ServiceThumbnail id="service-detail-photo" url={service.thumbnail_url} name={service.name}/>}</div>
       <div className="min-w-0">
         <dl className="grid gap-3 text-sm sm:grid-cols-2">{[
           ["Base price", formatMoney(service.base_price_centavos, service.currency)],
