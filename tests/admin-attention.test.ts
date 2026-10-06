@@ -8,7 +8,7 @@ function database(options: { failed?: string; rejected?: string; empty?: boolean
  const calls: { table: string; method: string; args: unknown[] }[] = [];
  const db = { from(table: string) {
   const query: Record<string, unknown> = {};
-  for (const method of ["select", "eq", "gt", "lt", "in", "order", "limit"]) query[method] = (...args: unknown[]) => { calls.push({ table, method, args }); return query; };
+  for (const method of ["select", "eq", "gt", "lt", "lte", "in", "order", "limit"]) query[method] = (...args: unknown[]) => { calls.push({ table, method, args }); return query; };
   query.then = (resolve: (value: unknown) => unknown, reject: (error: unknown) => unknown) => options.rejected === table
    ? Promise.reject(new Error("Private database diagnostic")).then(resolve, reject)
    : Promise.resolve({ count: options.empty ? 0 : 2, data: [{ id: `${table}-record` }], error: options.failed === table ? { message: "private" } : null }).then(resolve, reject);
@@ -19,7 +19,7 @@ function database(options: { failed?: string; rejected?: string; empty?: boolean
 
 test("attention reads use server membership scope and return direct task links", async () => {
  const { db, calls } = database(); const snapshot = await loadAdminAttention(db, membership, new Date("2026-09-16T04:00:00Z"));
- assert.equal(snapshot.total, 12); assert.equal(snapshot.items.length, 6);
+ assert.equal(snapshot.total, 14); assert.equal(snapshot.items.length, 7);
  for (const table of new Set(calls.map(call => call.table))) {
   assert.ok(calls.some(call => call.table === table && call.method === "eq" && call.args[0] === "organization_id" && call.args[1] === "org-a"));
   assert.ok(calls.some(call => call.table === table && call.method === "eq" && call.args[0] === "branch_id" && call.args[1] === "branch-a"));
@@ -45,7 +45,7 @@ test("all industries share common alerts and Pet Care gets its own detail route"
 test("one unavailable source preserves other alerts without claiming all clear", async () => {
  for (const mode of ["failed", "rejected"] as const) {
   const { db } = database({ [mode]: "customer_conversations" }); const snapshot = await loadAdminAttention(db, membership);
-  assert.equal(snapshot.total, 10); assert.deepEqual(snapshot.unavailable, ["Messages need a reply"]); assert.equal(JSON.stringify(snapshot).includes("private"), false);
+  assert.equal(snapshot.total, 12); assert.deepEqual(snapshot.unavailable, ["Messages need a reply"]); assert.equal(JSON.stringify(snapshot).includes("private"), false);
  }
  const { db } = database({ empty: true }); const snapshot = await loadAdminAttention(db, membership);
  assert.equal(snapshot.total, 0); assert.deepEqual(snapshot.items, []); assert.deepEqual(snapshot.unavailable, []);
@@ -74,4 +74,51 @@ test("missing order schema logs a safe diagnostic without exposing database deta
  assert.ok(JSON.stringify(logs).includes("dashboard.notifications.orders"));
  assert.ok(!JSON.stringify(logs).includes("private"));
  assert.ok(!JSON.stringify(snapshot).includes("private"));
+});
+
+
+test("reminders notify 24 hours ahead, retain overdue work, and exclude resolved reminders", async () => {
+ const { db, calls } = database();
+ const snapshot = await loadAdminAttention(db, membership, new Date("2026-10-06T04:00:00Z"));
+ assert.equal(snapshot.items.find(item => item.id === "reminders")?.href, "/dashboard/customers/reminders?status=attention");
+ const reminderCalls = calls.filter(call => call.table === "client_reminders");
+ assert.ok(reminderCalls.some(call => call.method === "lte" && call.args[0] === "due_at" && call.args[1] === "2026-10-07T04:00:00.000Z"));
+ assert.ok(reminderCalls.some(call => call.method === "eq" && call.args[0] === "status" && call.args[1] === "pending"));
+ assert.ok(!reminderCalls.some(call => ["gt", "gte"].includes(call.method)));
+ for (const role of ["owner", "manager", "advisor"] as const) {
+  const result = await loadAdminAttention(database().db, { ...membership, role });
+  assert.ok(result.items.some(item => item.id === "reminders"));
+ }
+ const failed = await loadAdminAttention(database({ failed: "client_reminders" }).db, membership);
+ assert.ok(failed.unavailable.includes("Reminders due soon"));
+ assert.ok(!failed.items.some(item => item.id === "reminders"));
+});
+
+
+test("reminder count includes the exact 24-hour boundary but excludes later, resolved, and foreign records", async () => {
+ const now = new Date("2026-10-06T04:00:00Z");
+ const pending = { organization_id: "org-a", branch_id: "branch-a", status: "pending" };
+ const rows = [
+  { ...pending, due_at: "2026-10-05T04:00:00.000Z" },
+  { ...pending, due_at: "2026-10-07T04:00:00.000Z" },
+  { ...pending, due_at: "2026-10-07T04:00:00.001Z" },
+  { ...pending, status: "contacted", due_at: now.toISOString() },
+  { ...pending, status: "cancelled", due_at: now.toISOString() },
+  { ...pending, organization_id: "org-b", due_at: now.toISOString() },
+  { ...pending, branch_id: "branch-b", due_at: now.toISOString() },
+ ];
+ const fallback = database({ empty: true }).db;
+ const db = { from(table: string) {
+  if (table !== "client_reminders") return fallback.from(table);
+  let matches = [...rows];
+  const query = {
+   select() { return query; },
+   eq(key: keyof typeof pending, value: string) { matches = matches.filter(row => row[key] === value); return query; },
+   lte(key: "due_at", value: string) { matches = matches.filter(row => row[key] <= value); return query; },
+   then(resolve: (value: unknown) => unknown) { return Promise.resolve({ count: matches.length, error: null }).then(resolve); },
+  };
+  return query;
+ } } as unknown as SupabaseClient;
+ const snapshot = await loadAdminAttention(db, membership, now);
+ assert.equal(snapshot.items.find(item => item.id === "reminders")?.count, 2);
 });

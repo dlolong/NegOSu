@@ -1,5 +1,5 @@
 export const dynamic = "force-dynamic";
-import { ArrowRight as ArrowRightIcon, ArrowRight, Boxes, Building2, CalendarDays, CarFront, CheckCircle2, CreditCard, PawPrint, Scissors, ShieldCheck, Store, Users } from "lucide-react";
+import { ArrowRight, Boxes, Building2, CalendarDays, CarFront, CreditCard, PawPrint, Scissors, ShieldCheck, Store, Users } from "lucide-react";
 import type { Metadata } from "next";
 
 import Link from "next/link";
@@ -32,10 +32,13 @@ const sharedCapabilities = [
 ] as const;
 
 const faqs = [
-  ["Which businesses can use NegOSu today?", "All four applications are available: Automotive, Salon & Beauty, Pet Care, and Apartelle & Inn. Choose your business type and start with the Free plan."],
-  ["Is this one generic workspace?", "No. NegOSu shares secure platform capabilities underneath, while Automotive, Salon & Beauty, Pet Care, and Apartelle & Inn present different workflows for the business using them."],
-  ["Can I choose my business type during signup?", "Yes. Choose Automotive, Salon & Beauty, Pet Care, or Apartelle & Inn to get the workspace built for your business."],
-  ["Do I need separate accounts for different businesses?", "No. One NegOSu account can access authorized businesses, and switching changes the actual organization context."],
+  ["Is NegOSu right for my business?", "NegOSu is built for automotive shops, salons and beauty businesses, pet grooming businesses, and apartelles or inns. Choose your business type to see the tools that fit your day-to-day work."],
+  ["How can it help me manage my day?", "Keep customer details, appointments or room bookings, payments, and stock records in one place. You and your team can check what needs attention without searching through separate notebooks and spreadsheets. Available tools depend on your business type and plan."],
+  ["Can I try it before choosing a paid plan?", "Yes. Start with the Free plan and see how it fits your business. You can compare plans and upgrade when you need room for more staff, branches, or additional tools."],
+  ["What do I need to get started?", "Create an account, choose your business type, and add your business details. Then add the services or rooms you offer and invite the staff who will use NegOSu."],
+  ["Can my staff use it too?", "Yes. You can invite your staff and choose what each person is allowed to view or do. The number of staff you can add depends on your plan."],
+  ["Can I use it for more than one branch?", "Yes. Choose a plan that supports the number of branches you need. Your team can work with the branches they have access to, while you keep track of your business locations."],
+  ["What if I need help deciding?", "Use the Contact us page to tell us about your business and what you need help with. Include your email address so our team can get back to you."],
 ] as const;
 
 export default function NegOSuLandingPage() {
@@ -47,37 +50,27 @@ export default function NegOSuLandingPage() {
         <div>
           <p className="inline-flex rounded-full border border-brand-border bg-brand-tint px-3 py-1 text-sm font-medium text-brand-primary-strong">Four applications. One business platform.</p>
           <h1 className="mt-5 max-w-4xl text-4xl font-medium tracking-[-0.05em] sm:text-5xl lg:text-6xl xl:text-7xl">{productBrand.tagline}</h1>
-          <p className="mt-5 max-w-2xl text-base leading-7 text-zinc-600 sm:text-lg sm:leading-8">From service appointments to guest stays, bring your customers, team, inventory and payments together. Choose Automotive, Salon & Beauty, Pet Care, or Apartelle & Inn. All four are available to get started today.</p>
-          <div className="mt-7 flex flex-col gap-3 min-[380px]:flex-row">
-            <Link id="negosu-start-free-button" href="/signup" className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-brand-primary px-5 py-3 font-medium text-white shadow-sm hover:bg-brand-primary-strong">Start Free <ArrowRight aria-hidden="true" size={18} /></Link>
-            <a id="negosu-explore-solutions-button" href="#solutions" className="inline-flex min-h-11 items-center justify-center rounded-xl border border-brand-border bg-white px-5 py-3 font-medium hover:bg-brand-tint"><ArrowRightIcon aria-hidden="true" size={16} className="shrink-0"/>Explore Solutions</a>
-          </div>
+          <p className="mt-5 max-w-2xl text-base leading-7 text-zinc-600 sm:text-lg sm:leading-8">From service appointments to guest stays, bring your customers, team, inventory and payments together. Choose Automotive, Salon & Beauty, Pet Care, or Apartelle & Inn.</p>
         </div>
 
         <div id="negosu-hero-product-visual" className="min-w-0 rounded-ui-lg border border-slate-200 bg-white p-3 shadow-ui-md sm:p-4">
           <div className="overflow-hidden rounded-xl border border-slate-200 bg-slate-50">
             <div className="flex items-center justify-between gap-3 border-b border-slate-200 bg-white px-4 py-3 sm:px-5">
               <div><p className="text-xs font-medium tracking-wider text-brand-primary-strong">NegOSu</p><p className="mt-0.5 font-medium text-brand-ink">Choose your application</p></div>
-              <span className="max-w-36 text-right text-xs text-slate-500">All available now</span>
             </div>
             <div className="p-4 sm:p-5">
-            <div className="mt-5 grid gap-3 sm:grid-cols-2">
+            <div className="grid gap-3 sm:grid-cols-2">
               {supportedVerticalKeys.map(key => {
                 const brand = verticalBrands[key];
                 const { icon: Icon, description } = applicationPreviews[key];
                 const id = key.replaceAll("_", "-");
-                return <article id={`negosu-${id}-preview`} key={key} className="flex min-w-0 flex-col rounded-xl border border-slate-200 bg-white p-4 text-brand-ink">
-                  <div className="flex flex-wrap items-center justify-between gap-2"><Icon aria-hidden="true" className="text-brand-primary" size={22}/><span className="rounded-full bg-brand-tint px-2 py-1 text-xs font-medium text-brand-primary-strong">Available now</span></div>
+                return <Link id={`negosu-${id}-preview`} key={key} href={brand.path} aria-label={`View ${brand.shortName}`} className="group flex min-w-0 flex-col rounded-xl border border-slate-200 bg-white p-4 text-brand-ink transition-colors hover:border-brand-primary hover:bg-brand-tint focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary focus-visible:ring-offset-2">
+                  <div className="flex items-center justify-between gap-2"><Icon aria-hidden="true" className="text-brand-primary" size={22}/><ArrowRight aria-hidden="true" size={16} className="text-slate-400 group-hover:text-brand-primary"/></div>
                   <h2 className="mt-3 font-medium">{brand.shortName}</h2>
                   <p className="mt-1 flex-1 text-sm leading-6 text-slate-600">{description}</p>
-                  <div className="mt-3 flex flex-wrap items-center gap-x-4">
-                    <Link id={`negosu-hero-${id}-signup`} href={brand.signupPath} aria-label={`Start free with ${brand.shortName}`} className="inline-flex min-h-11 items-center gap-2 text-sm font-medium text-brand-primary-strong">Start free <ArrowRight size={16} aria-hidden="true"/></Link>
-                    <Link id={`negosu-hero-${id}-link`} href={brand.path} aria-label={`Explore ${brand.shortName}`} className="inline-flex min-h-11 items-center text-sm text-slate-600 underline underline-offset-4">Explore</Link>
-                  </div>
-                </article>;
+                </Link>;
               })}
             </div>
-            <div className="mt-3 flex items-center gap-2 rounded-xl border border-brand-border bg-brand-tint px-4 py-3 text-sm text-brand-ink"><CheckCircle2 aria-hidden="true" className="shrink-0 text-brand-primary" size={18} />Shared staff, inventory, payments, permissions and reports.</div>
             </div>
           </div>
         </div>
@@ -134,7 +127,7 @@ export default function NegOSuLandingPage() {
       <section id="negosu-faq" className="border-y border-zinc-100 bg-zinc-50">
         <div className="mx-auto max-w-4xl px-4 py-14 sm:px-6 sm:py-18">
           <p className="text-sm font-medium normal-case tracking-wider text-brand-primary-strong">FAQ</p>
-          <h2 className="mt-2 text-3xl font-medium tracking-tight sm:text-4xl">A clear start for your business.</h2>
+          <h2 className="mt-2 text-3xl font-medium tracking-tight sm:text-4xl">Questions before you get started?</h2>
           <div className="mt-7 divide-y divide-zinc-200 rounded-2xl border border-zinc-200 bg-white px-5">{faqs.map(([question, answer], index) => <details id={`negosu-faq-item-${index + 1}`} key={question} className="group py-5"><summary className="cursor-pointer list-none font-medium marker:content-none">{question}<span aria-hidden="true" className="float-right ml-3 text-zinc-400 group-open:rotate-45">+</span></summary><p className="mt-3 max-w-3xl text-sm leading-6 text-zinc-600">{answer}</p></details>)}</div>
         </div>
       </section>

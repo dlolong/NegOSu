@@ -1,4 +1,4 @@
-import { ArrowRight as ArrowRightIcon, Play as PlayIcon, ArrowRight, CheckCircle2, Menu, type LucideIcon } from "lucide-react";
+import { ArrowRight as ArrowRightIcon, ArrowRight, CheckCircle2, type LucideIcon } from "lucide-react";
 
 import Link from "next/link";
 import type { ReactNode } from "react";
@@ -18,54 +18,7 @@ export type MarketingFeature = {
   description: string;
 };
 
-export function MarketingHeader({ vertical }: { vertical?: MarketingVerticalKey }) {
-  const signupPath = vertical ? marketingBrands[vertical].signupPath : "/signup";
-  const loginPath = vertical ? marketingBrands[vertical].loginPath : "/login";
-
-  return (
-    <header id="negosu-main-header" className="border-b border-brand-border/70 bg-white/95">
-      <div className="mx-auto flex min-h-16 w-full max-w-7xl items-center justify-between gap-3 px-4 sm:px-6">
-        <Link id="negosu-header-home-link" href="/" className="inline-flex min-h-11 items-center" aria-label={`${productBrand.name} home`}>
-          <BrandWordmark className="w-32" />
-        </Link>
-
-        <nav id="negosu-desktop-navigation" className="hidden items-center gap-1 xl:flex" aria-label="Main navigation">
-          <Link id="negosu-desktop-solutions-link" href="/#solutions" className="rounded-xl px-3 py-2 text-sm font-medium text-zinc-600 hover:bg-brand-tint hover:text-brand-ink">Solutions</Link>
-          <Link id="negosu-desktop-automotive-link" href={marketingBrands.automotive.path} className="rounded-xl px-3 py-2 text-sm font-medium text-zinc-600 hover:bg-brand-tint hover:text-brand-ink">Automotive</Link>
-          <Link id="negosu-desktop-salon-link" href={marketingBrands.salon.path} className="rounded-xl px-3 py-2 text-sm font-medium text-zinc-600 hover:bg-brand-tint hover:text-brand-ink">Salon &amp; Beauty</Link>
-          <Link id="negosu-desktop-pet-care-link" href={petCareBrand.path} className="rounded-xl px-3 py-2 text-sm font-medium text-zinc-600 hover:bg-brand-tint hover:text-brand-ink">Pet Care</Link>
-          <Link id="negosu-desktop-hospitality-link" href={hospitalityBrand.path} className="rounded-xl px-3 py-2 text-sm font-medium text-zinc-600 hover:bg-brand-tint hover:text-brand-ink">Apartelle &amp; Inn</Link>
-          <Link id="negosu-desktop-features-link" href="/#features" className="rounded-xl px-3 py-2 text-sm font-medium text-zinc-600 hover:bg-brand-tint hover:text-brand-ink">Features</Link>
-          <Link id="negosu-desktop-plans-link" href="/plans" className="rounded-xl px-3 py-2 text-sm font-medium text-zinc-600 hover:bg-brand-tint hover:text-brand-ink">Plans</Link>
-        </nav>
-
-        <div className="hidden items-center gap-2 xl:flex">
-          <Link id="negosu-header-sign-in-link" href={loginPath} className="inline-flex min-h-11 items-center rounded-xl px-3 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-100">Sign In</Link>
-          <Link id="negosu-header-start-free-button" href={signupPath} className="inline-flex min-h-11 items-center rounded-xl bg-brand-primary px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-brand-primary-strong"><PlayIcon aria-hidden="true" size={16} className="shrink-0"/>Start Free</Link>
-        </div>
-
-        <details id="negosu-mobile-menu" className="group relative xl:hidden">
-          <summary id="negosu-mobile-menu-button" className="flex min-h-11 min-w-11 cursor-pointer list-none items-center justify-center rounded-xl border border-brand-border text-brand-ink marker:content-none" aria-label="Open navigation menu">
-            <Menu aria-hidden="true" size={20} />
-          </summary>
-          <nav id="negosu-mobile-navigation" className="absolute right-0 z-30 mt-2 w-[min(18rem,calc(100vw-2rem))] rounded-2xl border border-zinc-200 bg-white p-2 shadow-lg" aria-label="Mobile navigation">
-            <Link id="negosu-mobile-solutions-link" href="/#solutions" className="block min-h-11 rounded-xl px-3 py-3 text-sm font-medium hover:bg-zinc-50">Solutions</Link>
-            <Link id="negosu-mobile-automotive-link" href={marketingBrands.automotive.path} className="block min-h-11 rounded-xl px-3 py-3 text-sm font-medium text-zinc-600 hover:bg-zinc-50">Automotive</Link>
-            <Link id="negosu-mobile-salon-link" href={marketingBrands.salon.path} className="block min-h-11 rounded-xl px-3 py-3 text-sm font-medium text-zinc-600 hover:bg-zinc-50">Salon &amp; Beauty</Link>
-            <Link id="negosu-mobile-pet-care-link" href={petCareBrand.path} className="block min-h-11 rounded-xl px-3 py-3 text-sm font-medium text-zinc-600 hover:bg-zinc-50">Pet Care</Link>
-            <Link id="negosu-mobile-hospitality-link" href={hospitalityBrand.path} className="block min-h-11 rounded-xl px-3 py-3 text-sm font-medium text-zinc-600 hover:bg-zinc-50">Apartelle &amp; Inn</Link>
-          <Link id="negosu-mobile-features-link" href="/#features" className="block min-h-11 rounded-xl px-3 py-3 text-sm font-medium text-zinc-600 hover:bg-zinc-50">Features</Link>
-            <Link id="negosu-mobile-plans-link" href="/plans" className="block min-h-11 rounded-xl px-3 py-3 text-sm font-medium text-zinc-600 hover:bg-zinc-50">Plans</Link>
-            <div className="mt-2 grid gap-2 border-t border-zinc-100 pt-2">
-              <Link id="negosu-mobile-sign-in-link" href={loginPath} className="inline-flex min-h-11 items-center justify-center rounded-xl border border-zinc-200 px-4 text-sm font-medium">Sign In</Link>
-              <Link id="negosu-mobile-start-free-button" href={signupPath} className="inline-flex min-h-11 items-center justify-center rounded-xl bg-brand-primary px-4 text-sm font-medium text-white"><PlayIcon aria-hidden="true" size={16} className="shrink-0"/>Start Free</Link>
-            </div>
-          </nav>
-        </details>
-      </div>
-    </header>
-  );
-}
+export { MarketingHeader } from "@/components/marketing/marketing-header";
 
 export function MarketingHero({ vertical, eyebrow, title, description, visual }: {
   vertical: MarketingVerticalKey;
@@ -155,22 +108,47 @@ export function MarketingCta({ vertical, title, description }: { vertical?: Mark
 }
 
 export function MarketingFooter({ vertical }: { vertical?: MarketingVerticalKey } = {}) {
+  const linkClass = "inline-flex min-h-10 items-center rounded-sm text-sm text-slate-300 transition-colors hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-300";
   return (
-    <footer id="negosu-main-footer" className="border-t border-brand-border/70 bg-brand-tint/60 px-4 py-8 sm:px-6">
-      <div className="mx-auto flex max-w-7xl flex-col gap-5 text-sm text-zinc-600 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <BrandWordmark />
-          <p className="mt-1">{productBrand.tagline}</p>
+    <footer id="negosu-main-footer" className="bg-brand-ink px-4 text-white sm:px-6">
+      <div className="mx-auto max-w-7xl">
+        <div className="grid gap-10 py-12 sm:py-14 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.6fr)] lg:gap-16">
+          <div className="min-w-0 max-w-sm">
+            <Link id="negosu-footer-home-link" href="/" aria-label="NegOSu home" className="inline-flex rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-300"><BrandWordmark inverse className="w-36"/></Link>
+            <p className="mt-4 text-base font-medium text-white">{productBrand.tagline}</p>
+            <p className="mt-3 max-w-xs text-sm leading-6 text-slate-300">Keep your team, customers, and daily operations connected. One platform, built around your business.</p>
+          </div>
+          <nav id="negosu-footer-navigation" aria-label="Footer navigation" className="grid min-w-0 grid-cols-2 gap-x-6 gap-y-8 sm:grid-cols-3">
+            <div className="min-w-0">
+              <h2 id="negosu-footer-solutions-title" className="mb-3 text-sm font-semibold text-white">Solutions</h2>
+              <ul aria-labelledby="negosu-footer-solutions-title" className="space-y-1">
+                <li><Link id="negosu-footer-automotive-link" href={marketingBrands.automotive.path} className={linkClass}>Automotive</Link></li>
+                <li><Link id="negosu-footer-salon-link" href={marketingBrands.salon.path} className={linkClass}>Salon &amp; Beauty</Link></li>
+                <li><Link id="negosu-footer-pet-care-link" href={petCareBrand.path} className={linkClass}>Pet Care</Link></li>
+                <li><Link id="negosu-footer-hospitality-link" href={hospitalityBrand.path} className={linkClass}>Apartelle &amp; Inn</Link></li>
+              </ul>
+            </div>
+            <div className="min-w-0">
+              <h2 id="negosu-footer-platform-title" className="mb-3 text-sm font-semibold text-white">Platform</h2>
+              <ul aria-labelledby="negosu-footer-platform-title" className="space-y-1">
+                <li><Link id="negosu-footer-features-link" href="/#features" className={linkClass}>Features</Link></li>
+                <li><Link id="negosu-footer-plans-link" href="/plans" className={linkClass}>Plans &amp; pricing</Link></li>
+                <li><Link id="negosu-footer-contact-link" href="/contact" className={linkClass}>Contact us</Link></li>
+              </ul>
+            </div>
+            <div className="min-w-0">
+              <h2 id="negosu-footer-account-title" className="mb-3 text-sm font-semibold text-white">Get started</h2>
+              <ul aria-labelledby="negosu-footer-account-title" className="space-y-1">
+                <li><Link id="negosu-footer-start-free-link" href={vertical ? marketingBrands[vertical].signupPath : "/signup"} className={linkClass}>Create an account<ArrowRight size={14} aria-hidden="true" className="ml-2 shrink-0"/></Link></li>
+                <li><Link id="negosu-footer-sign-in-link" href={vertical ? marketingBrands[vertical].loginPath : "/login"} className={linkClass}>Sign in</Link></li>
+              </ul>
+            </div>
+          </nav>
         </div>
-        <nav className="flex flex-wrap gap-x-5 gap-y-2" aria-label="Footer navigation">
-          <Link id="negosu-footer-automotive-link" href={marketingBrands.automotive.path}>Automotive</Link>
-          <Link id="negosu-footer-salon-link" href={marketingBrands.salon.path}>Salon &amp; Beauty</Link>
-          <Link id="negosu-footer-pet-care-link" href={petCareBrand.path}>Pet Care</Link>
-          <Link id="negosu-footer-hospitality-link" href={hospitalityBrand.path}>Apartelle &amp; Inn</Link>
-          <Link id="negosu-footer-plans-link" href="/plans">Plans</Link>
-          <Link id="negosu-footer-sign-in-link" href={vertical ? marketingBrands[vertical].loginPath : "/login"}>Sign In</Link>
-          <Link id="negosu-footer-start-free-link" href={vertical ? marketingBrands[vertical].signupPath : "/signup"}>Start Free</Link>
-        </nav>
+        <div className="flex flex-col gap-2 border-t border-white/15 py-5 text-xs leading-5 text-slate-400 sm:flex-row sm:items-center sm:justify-between">
+          <p>© {new Date().getFullYear()} {productBrand.name}. All rights reserved.</p>
+          <p>Simple tools. Connected operations.</p>
+        </div>
       </div>
     </footer>
   );

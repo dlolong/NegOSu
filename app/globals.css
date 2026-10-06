@@ -349,7 +349,8 @@ body:has(dialog[open]) {
   overscroll-behavior: none;
 }
 body:has(dialog[open]) #dashboard-main-content,
-body:has(dialog[open]) #negosu-sidebar {
+body:has(dialog[open]) #negosu-sidebar,
+body:has(dialog[open]) [data-workspace-sidebar] {
   overflow: hidden;
   overscroll-behavior: none;
 }
@@ -377,4 +378,65 @@ a:has([data-navigation-pending]) { position: relative; cursor: progress; }
 button:active:not(:disabled), a:active { opacity: .8; }
 @media (prefers-reduced-motion: reduce) {
   [aria-busy="true"] .animate-spin, [data-navigation-pending] .animate-spin { animation: none; }
+}
+
+/* Command Center: put the main scrollbar at the column divider, not the window edge. */
+@media (min-width: 1280px) {
+  #dashboard-main-content:has(#command-center-workspace) {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    padding: 0;
+    scrollbar-gutter: auto;
+  }
+  #dashboard-main-content #hospitality-overview-page {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    min-height: 0;
+  }
+  #dashboard-main-content #hospitality-setup-details {
+    flex-shrink: 0;
+    max-height: 30dvh;
+    overflow-y: auto;
+  }
+  #negosu-command-center-page {
+    display: flex;
+    flex: 1;
+    min-height: 0;
+    width: 100%;
+    padding-bottom: 0;
+  }
+  #command-center-workspace {
+    flex: 1;
+    min-height: 0;
+    width: 100%;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 20rem);
+    align-items: stretch;
+    gap: 0;
+  }
+  #command-center-workspace-primary,
+  #command-center-workspace-sidebar {
+    min-height: 0;
+    max-height: none;
+    overflow-y: auto;
+    overscroll-behavior-y: contain;
+    scrollbar-gutter: stable;
+    padding: 1.5rem;
+  }
+  #command-center-workspace-primary {
+    max-width: none;
+    margin: 0;
+  }
+  #command-center-workspace-sidebar {
+    position: static;
+    align-content: start;
+    border-left: 1px solid var(--color-admin-border);
+    border-radius: 0;
+    padding: 1rem;
+  }
+}
+body:has(dialog[open]) #command-center-workspace-primary,
+body:has(dialog[open]) #command-center-workspace-sidebar {
+  overflow: hidden;
 }

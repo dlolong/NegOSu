@@ -6,7 +6,7 @@ import { SettingsNavigation } from "@/components/settings-navigation";
 import { dashboardFeaturePreviews, publicWebsiteSummary } from "@/lib/dashboard-discovery";
 
 const settings = new URLSearchParams(location.search).has("settings");
-createRoot(document.getElementById("root")!).render(<div className="lg:pl-56">
+createRoot(document.getElementById("root")!).render(<div className="lg:pl-56"><div id="dashboard-main-content" className="h-[calc(100dvh-2rem)] overflow-y-auto">
   {settings ? <div id="settings-workspace" className="min-w-0 space-y-6">
     <SettingsNavigation industry="salon"/>
     <section id="settings-workspace-content" className="min-w-0 rounded-xl border p-4"><h1>Profile & workspace</h1><p>Business details and workspace preferences</p></section>
@@ -16,4 +16,4 @@ createRoot(document.getElementById("root")!).render(<div className="lg:pl-56">
     quickActions={[{ id: "appointment", primary: true, label: "New appointment", description: "Schedule a visit", href: "/dashboard/appointments/new" }]}
     discovery={<DashboardDiscoveryContent canManage website={publicWebsiteSummary("https://example.com", "long-business-name-for-mobile-url-wrapping-checks", { status: "active", public_page_enabled: true })} features={dashboardFeaturePreviews("salon", "owner")}/>}
   />}
-</div>);
+</div></div>);

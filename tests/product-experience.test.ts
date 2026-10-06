@@ -8,10 +8,12 @@ test("public product entry keeps the approved message and restrained shared visu
   const home = source("app/page.tsx");
   const automotive = source("app/automotive/page.tsx");
   const salon = source("app/salon/page.tsx");
-  const marketing = source("components/marketing/product-landing.tsx");
+  const marketing = source("components/marketing/product-landing.tsx") + source("components/marketing/marketing-header.tsx");
   assert.match(home, /productBrand\.tagline/);
-  assert.match(home, /negosu-start-free-button/);
-  assert.match(home, /negosu-explore-solutions-button/);
+  const hero = home.slice(home.indexOf('<section id="negosu-hero"'), home.indexOf('<section id="solutions"'));
+  assert.doesNotMatch(hero, /Available now|All available now|Shared staff|Start [Ff]ree|Explore/);
+  assert.match(hero, /return <Link id=\{`negosu-\$\{id\}-preview`\} key=\{key\} href=\{brand.path\}/);
+  assert.match(hero, /supportedVerticalKeys.map/);
   assert.doesNotMatch(`${home}\n${automotive}\n${salon}\n${marketing}`, /shadow-2xl|bg-cyan|text-cyan/);
   assert.match(home, /shadow-ui-md/);
   assert.match(automotive, /negosu-automotive-page/);

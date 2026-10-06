@@ -1,10 +1,11 @@
+import { reminderAttentionCutoff } from "@/modules/core/crm/client-reminders";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { OrganizationMembership } from "@/lib/auth/context";
 import { reportActionError } from "@/lib/errors/action-error";
 import { roleHasPermission } from "@/lib/rbac";
 import { automotiveActiveJobStatuses } from "@/modules/automotive/command-center/automotive-command-center";
 
-export type AttentionKind = "messages" | "bookings" | "appointments" | "stock" | "jobs" | "orders";
+export type AttentionKind = "messages" | "bookings" | "appointments" | "stock" | "jobs" | "orders" | "reminders";
 export type AttentionItem = { id: AttentionKind; title: string; description: string; count: number; href: string };
 export type AttentionSnapshot = {
   organizationId: string; branchId: string; branchName: string;
@@ -30,6 +31,11 @@ export async function loadAdminAttention(db: SupabaseClient, membership: Members
   if (roleHasPermission(role, "inventory.manage")) sources.push({ item: { id: "stock", title: "Stock needs replenishing", description: "Review low-stock and out-of-stock items.", href: "/dashboard/inventory" }, query: count("inventory_stock").eq("low_stock", true) });
 
   if (["owner", "manager", "cashier"].includes(role)) sources.push({ item: { id: "orders", title: "Public product orders", description: "Confirm new website orders and arrange payment.", href: "/dashboard/products/orders" }, query: db.from("public_product_orders").select("id", { count: "exact" }).eq("organization_id", organizationId).eq("branch_id", branchId).eq("status", "requested").limit(1) });
+
+  if (["owner", "manager", "advisor"].includes(role)) sources.push({
+    item: { id: "reminders", title: "Reminders due soon", description: "Due within 24 hours or overdue. Contact the client, then mark resolved.", href: "/dashboard/customers/reminders?status=attention" },
+    query: count("client_reminders").eq("status", "pending").lte("due_at", reminderAttentionCutoff(now)),
+  });
 
   const results = await Promise.allSettled(sources.map(source => source.query));
   const items: AttentionItem[] = [], unavailable: string[] = [];

@@ -1,0 +1,34 @@
+begin;
+create extension if not exists pgtap with schema extensions;
+set search_path=public,extensions;
+select no_plan();
+select ok((select relrowsecurity from pg_class where oid='public.platform_inquiries'::regclass),'inquiries enable RLS');
+select ok(not has_table_privilege('anon','public.platform_inquiries','select'),'visitors cannot read inquiry PII');
+select ok(not has_table_privilege('authenticated','public.platform_inquiries','select'),'tenant members cannot read inquiries');
+select ok(not has_table_privilege('authenticated','public.platform_inquiries','update'),'tenant owners cannot close inquiries');
+select ok(not has_table_privilege('anon','public.platform_inquiries','insert'),'visitors cannot bypass intake');
+select ok(not has_function_privilege('anon','public.submit_platform_inquiry(uuid,text,text,text,text)','execute'),'intake is server only');
+select ok(not has_function_privilege('authenticated','public.submit_platform_inquiry(uuid,text,text,text,text)','execute'),'tenant role cannot bypass server validation');
+-- Disposable test transaction only; rolled back below.
+delete from public.platform_inquiries;
+set local role service_role;
+select lives_ok($$select public.submit_platform_inquiry('13400000-0000-4000-8000-000000000001','Client','client@example.com','Plans question','Please explain the available plans.')$$,'accepts valid inquiry');
+select lives_ok($$select public.submit_platform_inquiry('13400000-0000-4000-8000-000000000001','Client','client@example.com','Plans question','Please explain the available plans.')$$,'same request retries safely');
+select is((select count(*)::integer from platform_inquiries),1,'retry creates no duplicate');
+select lives_ok($$select public.submit_platform_inquiry(gen_random_uuid(),'Client','CLIENT@example.com','Plans question','Please explain the available plans.')$$,'new UUID and email case cannot duplicate the message');
+select is((select count(*)::integer from platform_inquiries),1,'content retry creates no duplicate');
+select throws_ok($$select public.submit_platform_inquiry(gen_random_uuid(),'Client','client@example.com','Another question','Please explain billing for additional branches.')$$,'P0001','Submission cooldown','different messages enforce cooldown');
+
+select throws_ok($$select public.submit_platform_inquiry('13400000-0000-4000-8000-000000000001','Client','client@example.com','Different subject','Please explain the available plans.')$$,'22023','Request key reused','changed payload cannot reuse request key');
+update platform_inquiries set created_at=now()-interval '2 minutes';
+select throws_ok($$select public.submit_platform_inquiry(gen_random_uuid(),'Client','client@example.com','Plans question','short')$$,'23514',null,'database rejects short messages');
+update platform_inquiries set created_at=now()-interval '2 minutes';
+select public.submit_platform_inquiry(gen_random_uuid(),'Client','client@example.com','Plans question',gen_random_uuid()::text);
+update platform_inquiries set created_at=now()-interval '2 minutes';
+select public.submit_platform_inquiry(gen_random_uuid(),'Client','client@example.com','Plans question',gen_random_uuid()::text);
+update platform_inquiries set created_at=now()-interval '2 minutes';
+select throws_ok($$select public.submit_platform_inquiry(gen_random_uuid(),'Client','CLIENT@example.com','Plans question','A different inquiry beyond the hourly limit.')$$,'P0001','Submission limit reached','email limit is case insensitive');
+update platform_inquiries set status='closed' where id='13400000-0000-4000-8000-000000000001';
+select is((select status from platform_inquiries where id='13400000-0000-4000-8000-000000000001'),'closed','trusted admin server closes inquiry');
+select * from finish();
+rollback;

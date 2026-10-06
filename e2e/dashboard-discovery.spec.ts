@@ -14,7 +14,8 @@ test("published website has a visible URL and permission-aware feature links wit
   await expect(page.locator("#dashboard-website-settings-link")).toHaveAttribute("href", "/dashboard/settings/public-page");
   await expect(page.locator("#dashboard-discover-bookings")).toBeVisible();
   await expect(page.locator("#dashboard-discover-inbox")).toBeVisible();
-  await expect(page.locator("#dashboard-discover-reports")).toBeVisible();
+  await expect(page.locator("#dashboard-discover-new-sale")).toBeVisible();
+  await expect(page.locator("#dashboard-reminders-shortcut")).toHaveAttribute("href", "/dashboard/customers/reminders?status=scheduled");
   expect(await page.locator("#root").evaluate(element => element.scrollWidth <= element.clientWidth)).toBe(true);
 });
 

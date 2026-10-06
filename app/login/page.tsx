@@ -22,7 +22,7 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
   const contextQuery = entry ? `?industry=${entry.industry}` : "";
 
   return (
-    <AuthShell id="negosu-login-page" industry={entry?.industry} title={entry?.loginTitle ?? "Welcome back"} description={entry?.loginDescription ?? "Sign in to manage your business, from appointments and services to rooms and guest stays."} footer={<>New here? <Link id="negosu-login-create-account-link" className="font-medium text-brand-primary-strong" href={`/signup${contextQuery}`}>Create an account</Link></>}>
+    <AuthShell closeHref="/" id="negosu-login-page" industry={entry?.industry} title={entry?.loginTitle ?? "Welcome back"} description={entry?.loginDescription ?? "Sign in to manage your business, from appointments and services to rooms and guest stays."} footer={<>New here? <Link id="negosu-login-create-account-link" className="font-medium text-brand-primary-strong" href={`/signup${contextQuery}`}>Create an account</Link></>}>
       <FormMessage error={params.error} message={params.message} />
       <form id="negosu-login-form" action={signIn} className="mt-6 space-y-4">
         <input type="hidden" name="next" value={next} />

@@ -18,12 +18,24 @@ test("dashboard puts supporting information right on desktop and operational wor
     expect(Math.abs(sidebar!.y - primary!.y)).toBeLessThan(2);
     const panel = page.locator("#command-center-workspace-sidebar");
     await expect(panel).toHaveCSS("overflow-y", "auto");
-    await expect(panel).toHaveCSS("position", "sticky");
+    await expect(panel).toHaveCSS("position", "static");
     expect(await panel.evaluate(element => element.scrollHeight > element.clientHeight)).toBe(true);
     await panel.evaluate(element => element.focus({ preventScroll: true }));
     await page.keyboard.press("ArrowDown");
     await expect.poll(() => panel.evaluate(element => element.scrollTop)).toBeGreaterThan(0);
     expect((await page.locator("#command-center-workspace-primary").boundingBox())!.y).toBe(primary!.y);
+    const main = page.locator("#command-center-workspace-primary");
+    await expect(main).toHaveCSS("overflow-y", "auto");
+    await expect(page.locator("#dashboard-main-content")).toHaveCSS("overflow-y", "hidden");
+    const sideScroll = await panel.evaluate(element => element.scrollTop);
+    await main.evaluate(element => { const extra = document.createElement("div"); extra.style.height = "1800px"; element.append(extra); element.scrollTop = 300; });
+    expect(await main.evaluate(element => element.scrollTop)).toBe(300);
+    expect(await panel.evaluate(element => element.scrollTop)).toBe(sideScroll);
+    const container = await page.locator("#dashboard-main-content").boundingBox();
+    expect(Math.abs(sidebar!.x + sidebar!.width - (container!.x + container!.width))).toBeLessThan(2);
+    expect(sidebar!.width).toBeLessThanOrEqual(320);
+    await main.evaluate(element => { element.lastElementChild?.remove(); element.scrollTop = 0; });
+
   } else {
     expect(sidebar!.y).toBeGreaterThanOrEqual(primary!.y + primary!.height);
     await expect(page.locator("#command-center-workspace-sidebar")).toHaveCSS("overflow-y", "visible");

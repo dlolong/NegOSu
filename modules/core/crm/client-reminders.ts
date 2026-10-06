@@ -18,3 +18,8 @@ export function appointmentBackLink(from: string | undefined, pet = false) {
     ? { href: "/dashboard/customers", label: "Back to Clients" }
     : { href: pet ? "/dashboard/pet-care/appointments" : "/dashboard/appointments", label: "Back to Appointments" };
 }
+
+/** Pending reminders remain actionable from 24 hours before their due instant. */
+export function reminderAttentionCutoff(now: Date) {
+  return new Date(now.getTime() + 24 * 60 * 60 * 1000).toISOString();
+}

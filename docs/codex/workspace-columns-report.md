@@ -38,3 +38,13 @@ Self-review checked narrow column widths, long website addresses, branch-perform
 ## Remaining validation
 
 Run `npm run test:e2e -- e2e/workspace-columns.spec.ts e2e/dashboard-discovery.spec.ts` with browser execution enabled, and review populated dashboards/settings on desktop and phone. Unrelated directory and transaction pages are unchanged.
+
+## Command Center scroll restoration
+
+Restored independent desktop scrolling for the Command Center right sidebar. It stays at the top while the main dashboard content scrolls, has a viewport-bounded height, keyboard focus and contained scroll chaining. Mobile retains ordinary page scrolling. Opening a modal also locks the sidebar scroller. No data or permission changes. Targeted lint and typecheck passed; browser interaction remains unverified following the earlier permission decline.
+
+## Separate Command Center panes
+
+The clarified desktop layout replaces the sticky rail with two constrained scrollers. The outer dashboard container no longer scrolls for Command Center pages; the primary column scrolls at the divider and the right column occupies the workspace's far-right edge with a 20rem (320px at default root size) cap. Removed the primary column's max-width so wide screens keep the divider next to the right pane. Small screens keep ordinary stacked page scrolling. Modal scroll locking covers both panes. Hospitality's setup disclosure remains accessible below its Command Center.
+
+Updated the existing fixture and browser assertions for independent scroll positions, far-right alignment, width cap and absence of an outer scrollbar. Typecheck, targeted lint, fixture compilation and diff checks passed. Browser execution remains unverified following the earlier permission decline. No data or authorization changes.

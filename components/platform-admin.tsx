@@ -4,7 +4,7 @@ import { DashboardChart } from "@/components/dashboard-chart";
 import type { AdminOverview, AdminRow, AdminSection } from "@/modules/platform/admin-reader";
 
 export const platformLinks = [
-  ["", "Overview"], ["signups", "Signups"], ["businesses", "Businesses"],
+  ["", "Overview"], ["inquiries", "Inquiries"], ["signups", "Signups"], ["businesses", "Businesses"],
   ["subscriptions", "Subscriptions"], ["payments", "Payments"], ["events", "Billing events"], ["plans", "Plan catalog"],
 ] as const;
 

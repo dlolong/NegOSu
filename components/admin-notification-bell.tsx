@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 
 class NotificationReadError extends Error {}
 
-const icons = { messages: MessageCircle, bookings: CalendarCheck, appointments: CalendarDays, stock: Package, jobs: Wrench, orders: Package } satisfies Record<AttentionKind, typeof Bell>;
+const icons = { messages: MessageCircle, bookings: CalendarCheck, appointments: CalendarDays, stock: Package, jobs: Wrench, orders: Package, reminders: Bell } satisfies Record<AttentionKind, typeof Bell>;
 
 export function AdminNotificationBell({ organizationId, branchId, branchName }: { organizationId: string; branchId: string; branchName: string }) {
   const pathname = usePathname();

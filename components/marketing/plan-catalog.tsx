@@ -1,5 +1,5 @@
 import { createPublicClient } from "@/lib/supabase/public";
-import { petCareBrand } from "@/modules/platform/brand";
+import { marketingBrands } from "@/modules/platform/brand";
 import { Check } from "lucide-react";
 import Link from "next/link";
 
@@ -23,7 +23,18 @@ export async function PublicPlanCatalog({ compact = false }: { compact?: boolean
           {compact ? <Link id="negosu-view-all-plans-link" href="/plans" className="inline-flex min-h-11 items-center font-medium text-brand-primary-strong hover:underline">Compare all plans</Link> : null}
         </div>
 
-        <p id={compact ? "negosu-home-pet-care-note" : "negosu-plans-pet-care-note"} className="mt-4 rounded-xl border border-brand-border bg-brand-tint p-4 text-sm leading-6 text-zinc-600">Pet Care includes grooming appointments, pet records, and pickup tracking. Public pages and reminders follow your selected plan. <Link href={petCareBrand.path} className="text-brand-primary-strong underline">Explore Pet Care.</Link></p>
+        <nav id={compact ? "negosu-home-plan-solutions" : "negosu-plans-solutions"} aria-label="Explore plans for your business" className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          {([
+            { key: "automotive", label: "Automotive", description: "Vehicle records, appointments, and job orders." },
+            { key: "salon", label: "Salon & Beauty", description: "Client visits, treatments, and staff schedules." },
+            { key: "pet_care", label: "Pet Care", description: "Pet records, grooming appointments, and pickup tracking." },
+            { key: "hospitality", label: "Apartelle & Inn", description: "Room bookings, guest stays, and check-ins." },
+          ] as const).map(({ key, label, description }) => <Link key={key} id={`negosu-${compact ? "home" : "plans"}-solution-${key}`} href={marketingBrands[key].path} className="group min-w-0 rounded-xl border border-brand-border bg-white p-4 transition-colors hover:bg-brand-tint focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary">
+            <h3 className="text-sm font-medium text-brand-ink">{label}</h3>
+            <p className="mt-2 text-sm leading-6 text-zinc-600">{description}</p>
+            <span className="mt-3 inline-block text-sm font-medium text-brand-primary-strong group-hover:underline">Explore {label}</span>
+          </Link>)}
+        </nav>
 
         {!plans.length ? <p id="negosu-plans-unavailable" role="status" className="mt-6 text-sm">Plan prices are temporarily unavailable. Please try again shortly.</p> : null}
         <div id="negosu-plan-grid" className="mt-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-5">

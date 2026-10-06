@@ -18,7 +18,7 @@ export default async function SignupPage({ searchParams }: { searchParams: Promi
   const contextQuery = entry ? `?industry=${entry.industry}` : "";
 
   return (
-    <AuthShell id="negosu-signup-page" industry={entry?.industry} title="Create your account" description={entry?.signupDescription ?? `Create your ${productBrand.name} account and choose the business you want to manage.`} footer={<>Already registered? <Link id="negosu-signup-login-link" className="font-medium text-brand-primary-strong" href={`/login${contextQuery}`}>Sign in</Link></>}>
+    <AuthShell closeHref="/" id="negosu-signup-page" industry={entry?.industry} title="Create your account" description={entry?.signupDescription ?? `Create your ${productBrand.name} account and choose the business you want to manage.`} footer={<>Already registered? <Link id="negosu-signup-login-link" className="font-medium text-brand-primary-strong" href={`/login${contextQuery}`}>Sign in</Link></>}>
       <FormMessage error={params.error} />
       <SignupForm action={signUp} initialIndustry={entry?.industry} />
     </AuthShell>

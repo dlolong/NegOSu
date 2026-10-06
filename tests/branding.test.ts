@@ -30,7 +30,7 @@ test("vertical marketing paths retain allowlisted signup context", () => {
 });
 
 test("public marketing pages use NegOSu rather than internal legacy brands", () => {
-  const sources = [read("app/page.tsx"), read("app/automotive/page.tsx"), read("app/salon/page.tsx"), read("components/marketing/product-landing.tsx")].join("\n");
+  const sources = [read("app/page.tsx"), read("app/automotive/page.tsx"), read("app/salon/page.tsx"), read("components/marketing/product-landing.tsx"), read("components/marketing/marketing-header.tsx")].join("\n");
   assert.doesNotMatch(sources, /ServiceCore|KarKR/);
   assert.doesNotMatch(sources, /Negosu|NEGOSU|NegoSu|NegOSU/);
   assert.match(sources, /NegOSu Automotive/);
@@ -58,13 +58,12 @@ test("Salon marketing copy stays free of Automotive domain vocabulary", () => {
 });
 
 test("public pages and shared navigation expose stable NegOSu IDs", () => {
-  const sources = [read("app/page.tsx"), read("app/automotive/page.tsx"), read("app/salon/page.tsx"), read("components/marketing/product-landing.tsx")].join("\n");
+  const sources = [read("app/page.tsx"), read("app/automotive/page.tsx"), read("app/salon/page.tsx"), read("components/marketing/product-landing.tsx"), read("components/marketing/marketing-header.tsx")].join("\n");
   for (const id of [
     "negosu-home-page",
     "negosu-main-header",
     "negosu-hero",
-    "negosu-start-free-button",
-    "negosu-explore-solutions-button",
+    "negosu-hero-product-visual",
     "negosu-industry-selector",
     "negosu-automotive-card",
     "negosu-salon-card",

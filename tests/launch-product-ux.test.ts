@@ -46,7 +46,7 @@ test("launch catalog remains synchronized with the seeded database plan prices",
 test("Plans is discoverable, responsive, and uses clear launch actions", () => {
   const plansPage = source("app/plans/page.tsx");
   const planCatalog = source("components/marketing/plan-catalog.tsx");
-  const marketingNavigation = source("components/marketing/product-landing.tsx");
+  const marketingNavigation = source("components/marketing/product-landing.tsx") + source("components/marketing/marketing-header.tsx");
   const homepage = source("app/page.tsx");
   const sitemap = source("app/sitemap.ts");
 
