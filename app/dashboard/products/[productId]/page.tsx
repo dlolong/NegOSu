@@ -38,7 +38,7 @@ export default async function Page({ params, searchParams }: { params: Promise<{
 
   return <main id="product-detail-page" className="mx-auto min-w-0 max-w-5xl [overflow-wrap:anywhere]">
     
-    <PageHeader back={<Button asChild variant="ghost" ><Link id="product-detail-back" href="/dashboard/products">Back to Products</Link></Button>} id="product-detail-header" title={product.name} description={`${m.branchName} · ${product.category || "Uncategorized"}`} action={<Button asChild variant="secondary"><Link id="product-detail-edit" href={`/dashboard/products?dialog=edit&id=${product.id}`}>Edit product</Link></Button>}/>
+    <PageHeader back={<Button asChild variant="ghost" ><Link id="product-detail-back" href="/dashboard/products">Back to Products</Link></Button>} id="product-detail-header" title={product.name} description={`${product.category || "Uncategorized"}`} action={<Button asChild variant="secondary"><Link id="product-detail-edit" href={`/dashboard/products?dialog=edit&id=${product.id}`}>Edit product</Link></Button>}/>
     <Card id="product-details" className="mt-4 grid min-w-0 gap-4 p-4 sm:grid-cols-[minmax(0,1fr)_minmax(0,2fr)] sm:p-5">
       <div className="min-w-0"><ServiceThumbnail id="product-detail-photo" name={product.name} url={product.thumbnail_url} subject="product"/></div>
       <div className="min-w-0"><dl className="grid gap-3 text-sm sm:grid-cols-2">{[

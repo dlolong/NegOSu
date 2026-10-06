@@ -130,7 +130,7 @@ export function StaffAccessForm({ profile, branches, industry, prefix }: {
   </form>;
 }
 
-export function StaffDirectoryViews({ staff, branches, timezone, industry, prefix, managementAvailable = true }: {
+export function StaffDirectoryViews({ staff, timezone, industry, prefix, managementAvailable = true }: {
   staff: StaffProfileRow[];
   branches: StaffBranch[];
   timezone: string;
@@ -139,7 +139,7 @@ export function StaffDirectoryViews({ staff, branches, timezone, industry, prefi
   managementAvailable?: boolean;
 }) {
   return <RecordTable id={industry === "salon" ? "salon-staff-table" : "staff-table"} caption="Staff directory" className="mt-4" empty="No staff profiles match this view." columns={[{key:"staff",label:"Staff"},{key:"function",label:industry === "hospitality" ? "Job function" : "Function / schedule",secondary:true},{key:"status",label:"Profile",secondary:true},{key:"access",label:"System access",secondary:true},{key:"actions",label:"Actions",align:"right"}]} rows={staff.map(profile=>({id:`${prefix}-row-${profile.id}`,cells:{
-    staff:<><RecordLink id={`${prefix}-link-${profile.id}`} href={`/dashboard/settings/staff/${profile.id}`}>{profile.fullName}</RecordLink><StaffContactLines profile={profile}/><small className="block text-admin-text-muted">{branchNames(profile.branchIds,branches)}</small></>,
+    staff:<><RecordLink id={`${prefix}-link-${profile.id}`} href={`/dashboard/settings/staff/${profile.id}`}>{profile.fullName}</RecordLink><StaffContactLines profile={profile}/></>,
     function:<><strong>{profile.jobFunction||"Not set"}</strong><p className="text-xs text-admin-text-muted">{profile.specializations.join(", ")}</p>{industry !== "hospitality" ? <p className="mt-1 text-xs">{profile.todayCount??0} appointments · {profile.nextAt?formatTime(profile.nextAt,timezone):"No upcoming visit"}</p> : null}</>,status:<ProfileStatus active={profile.isActive}/>,access:<AccessStatus id={`${prefix}-access-status-${profile.id}`} profile={profile} industry={industry}/>,actions:<StaffActions profile={profile} prefix={prefix} managementAvailable={managementAvailable}/>,
   },mobile:<><p>{profile.jobFunction||"Job function not set"}</p>{industry !== "hospitality" ? <p>{profile.todayCount??0} appointments · {profile.nextAt?formatTime(profile.nextAt,timezone):"No upcoming visit"}</p> : null}<ProfileStatus active={profile.isActive}/><AccessStatus id={`${prefix}-access-status-${profile.id}-mobile`} profile={profile} industry={industry}/></>}))}/>;
 }
@@ -187,11 +187,6 @@ function StaffContactLines({ profile, mobile = false }: { profile: StaffProfileR
     <small className={className}>{staffContactLabel(profile.email, "No email")}</small>
     <small className={className}>{profile.mobile ? displayPhone(profile.mobile) : "No mobile"}</small>
   </>;
-}
-
-function branchNames(ids: string[], branches: StaffBranch[]) {
-  if (!ids.length) return "All operational branches";
-  return branches.filter((branch) => ids.includes(branch.id)).map((branch) => branch.name).join(", ") || "Restricted branches";
 }
 
 function formatTime(value: string, timezone: string) {

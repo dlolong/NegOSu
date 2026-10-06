@@ -139,7 +139,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ m
 
   return (
     <main id="booking-requests-page" className="mx-auto w-full min-w-0 max-w-6xl">
-      <PageHeader id="booking-requests-page-header" eyebrow={activeMembership.branchName} title="Booking requests" description="Review requests from your public page and confirm appointments."/>
+      <PageHeader id="booking-requests-page-header" title="Booking requests" description="Review requests from your public page and confirm appointments."/>
 
       <FormMessage {...params} />
 

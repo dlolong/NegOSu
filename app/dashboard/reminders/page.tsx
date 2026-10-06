@@ -73,7 +73,7 @@ export default async function Page({searchParams}:{searchParams:Promise<{status?
   const counts=Object.fromEntries(statuses.slice(1).map(status=>[status,rows.filter(row=>row.due_status===status).length]));
   const selected=rows.find(row=>row.id===query.id);
   return <main id="vehicle-maintenance-page" className="mx-auto min-w-0 max-w-7xl">
-    <PageHeader id="vehicle-maintenance-page-header" eyebrow={activeMembership.branchName} title="Maintenance" description="Service recommendations, linked appointments, and reminder status."/>
+    <PageHeader id="vehicle-maintenance-page-header" title="Maintenance" description="Service recommendations, linked appointments, and reminder status."/>
     <FormMessage message={query.message} error={query.error}/>
     <ListTabs id="maintenance-tabs" baseHref="/dashboard/reminders" query={query} parameter="tab" value={canManage&&query.tab==="intervals"?"intervals":"due"} options={[{value:"due",label:"Due services"},...(canManage?[{value:"intervals",label:"Service intervals"}]:[])]}/>
     {(!canManage||query.tab!=="intervals")&&<>

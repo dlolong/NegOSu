@@ -1,5 +1,6 @@
 "use client";
 
+import { ClearFilterButton } from "@/components/clear-filter-button";
 import { useRef, useState, type ReactNode } from "react";
 import { Search, X } from "lucide-react";
 import { FilterPopover } from "@/components/ui/filter-popover";
@@ -7,9 +8,9 @@ import { cn } from "@/lib/utils";
 
 /** One GET form keeps search, filters and current-view fields together even
  * when controls are collapsed. Each page still owns its query contract. */
-export function CompactFilters({ id, action, search, searchLabel = "Search records", searchValue = "", children, hiddenFields, hasFilters = false, clearAction, className }: {
+export function CompactFilters({ id, action, search, searchLabel = "Search records", searchValue = "", children, hiddenFields, hasFilters = false, clearHref, className }: {
   id: string; action?: string; search?: ReactNode; searchLabel?: string; searchValue?: string;
-  children?: ReactNode; hiddenFields?: ReactNode; hasFilters?: boolean; clearAction?: ReactNode; className?: string;
+  children?: ReactNode; hiddenFields?: ReactNode; hasFilters?: boolean; clearHref?: string; className?: string;
 }) {
   const [expanded, setExpanded] = useState(false);
   const trigger = useRef<HTMLButtonElement>(null);
@@ -52,7 +53,7 @@ export function CompactFilters({ id, action, search, searchLabel = "Search recor
     {hasFilters ? <FilterPopover id={`${id}-filters`} iconOnly>
       <div className="grid min-w-0 gap-3 [&>select]:w-full [&>select]:min-w-0 [&>button]:w-full">{children}</div>
     </FilterPopover> : <div hidden>{children}</div>}
-    {clearAction}
+    <ClearFilterButton id={`${id}-clear`} href={clearHref}/>
     {searchValue && !expanded ? <span id={`${id}-search-summary`} className="max-w-full truncate text-xs text-admin-text-secondary" title={`Search: ${searchValue}`}>Search: {searchValue}</span> : null}
   </form>;
 }

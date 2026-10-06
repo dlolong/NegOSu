@@ -1,3 +1,4 @@
+import { ClearFilterButton } from "@/components/clear-filter-button";
 import { Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { FilterPopover } from "@/components/ui/filter-popover";
@@ -28,5 +29,5 @@ export function HospitalityReportFilters({ advanced, mode, section, scope, branc
     <Button id="hospitality-report-apply" type="submit" variant="secondary" className="sm:col-span-2"><Search size={16} aria-hidden="true"/>Apply</Button>
   </form>;
 
-  return <div className="my-3 flex justify-end"><FilterPopover iconOnly key={`${section}-${scope.filters.preset}-${scope.range.start}-${scope.range.end}`} id={payments ? "hospitality-payments-filters" : "hospitality-report-filter-panel"} title={payments ? "Payment filters" : "Period & branch filters"}>{form}</FilterPopover></div>;
+  return <div className="my-3 flex justify-end gap-2"><FilterPopover iconOnly key={`${section}-${scope.filters.preset}-${scope.range.start}-${scope.range.end}`} id={payments ? "hospitality-payments-filters" : "hospitality-report-filter-panel"} title={payments ? "Payment filters" : "Period & branch filters"}>{form}</FilterPopover><ClearFilterButton id="hospitality-report-clear-filters" formId="hospitality-report-filters"/></div>;
 }

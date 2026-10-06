@@ -30,7 +30,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<Par
   ]);
   const format = new Intl.DateTimeFormat("en-PH", { timeZone: branch.data?.timezone ?? m.timezone, dateStyle: "medium", timeStyle: "short" });
   return <main id="public-product-orders-page" className="mx-auto min-w-0 max-w-5xl">
-    <PageHeader id="public-product-orders-header" title="Public product orders" description={`${m.branchName} · Review orders submitted on your public website.`} back={<Button asChild variant="secondary"><Link id="public-orders-back" href={m.role === "cashier" ? "/dashboard/payments" : "/dashboard/products"}>Back</Link></Button>}/>
+    <PageHeader id="public-product-orders-header" title="Public product orders" description={`Review orders submitted on your public website.`} back={<Button asChild variant="secondary"><Link id="public-orders-back" href={m.role === "cashier" ? "/dashboard/payments" : "/dashboard/products"}>Back</Link></Button>}/>
     <FormMessage message={p.message} error={p.error ?? (orders.error ? "Orders could not be loaded. Please try again." : undefined)}/>
     <ListTabs id="public-product-order-tabs" baseHref="/dashboard/products/orders" query={{ q: p.q, from: p.from, to: p.to }} value={status} options={[{ value: "requested", label: "Pending" }, { value: "confirmed", label: "Confirmed" }, { value: "declined", label: "Declined" }]}/>
     <ListingFilters id="public-orders-filters" action="/dashboard/products/orders" query={{...p,status}} searchLabel="Search customer, product or phone" dates/>

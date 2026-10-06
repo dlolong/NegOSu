@@ -85,3 +85,5 @@ Shared surfaces target 320, 375, 390, and 430px mobile widths plus 1366×768, 14
 ## Accessibility and DOM IDs
 
 All interactive primitives expose visible keyboard focus. Icon-only buttons require an accessible label and stable ID. Dialogs reference their title and optional description. Meaningful roots, sections, forms, menus, repeated records, and actions use deterministic kebab-case IDs. Reduced-motion preferences disable smooth scrolling and nonessential transitions.
+
+Status labels use a shared semantic color mapping in `lib/status-colors.ts`. Shared record tables color recognized status text while retaining labels and controls; generic badges also use this mapping for recognized status labels. Unknown descriptive text stays unchanged. Green indicates completion/active, blue confirmation, violet work in progress, amber waiting, red failure/cancellation, and gray inactive/archive states.

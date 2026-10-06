@@ -111,7 +111,7 @@ export default async function Page({
       .join(", ") || "All active branches";
 
   return <main id={isSalon ? "salon-treatment-detail-page" : "service-detail-page"} className="mx-auto min-w-0 max-w-5xl [overflow-wrap:anywhere]">
-    <PageHeader id="service-detail-header" title={service.name} description={`${activeMembership.branchName} · ${category?.name ?? "Uncategorized"}`}
+    <PageHeader id="service-detail-header" title={service.name} description={`${category?.name ?? "Uncategorized"}`}
       action={canManage ? <Button id={isSalon ? "salon-treatment-edit-button" : "service-detail-edit-button"} asChild variant="secondary"><Link href={`/dashboard/services/${service.id}/edit`}><PencilIcon aria-hidden="true" size={16}/>Edit {serviceLabel}</Link></Button> : undefined}/>
     <FormMessage {...messageParams}/>
     <Card id="service-details" className="mt-4 grid min-w-0 gap-4 p-4 sm:grid-cols-[minmax(0,1fr)_minmax(0,2fr)] sm:p-5">

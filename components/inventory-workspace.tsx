@@ -20,7 +20,7 @@ function StockBadge({ item }: { item: InventoryStock }) {
   const status = stockStatus(item);
   return <span className={`inline-flex max-w-full rounded-full px-2.5 py-1 text-xs font-medium ${status === "out" ? "bg-red-50 text-red-700" : status === "low" ? "bg-amber-50 text-amber-800" : "bg-emerald-50 text-emerald-700"}`}>{stockStatusLabels[status]}</span>;
 }
-export function InventoryWorkspace({ canViewConsumption = false, stock, movements, branches, services, branchId, branchName, salon, canManage, query = {}, loadError, timezone = "Asia/Manila", currency = "PHP" }: {
+export function InventoryWorkspace({ canViewConsumption = false, stock, movements, branches, services, branchId, salon, canManage, query = {}, loadError, timezone = "Asia/Manila", currency = "PHP" }: {
   stock: InventoryStock[]; movements: InventoryMovement[]; branches: { id: string; name: string }[]; services: { id: string; name: string }[];
   canViewConsumption?: boolean; branchId: string; branchName: string; salon: boolean; canManage: boolean; query?: InventoryQuery; loadError?: string; timezone?: string; currency?: string;
 }) {
@@ -39,7 +39,7 @@ export function InventoryWorkspace({ canViewConsumption = false, stock, movement
   const showDialog = canManage && mode && !(mode === "recipe" && salon) && !loadError;
   const recordLink = (item: InventoryStock, suffix: string) => <Button asChild variant="secondary" size="sm"><Link id={`${productPrefix}-record-${suffix}-${item.id}`} href={href({ dialog: "movement", itemId: item.id })} aria-label="Record movement"><ArrowDownUp size={16} aria-hidden="true" className="shrink-0"/><span className="hidden sm:inline">Record movement</span><span className="sm:hidden">Adjust</span></Link></Button>;
   return <main id={`${prefix}-page`} className="mx-auto min-w-0 max-w-7xl">
-    <PageHeader id={`${prefix}-page-header`} eyebrow={branchName} title="Inventory" description="Keep stock organized and see what needs replenishing." action={canManage && !loadError ? <>
+    <PageHeader id={`${prefix}-page-header`} title="Inventory" description="Keep stock organized and see what needs replenishing." action={canManage && !loadError ? <>
       <Button id={`${prefix}-transfer-open-button`} asChild variant="outline"><Link href={href({ dialog: "transfer" })}><ArrowRightLeft size={16} aria-hidden="true"/>Transfer stock</Link></Button>
       <Button id="inventory-manage-products" asChild variant="secondary"><Link href="/dashboard/products"><Package size={16} aria-hidden="true"/>Manage products</Link></Button>
     </> : undefined}/>
@@ -57,7 +57,7 @@ export function InventoryWorkspace({ canViewConsumption = false, stock, movement
         ]}/>
         {canManage && !salon ? <Button asChild size="sm" variant="ghost"><Link id="inventory-recipe-open-button" href={href({ dialog: "recipe" })}><ClipboardList size={16} aria-hidden="true"/>Service recipes</Link></Button> : null}
       </div>
-      {history ? <Card id={`${prefix}-history`} elevation="none" className="min-w-0 p-4 sm:p-5"><h2 className="font-medium">Recent movements</h2><p className="mt-1 text-sm text-admin-text-muted">Latest 30 movements for {branchName}. Times shown in {timezone}.</p>
+      {history ? <Card id={`${prefix}-history`} elevation="none" className="min-w-0 p-4 sm:p-5"><h2 className="font-medium">Recent movements</h2><p className="mt-1 text-sm text-admin-text-muted">Latest 30 movements. Times shown in {timezone}.</p>
         <RecordTable id={`${prefix}-movements-table`} className="mt-4" caption="Recent stock movements" empty="No movements yet. Recorded stock changes will appear here." columns={[{key:"product",label:"Product"},{key:"type",label:"Movement",secondary:true},{key:"date",label:"Recorded on",secondary:true},{key:"quantity",label:"Change",align:"right"}]} rows={movements.map(movement=>({id:`${prefix}-movement-${movement.id}`,cells:{
           product:<>{movement.itemId?<RecordLink id={`${prefix}-movement-link-${movement.id}`} href={href({dialog:"details",itemId:movement.itemId})}>{movement.name}</RecordLink>:movement.name}{movement.note&&<p className="mt-1 text-xs text-admin-text-secondary">{movement.note}</p>}</>,
           type:<span className="capitalize">{movement.type.replaceAll("_"," ")}</span>,date:<time dateTime={movement.createdAt}>{new Intl.DateTimeFormat("en-PH",{dateStyle:"medium",timeStyle:"short",timeZone:timezone}).format(new Date(movement.createdAt))}</time>,quantity:<strong className={Number(movement.quantity)<0?"text-red-700":"text-emerald-700"}>{Number(movement.quantity)>0?"+":""}{quantityLabel(movement.quantity,movement.unit)}</strong>,

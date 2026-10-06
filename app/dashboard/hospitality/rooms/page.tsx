@@ -38,7 +38,7 @@ export default async function RoomsPage({ searchParams }: { searchParams: Promis
   const base = "/dashboard/hospitality/rooms", closeHref = `${base}?tab=${tab}`;
   const price = (r: Room) => r.rates.length ? `From ${formatMoney(Math.min(...r.rates.map(rate => rate.priceCentavos)), m.currency)}` : "Rates not configured";
   return <main id="hospitality-rooms-page" className="mx-auto min-w-0 max-w-7xl">
-    <PageHeader id="hospitality-rooms-header" eyebrow={m.branchName} title="Rooms" description="Maintain room details, capacity and rates. Open a room to view its stay history. Manage room status and arrivals in Bookings." action={manage ? <Button id="hospitality-add-room-button" asChild><Link href={`${base}?tab=${tab}&dialog=room`}><Plus size={16}/>Add room</Link></Button> : undefined}/>
+    <PageHeader id="hospitality-rooms-header" title="Rooms" description="Maintain room details, capacity and rates. Open a room to view its stay history. Manage room status and arrivals in Bookings." action={manage ? <Button id="hospitality-add-room-button" asChild><Link href={`${base}?tab=${tab}&dialog=room`}><Plus size={16}/>Add room</Link></Button> : undefined}/>
     <FormMessage message={q.message}/>
     <div id="hospitality-rooms-workspace" className="mt-4 min-w-0">
     <div id="hospitality-rooms-content" className="min-w-0">

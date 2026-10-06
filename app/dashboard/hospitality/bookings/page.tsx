@@ -66,7 +66,7 @@ export default async function BookingsPage({ searchParams }: { searchParams: Pro
   }
   const dialogQuery = { dialog: q.dialog ?? "manual", ...(guest ? { guest } : {}) };
   return <main id="hospitality-bookings-page" className="mx-auto min-w-0 max-w-7xl">
-    <PageHeader id="hospitality-bookings-header" eyebrow={m.branchName} title="Bookings" description="View room availability, check guests in and out, and mark cleaned rooms ready." action={checkIn ? <Button asChild><Link id="hospitality-manual-booking-button" href={href({ dialog: "manual" })}><Plus size={16}/>Manually Add Booking</Link></Button> : undefined}/>
+    <PageHeader id="hospitality-bookings-header" title="Bookings" description="View room availability, check guests in and out, and mark cleaned rooms ready." action={checkIn ? <Button asChild><Link id="hospitality-manual-booking-button" href={href({ dialog: "manual" })}><Plus size={16}/>Manually Add Booking</Link></Button> : undefined}/>
     <BookingTabs value="rooms"/>
     <form id="hospitality-booking-search-form" className="my-4 flex flex-wrap items-end gap-2">
       <label className="min-w-0 flex-1 text-sm" htmlFor="hospitality-booking-search">Search rooms<input id="hospitality-booking-search" name="q" type="search" defaultValue={term} maxLength={80} className={fieldClass}/></label>

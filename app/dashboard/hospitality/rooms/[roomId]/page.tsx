@@ -22,7 +22,7 @@ export default async function RoomDetailsPage({ params, searchParams }: {
   const room = result.data as Room;
   const tab = query.tab === "history" ? "history" : "details";
   return <main id="hospitality-room-details-page" className="mx-auto min-w-0 max-w-7xl">
-    <PageHeader id="hospitality-room-details-header" eyebrow={m.branchName} title={room.name} description="Room details and guest stay history." action={canHospitality(m.role, "rooms") ? <Button asChild variant="secondary"><Link id="hospitality-room-edit" href={`/dashboard/hospitality/rooms?dialog=room&room=${room.id}`}>Edit room</Link></Button> : undefined}/>
+    <PageHeader id="hospitality-room-details-header" title={room.name} description="Room details and guest stay history." action={canHospitality(m.role, "rooms") ? <Button asChild variant="secondary"><Link id="hospitality-room-edit" href={`/dashboard/hospitality/rooms?dialog=room&room=${room.id}`}>Edit room</Link></Button> : undefined}/>
     <ListTabs id="hospitality-room-tabs" baseHref={`/dashboard/hospitality/rooms/${room.id}`} query={{ preset: query.preset, start: query.start, end: query.end }} parameter="tab" value={tab} options={[{ value: "details", label: "Details" }, { value: "history", label: "History" }]}/>
     {tab === "history" ? <RoomHistory roomId={room.id} query={query}/> : <section id="hospitality-room-details" className="mt-5 rounded-xl border border-admin-border bg-white p-4 sm:p-6">
       <dl className="grid gap-4 text-sm sm:grid-cols-2"><div><dt className="text-slate-500">Room type</dt><dd>{room.room_type || "Not specified"}</dd></div><div><dt className="text-slate-500">Capacity</dt><dd>{room.capacity} occupants</dd></div></dl>
