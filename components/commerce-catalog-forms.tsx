@@ -26,7 +26,7 @@ export function ProductCatalogForm({ product, currency, requestKey }: { product?
     <SettingsFormSection id="product-details-section" title="Product details">
     <label>Name<Input id="product-name" name="name" required maxLength={120} {...field("name")}/></label>
     <div><label htmlFor="product-sku">Product code (optional)</label><Input id="product-sku" name="sku" aria-describedby="product-code-help" maxLength={60} {...field("sku")}/><p id="product-code-help" className="mt-1 text-xs font-normal leading-5 text-admin-text-secondary">Optional reference, e.g. PROD-001.</p></div>
-    <label>Category (optional)<Input id="product-category" name="category" maxLength={80} {...field("category")}/></label>
+    <label>Category<Input id="product-category" name="category" required maxLength={80} {...field("category")}/></label>
     <label className="col-span-full">Description (optional)<Input id="product-description" name="description" maxLength={1000} {...field("description")}/></label>
     </SettingsFormSection>
     <SettingsFormSection id="product-pricing-section" title="Pricing & use">

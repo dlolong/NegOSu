@@ -28,11 +28,14 @@ insert into inventory_movements(organization_id,branch_id,inventory_item_id,move
 ('c0200000-0000-4000-8000-000000000001','c0300000-0000-4000-8000-000000000001','c0500000-0000-4000-8000-000000000001','opening',10,'2026-10-04T15:59:00Z','c0100000-0000-4000-8000-000000000001','report-opening'),
 ('c0200000-0000-4000-8000-000000000001','c0300000-0000-4000-8000-000000000001','c0500000-0000-4000-8000-000000000001','usage',-2.5,'2026-10-04T16:00:00Z','c0100000-0000-4000-8000-000000000001','report-usage'),
 ('c0200000-0000-4000-8000-000000000001','c0300000-0000-4000-8000-000000000001','c0500000-0000-4000-8000-000000000001','waste',-1,'2026-10-05T16:00:00Z','c0100000-0000-4000-8000-000000000001','report-next-day');
+update inventory_items set category='Skin care' where id='c0500000-0000-4000-8000-000000000001';
 set local role authenticated;
 set local "request.jwt.claims"='{"sub":"c0100000-0000-4000-8000-000000000001","role":"authenticated"}';
 create function pg_temp.inventory_report() returns jsonb language sql as $$
  select public.get_inventory_consumption_report('c0200000-0000-4000-8000-000000000001',null,'2026-10-05','2026-10-05',1);
 $$;
+select is((public.get_inventory_consumption_report('c0200000-0000-4000-8000-000000000001',null,'2026-10-05','2026-10-05',1,'','Skin care')->>'count')::integer,1,'category filters before pagination');
+select is((public.get_inventory_consumption_report('c0200000-0000-4000-8000-000000000001',null,'2026-10-05','2026-10-05',1,'','Uncategorized')->'totals'->0->>'consumed')::numeric,0::numeric,'category totals exclude other products');
 select is((pg_temp.inventory_report()->>'count')::integer,2,'all products including zero-activity included');
 select is((pg_temp.inventory_report()->'rows'->0->>'opening')::numeric,10::numeric,'opening uses branch-local midnight');
 select is((pg_temp.inventory_report()->'rows'->0->>'consumed')::numeric,2.5::numeric,'consumption at local midnight included');

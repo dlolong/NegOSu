@@ -2,6 +2,7 @@ import { z } from "zod";
 export const inventoryReportQuery = z.object({
   period: z.enum(["day", "week", "month", "year"]).default("month"),
   date: z.preprocess(value => typeof value === "string" && /^\d{4}-\d{2}$/.test(value) ? `${value}-01` : value, z.iso.date().optional()),
+  category: z.string().trim().max(80).default(""),
   q: z.string().trim().max(120).default(""),
   start: z.iso.date().optional(),
   end: z.iso.date().optional(),
@@ -30,10 +31,11 @@ export function inventoryReportRange(period: "day" | "week" | "month" | "year", 
   return { start: start.toISOString().slice(0, 10), end: end.toISOString().slice(0, 10) };
 }
 export type InventoryReportRow = {
-  id: string; name: string; branch_name: string; unit: string; stock_tracked: boolean;
+  id: string; name: string; category?: string; branch_name: string; unit: string; stock_tracked: boolean;
   opening: number; received: number; consumed: number; waste: number; other: number; closing: number;
 };
 export type InventoryReport = {
+  categories?: string[];
   count: number; rows: InventoryReportRow[];
   product_daily?: Array<{ inventory_item_id: string; day: string; consumed: number }>;
   daily?: Array<{ day: string; unit: string; consumed: number }>;

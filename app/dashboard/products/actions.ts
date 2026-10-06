@@ -10,7 +10,7 @@ import { parseCatalogPrice } from "@/modules/core/commerce/pricing";
 import { catalogSaveError } from "@/modules/core/commerce/save-errors";
 import type { CatalogActionState } from "@/app/dashboard/promos/actions";
 
-const schema = z.object({ name: z.string().trim().min(2).max(120), sku: z.string().trim().max(60), description: z.string().trim().max(1000), category: z.string().trim().max(80), unit: z.string().trim().min(1).max(30), price: z.number().int().min(0).max(10_000_000_000), purpose: z.enum(["retail", "internal", "both"]), thumbnailUrl: businessLogoUrlSchema, isPublic: z.boolean(), id: z.uuid().nullable() });
+const schema = z.object({ name: z.string().trim().min(2).max(120), sku: z.string().trim().max(60), description: z.string().trim().max(1000), category: z.string().trim().min(1, "Enter a product category.").max(80), unit: z.string().trim().min(1).max(30), price: z.number().int().min(0).max(10_000_000_000), purpose: z.enum(["retail", "internal", "both"]), thumbnailUrl: businessLogoUrlSchema, isPublic: z.boolean(), id: z.uuid().nullable() });
 export async function saveProduct(_previous: CatalogActionState, form: FormData): Promise<CatalogActionState> {
   const { activeMembership: m } = await getDashboardContext();
   if (!["owner", "manager"].includes(m.role)) return { error: "Product management access required." };

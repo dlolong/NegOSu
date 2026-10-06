@@ -23,10 +23,10 @@ export default async function InventoryReportPage({ searchParams }: { searchPara
   const range = query.start && query.end ? { start: query.start, end: query.end } : inventoryReportRange(query.period, date);
   const { data, error } = await db.rpc("get_inventory_consumption_report", {
     p_org: m.organizationId, p_branch: branch === "all" ? null : branch,
-    p_start: range.start, p_end: range.end, p_page: query.page, p_search: query.q,
+    p_start: range.start, p_end: range.end, p_page: query.page, p_search: query.q, p_category: query.category,
   });
   const report = data as InventoryReport | null;
-  const href = (page = 1) => `/dashboard/inventory/consumption?${new URLSearchParams({ start: range.start, end: range.end, branch, q: query.q, page: String(page) })}`;
+  const href = (page = 1) => `/dashboard/inventory/consumption?${new URLSearchParams({ start: range.start, end: range.end, branch, q: query.q, category: query.category, page: String(page) })}`;
   const number = (value: number) => new Intl.NumberFormat("en", { maximumFractionDigits: 3 }).format(value);
   return <main id="inventory-report-page" className="mx-auto min-w-0 max-w-7xl">
     <PageTitle back={<Link className="inline-flex min-h-11 items-center underline" href="/dashboard/inventory">Back to inventory</Link>} className="text-2xl">Stock consumption</PageTitle>
@@ -46,10 +46,11 @@ export default async function InventoryReportPage({ searchParams }: { searchPara
       <label className="grid gap-1 text-sm" htmlFor="inventory-report-start">From<input className="min-h-11 rounded-xl border border-admin-border bg-white px-3" id="inventory-report-start" name="start" type="date" defaultValue={range.start} required/></label>
       <label className="grid gap-1 text-sm" htmlFor="inventory-report-end">To<input className="min-h-11 rounded-xl border border-admin-border bg-white px-3" id="inventory-report-end" name="end" type="date" defaultValue={range.end} required/></label>
       <label className="grid gap-1 text-sm" htmlFor="inventory-report-branch">Branch<select className="min-h-11 max-w-full rounded-xl border border-admin-border bg-white px-3" id="inventory-report-branch" name="branch" defaultValue={branch}><option value="all">All accessible branches</option>{m.branches.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}</select></label>
+      <label className="grid gap-1 text-sm" htmlFor="inventory-report-category">Category<select id="inventory-report-category" name="category" defaultValue={query.category} className="min-h-11 rounded-xl border border-admin-border bg-white px-3"><option value="">All categories</option>{[...new Set([...(report?.categories ?? []), ...(query.category ? [query.category] : [])])].map(category => <option key={category} value={category}>{category}</option>)}</select></label>
       <Button id="inventory-report-apply" type="submit">Apply</Button>
     </CompactFilters>
       <p className="mb-3 text-xs text-admin-text-secondary">{range.start} to {range.end} · {report?.count ?? 0} products{query.q ? " matching search" : ""}</p>
-    {error || !report ? <p id="inventory-report-error" role="alert" className="rounded-xl border border-admin-border p-5">Unable to load inventory. Check that migration 0132_inventory_report_search.sql has been applied, then try again.</p> : <>
+    {error || !report ? <p id="inventory-report-error" role="alert" className="rounded-xl border border-admin-border p-5">Unable to load inventory. Check that migration 0133_inventory_consumption_categories.sql has been applied, then try again.</p> : <>
       <InventoryConsumptionMatrix report={report} start={range.start} end={range.end}/>
       <nav className="mt-4 flex items-center justify-between gap-3" aria-label="Inventory report pages">{query.page > 1 ? <Link id="inventory-report-previous" className="inline-flex min-h-11 items-center underline" href={href(query.page - 1)}>Previous</Link> : <span/>}<span className="text-sm">Page {query.page} of {Math.max(1, Math.ceil(report.count / 50))}</span>{query.page * 50 < report.count ? <Link id="inventory-report-next" className="inline-flex min-h-11 items-center underline" href={href(query.page + 1)}>Next</Link> : null}</nav>
     </>}

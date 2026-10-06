@@ -29,3 +29,9 @@ test("product search trims whitespace and bounds input", () => {
   assert.equal(inventoryReportQuery.parse({q:"  cleanser  "}).q,"cleanser");
   assert.equal(inventoryReportQuery.safeParse({q:"x".repeat(121)}).success,false);
 });
+
+test("category filter trims values and limits length", () => {
+ assert.equal(inventoryReportQuery.parse({category:" Skin care "}).category,"Skin care");
+ assert.equal(inventoryReportQuery.parse({}).category,"");
+ assert.equal(inventoryReportQuery.safeParse({category:"x".repeat(81)}).success,false);
+});

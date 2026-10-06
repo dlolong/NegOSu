@@ -120,3 +120,5 @@ Inventory & consumption now defaults to the current calendar month and uses From
 Migration `0132_inventory_report_search.sql` adds the six-argument report RPC with literal case-insensitive name/SKU search before pagination and totals aggregation; the five-argument RPC remains available. Inventory reports use shared compact search/date/branch filters and individual summary cards.
 
 The consumption workspace now lives at `/dashboard/inventory/consumption`, titled **Stock consumption**, alongside the Inventory Stock and History tabs. Reports navigation no longer links to it. Legacy `/dashboard/reports/inventory` URLs redirect with query filters preserved. Existing report-role and database permissions remain unchanged.
+
+Migration `0133_inventory_consumption_categories.sql` adds scoped category options and filtering before consumption pagination/totals. The matrix groups products by category and highlights nonzero quantities in green; zero and non-stock cells stay neutral. Product add/edit forms now require a category; existing blank categories remain visible as Uncategorized. Categories are displayed on product lists and details.
