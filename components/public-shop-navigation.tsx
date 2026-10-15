@@ -23,16 +23,17 @@ function sectionLinks({ hospitality, industry, hasProducts, hasPromos, hasGaller
   ];
 }
 
-export function PublicShopHeader({ name, logoUrl, slug, bookingAvailable, ...navigation }: NavigationProps & {
+export function PublicShopHeader({ name, logoUrl, slug, bookingAvailable, styled = false, ...navigation }: NavigationProps & {
   name: string;
   logoUrl?: string | null;
   slug: string;
   bookingAvailable: boolean;
+  styled?: boolean;
 }) {
   return <header id="public-shop-header" className="sticky top-0 z-40 border-b border-admin-border bg-white pt-[env(safe-area-inset-top)] shadow-none transition-shadow duration-200 data-[scrolled=true]:shadow-[0_4px_16px_-8px_rgba(15,23,42,0.22)] motion-reduce:transition-none sm:pt-0">
     <div className="mx-auto grid min-h-18 max-w-6xl grid-cols-[minmax(0,1fr)_auto] items-center gap-x-2 gap-y-1 sm:gap-x-5 px-4 py-2 sm:px-6 lg:grid-cols-[minmax(0,1fr)_auto_auto]">
       <Link id="public-shop-home-link" href={`/shop/${encodeURIComponent(slug)}`} className="flex min-w-0 items-center" aria-label={`${name} home`}>
-        <BusinessIdentity name={name} logoUrl={logoUrl}/>
+        <BusinessIdentity name={name} logoUrl={logoUrl} wordmark={styled}/>
       </Link>
       <nav id="public-shop-section-navigation" aria-label="Website sections" className="col-span-2 row-start-2 hidden items-center justify-center gap-1 border-t border-admin-border pt-1 text-sm font-medium sm:flex lg:col-span-1 lg:col-start-2 lg:row-start-1 lg:border-0 lg:pt-0">
         {sectionLinks(navigation).map(({ key, label, href }) => <a key={key} id={`public-shop-${key}-nav`} href={href} className="inline-flex min-h-11 shrink-0 items-center whitespace-nowrap rounded-ui-md px-2 hover:bg-brand-tint hover:text-brand-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary">{label}</a>)}

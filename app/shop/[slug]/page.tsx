@@ -1,3 +1,5 @@
+import { PublicStyledHero, PublicVisitGuide, PublicClosingBanner, PublicStyledFooter } from "@/components/public-page-presentation";
+import { resolvePublicPageStyle } from "@/modules/platform/public-page-style";
 import { PublicWebsiteEffects } from "@/components/public-website-effects";
 import { PublicProductCards } from "@/components/public-product-cards";
 import { PublicShopHeader, PublicShopMobileNavigation } from "@/components/public-shop-navigation";
@@ -41,6 +43,8 @@ export default async function Page({ params }: { params: Promise<{ slug: string 
   if (!publicShop) notFound();
   const industry = publicShop.industry ?? "automotive";
   const hospitality = industry === "hospitality";
+  const pageStyle = resolvePublicPageStyle(publicShop.pageStyle, industry);
+  const styled = pageStyle !== "standard";
   const serviceLabel = industry === "salon" ? "treatment" : "service";
   const primaryBranch = publicShop.branches.find(branch => branch.acceptsBookings) ?? publicShop.branches[0];
   const bookingAvailable = !hospitality && publicShop.services.length > 0 && publicShop.branches.some(branch=>branch.acceptsBookings);
@@ -59,14 +63,14 @@ export default async function Page({ params }: { params: Promise<{ slug: string 
     address: publicShop.branches[0]?.address.filter(Boolean).join(", "),
   };
 
-  return <main id={hospitality ? "public-hospitality-shop-page" : industry === "pet_care" ? "public-pet-care-shop-page" : industry === "salon" ? "public-salon-shop-page" : "public-automotive-shop-page"} className="min-h-dvh min-w-0 bg-admin-canvas text-admin-text [overflow-wrap:anywhere] [--public-header-offset:6rem] sm:[--public-header-offset:9rem] lg:[--public-header-offset:6rem] [&_[id]]:scroll-mt-[var(--public-header-offset)]">
+  return <main data-public-style={pageStyle} id={hospitality ? "public-hospitality-shop-page" : industry === "pet_care" ? "public-pet-care-shop-page" : industry === "salon" ? "public-salon-shop-page" : "public-automotive-shop-page"} className={`${styled ? "public-designed-page " : ""}min-h-dvh min-w-0 bg-admin-canvas text-admin-text [overflow-wrap:anywhere] [--public-header-offset:6rem] sm:[--public-header-offset:9rem] lg:[--public-header-offset:6rem] [&_[id]]:scroll-mt-[var(--public-header-offset)]`}>
     <PublicWebsiteEffects/>
     <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replaceAll("<", "\\u003c") }} />
 
     <a id="public-shop-skip-link" href={hospitality ? "#public-automotive-shop-branches" : "#public-automotive-shop-services"} className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-xl focus:bg-white focus:p-3">{hospitality ? "Skip to locations" : "Skip to services"}</a>
-    <PublicShopHeader {...navigation} name={publicShop.name} logoUrl={publicShop.logoUrl} slug={slug} bookingAvailable={bookingAvailable}/>
+    <PublicShopHeader styled={styled} {...navigation} name={publicShop.name} logoUrl={publicShop.logoUrl} slug={slug} bookingAvailable={bookingAvailable}/>
 
-    <section data-public-reveal id="public-automotive-shop-hero" className="overflow-hidden bg-white">
+    {styled ? <PublicStyledHero name={publicShop.name} industry={industry} hero={publicShop.hero} coverUrl={publicShop.coverUrl} bookingAvailable={bookingAvailable} slug={slug}/> : <section data-public-reveal id="public-automotive-shop-hero" className="overflow-hidden bg-white">
       <div className="mx-auto grid max-w-6xl items-center gap-6 px-4 py-7 sm:gap-8 sm:px-6 sm:py-12 lg:grid-cols-[minmax(0,1fr)_minmax(22rem,0.9fr)] lg:py-16">
         <div>
           <p className="text-sm font-medium text-brand-primary-strong">{hospitality ? "Apartelle & Inn" : industry === "pet_care" ? "Pet grooming" : industry === "salon" ? "Salon & beauty" : "Automotive care"}</p>
@@ -79,7 +83,7 @@ export default async function Page({ params }: { params: Promise<{ slug: string 
           {publicShop.coverUrl ? <Image src={publicShop.coverUrl} alt={`${publicShop.name} business`} fill unoptimized sizes="(min-width: 1024px) 45vw, 100vw" className="object-cover"/> : <div className="absolute inset-0 grid place-items-center bg-[radial-gradient(circle_at_top_right,var(--brand-primary),transparent_55%)] p-5 sm:p-10"><div className="rounded-ui-lg border border-white/15 bg-white/10 p-6 text-white backdrop-blur-sm"><p className="text-sm text-white/80">Welcome to</p><p className="mt-2 text-3xl font-medium">{publicShop.name}</p></div></div>}
         </div>
       </div>
-    </section>
+    </section>}
 
     <div data-public-sections className="mx-auto min-w-0 max-w-6xl space-y-10 px-4 py-9 sm:space-y-14 sm:px-6 sm:py-14">
       <PublicPromoCards slug={slug} promos={promos} branches={publicShop.branches} services={publicShop.services}/>
@@ -105,12 +109,14 @@ export default async function Page({ params }: { params: Promise<{ slug: string 
       </section>
 
       {publicShop.gallery.length > 0 ? <section id="public-automotive-shop-gallery" className="scroll-mt-[calc(6rem+env(safe-area-inset-top))] sm:scroll-mt-5" aria-labelledby="public-shop-gallery-title"><div><p className="text-sm font-medium text-brand-primary-strong">Inside our business</p><h2 id="public-shop-gallery-title" className="mt-1 text-3xl font-medium tracking-tight text-brand-ink">Gallery</h2></div><div className="mt-6 grid grid-cols-2 gap-3 md:grid-cols-3">{publicShop.gallery.map((image, index) => <Image id={`public-shop-gallery-image-${index}`} className={`w-full rounded-ui-lg object-cover ${index === 0 ? "col-span-2 aspect-[2/1] md:col-span-2" : "aspect-square md:aspect-[4/3]"}`} src={image.url} alt={image.alt} width={800} height={600} unoptimized key={`${image.url}-${index}`}/>)}</div></section> : null}
+      {styled ? <PublicVisitGuide industry={industry} bookingAvailable={bookingAvailable}/> : null}
       <PublicContact shop={publicShop}/>
+      {styled ? <PublicClosingBanner industry={industry} slug={slug} bookingAvailable={bookingAvailable}/> : null}
     </div>
 
-    <footer id="public-automotive-shop-footer" className="border-t border-admin-border bg-white pb-24 sm:pb-0">
+    {styled ? <PublicStyledFooter shop={publicShop} hasPromos={promos.length > 0}/> : <footer id="public-automotive-shop-footer" className="border-t border-admin-border bg-white pb-24 sm:pb-0">
       <div className="mx-auto grid max-w-6xl gap-7 px-4 py-9 sm:px-6 md:grid-cols-[minmax(0,1fr)_auto] md:items-end"><div><p className="font-medium">{publicShop.name}</p><PoweredBy id="public-shop-powered-by" className="mt-2"/><div className="mt-3 flex flex-wrap gap-x-4 gap-y-2 text-sm text-admin-text-secondary">{publicShop.phone?<a id="public-shop-call-link" className="inline-flex min-h-11 items-center gap-2" href={`tel:${publicShop.phone.replace(/[^\d+]/g,"")}`}><Phone size={16} aria-hidden="true"/>{publicShop.phone}</a>:null}{publicShop.email?<a id="public-shop-email-link" className="inline-flex min-h-11 min-w-0 items-center gap-2" href={`mailto:${publicShop.email}`}><Mail size={16} className="shrink-0" aria-hidden="true"/>{publicShop.email}</a>:null}</div></div><nav id="public-shop-social-links" className="flex flex-wrap gap-x-5 gap-y-2 text-sm font-medium text-brand-primary-strong" aria-label={`${publicShop.name} links`}>{publicShop.website ? <a href={publicShop.website} target="_blank" rel="noopener noreferrer">Website</a> : null}{publicShop.facebook ? <a href={publicShop.facebook} target="_blank" rel="noopener noreferrer">Facebook</a> : null}{publicShop.instagram ? <a href={publicShop.instagram} target="_blank" rel="noopener noreferrer">Instagram</a> : null}</nav></div>
-    </footer>
+    </footer>}
     <PublicShopMobileNavigation {...navigation}/>
     {!hospitality ? <PublicChat key={publicShop.slug} shop={publicShop}/> : null}
   </main>;

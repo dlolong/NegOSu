@@ -13,7 +13,8 @@ test("catalog groups services and scrolls each row without widening the page",as
  await expect(page.getByRole("button",{name:/^(Next|Previous) /})).toHaveCount(0);
  await promos.focus();await page.keyboard.press("ArrowRight");
  await expect.poll(()=>promos.evaluate(el=>el.scrollLeft)).toBeGreaterThan(0);
- expect(await hair.evaluate(el=>el.scrollLeft)).toBe(0);
+ // Chrome may snap to the first card at the row’s padded start.
+ expect(await hair.evaluate(el=>el.scrollLeft<=parseFloat(getComputedStyle(el).paddingLeft))).toBe(true);
  await hair.focus();await page.keyboard.press("ArrowRight");
  await expect.poll(()=>hair.evaluate(el=>el.scrollLeft)).toBeGreaterThan(0);
  await hair.focus();await page.keyboard.press("Home");

@@ -10,6 +10,8 @@ import { roleHasPermission } from "@/lib/rbac";
 import { createClient } from "@/lib/supabase/server";
 import { isPublicPageTheme } from "@/modules/platform/public-page-theme";
 
+import { isPublicPageStyleForIndustry, publicPageAppearanceSchema } from "@/modules/platform/public-page-style";
+
 const path = "/dashboard/settings/public-page";
 function go(kind: "message" | "error", message: string, tab="profile"): never { redirect(`${path}?${new URLSearchParams({tab,[kind]:message})}`); }
 async function settingsContext() {
@@ -21,6 +23,24 @@ function saved(slug: string, message: string, tab="profile"): never {
   revalidatePath(path); revalidatePath("/dashboard", "layout"); revalidatePath("/organizations"); revalidatePath("/onboarding/setup"); revalidatePath(`/shop/${slug}`, "layout");
   go("message", message, tab);
 }
+export async function savePublicPageAppearance(data: FormData) {
+  const membership = await settingsContext();
+  const parsed = publicPageAppearanceSchema.safeParse({ pageStyle: formValue(data, "pageStyle"), headline: formValue(data, "headline"), eyebrow: formValue(data, "eyebrow"), description: formValue(data, "description"), position: formValue(data, "position") });
+  if (!parsed.success) go("error", firstError(parsed.error));
+  if (!isPublicPageStyleForIndustry(parsed.data.pageStyle, membership.industry)) go("error", "Select a page style available for your business industry.");
+  const supabase = await createClient();
+  // Theme, cover image and profile edits are independent of this save.
+  const { data: updated, error } = await supabase.from("organizations").update({
+    public_page_style: parsed.data.pageStyle,
+    public_hero_headline: parsed.data.headline || null,
+    public_hero_eyebrow: parsed.data.eyebrow || null,
+    public_hero_description: parsed.data.description || null,
+    public_hero_position: parsed.data.position,
+  }).eq("id", membership.organizationId).select("id").maybeSingle();
+  if (error || !updated) go("error", "Unable to save your page style. Please try again.");
+  saved(membership.organizationSlug, "Public page style saved.");
+}
+
 export async function savePublicPageTheme(data: FormData) {
   const membership = await settingsContext();
   const theme = formValue(data, "publicPageTheme");

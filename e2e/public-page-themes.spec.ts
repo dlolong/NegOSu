@@ -6,12 +6,12 @@ for (const width of [1440, 390, 320]) test(`public theme preview, cancel and sav
   await page.setViewportSize({ width, height: 900 });
   await page.route("https://forms.test/**", route => route.fulfill({ contentType: "text/html", body: html }));
   await page.goto("https://forms.test/themes");
-  await expect(page.getByRole("radio")).toHaveCount(6);
+  await expect(page.getByRole("radio")).toHaveCount(7);
   await expect(page.locator("#public-page-theme-radio-classic")).toBeChecked();
   const preview = page.locator("#public-page-theme-preview");
   const primary = () => preview.evaluate(el => getComputedStyle(el).getPropertyValue("--brand-primary").trim());
   expect(await primary()).toBe("#0062dc");
-  for (const [id, color] of Object.entries({ blue: "#2459a9", plum: "#85466d", teal: "#087d72", graphite: "#475569", indigo: "#4f46e5" })) {
+  for (const [id, color] of Object.entries({ blue: "#2459a9", plum: "#85466d", teal: "#087d72", graphite: "#475569", indigo: "#4f46e5", crimson: "#b50924" })) {
     await page.locator(`#public-page-theme-option-${id}`).click();
     await expect(preview).toHaveAttribute("data-public-theme", id);
     expect(await primary()).toBe(color);

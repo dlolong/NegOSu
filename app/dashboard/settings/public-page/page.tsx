@@ -1,3 +1,5 @@
+import { PublicPageStyleForm } from "@/components/public-page-style-form";
+import { resolvePublicPageStyle } from "@/modules/platform/public-page-style";
 import { PublicVisibilityItem } from "@/components/public-catalog-visibility";
 import { PublicPageThemeForm } from "@/components/public-page-theme-form";
 import { resolvePublicPageTheme } from "@/modules/platform/public-page-theme";
@@ -56,7 +58,7 @@ export default async function Page({
     await Promise.all([
       supabase
         .from("organizations")
-        .select("slug,public_page_enabled,public_page_theme,public_description,logo_url,cover_url,instagram_url,facebook_page,website")
+        .select("name,slug,public_page_enabled,public_page_theme,public_page_style,public_hero_headline,public_hero_eyebrow,public_hero_description,public_hero_position,public_description,logo_url,cover_url,instagram_url,facebook_page,website")
         .eq("id", activeMembership.organizationId)
         .single(),
       supabase
@@ -123,6 +125,14 @@ export default async function Page({
 
       <ListTabs id="website-settings-tabs" baseHref="/dashboard/settings/public-page" query={{}} parameter="tab" value={tab} options={[{value:"profile",label:"Business details"},...(!hospitality ? [{value:"services",label:"Services",count:publicServiceCount}] : []),{value:"products",label:"Products",count:products.filter(item=>item.is_public).length},...(!hospitality ? [{value:"promos",label:"Promos",count:promos.filter(item=>item.is_public).length}] : []),{value:"locations",label:"Locations & hours",count:branches.length},{value:"gallery",label:"Gallery",count:gallery.length}]}/>
       <div id="public-page-settings-grid" className="mt-6 grid min-w-0 gap-5">
+        {tab === "profile" ? <Card id="public-page-style-card" className="p-4 sm:p-6">
+          <h2 className="text-lg font-medium text-admin-text">Page style</h2>
+          <p className="mt-1 text-sm text-admin-text-secondary">Choose the layout for your business and personalize its introduction.</p>
+          <PublicPageStyleForm key={JSON.stringify([organization.public_page_style, organization.public_hero_headline, organization.public_hero_eyebrow, organization.public_hero_description, organization.public_hero_position])}
+            industry={activeMembership.industry} name={organization.name} theme={organization.public_page_theme} coverUrl={organization.cover_url}
+            preference={resolvePublicPageStyle(organization.public_page_style, activeMembership.industry)}
+            hero={{ headline: organization.public_hero_headline, eyebrow: organization.public_hero_eyebrow, description: organization.public_hero_description, position: organization.public_hero_position }}/>
+        </Card> : null}
         {tab === "profile" ? <Card id="public-page-theme-card" className="p-4 sm:p-6">
           <h2 className="text-lg font-medium text-admin-text">Color theme</h2>
           <p className="mt-1 text-sm text-admin-text-secondary">Set the colors customers see on your public website.</p>

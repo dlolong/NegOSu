@@ -1,0 +1,69 @@
+/* Layout styles are scoped to opted-in public homepages and admin previews.
+   Catalog rows and their cards retain their existing presentation and scrolling. */
+[data-public-style="elegant"], [data-public-style="retreat"] { --public-heading-font: Georgia, "Times New Roman", serif; }
+[data-public-style="precision"] { --public-heading-font: Arial, Helvetica, sans-serif; }
+[data-public-style="friendly"] { --public-heading-font: "Trebuchet MS", Arial, sans-serif; }
+.public-designed-page { background: var(--admin-surface); }
+.public-designed-page h2, .public-style-hero h1 { font-family: var(--public-heading-font); }
+.public-style-eyebrow { font-size: 0.75rem; font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase; line-height: 1.8; color: var(--brand-primary-strong); }
+.public-style-hero { position: relative; isolation: isolate; overflow: hidden; background: var(--brand-tint); }
+.public-style-hero-media, .public-style-hero-shade { position: absolute; inset: 0; z-index: -1; }
+.public-style-hero-placeholder { display: grid; height: 100%; place-items: center; padding: 2rem; background: radial-gradient(ellipse at top right, var(--brand-border), transparent 70%), var(--brand-tint); }
+.public-style-hero-placeholder span { max-width: 18rem; color: var(--brand-primary-strong); font-family: var(--public-heading-font); font-size: clamp(1.5rem, 3vw, 3rem); text-align: center; overflow-wrap: anywhere; }
+.public-style-hero-inner { max-width: 72rem; margin-inline: auto; padding: 4.5rem 1.5rem; min-height: 34rem; display: flex; align-items: center; }
+.public-style-hero-copy { width: 54%; min-width: 0; }
+.public-style-hero h1 { font-size: clamp(2.4rem, 5vw, 4.8rem); line-height: 1.04; letter-spacing: -0.045em; margin-top: 1rem; color: var(--brand); overflow-wrap: anywhere; text-wrap: balance; }
+.public-style-hero-description { margin-top: 1.5rem; max-width: 34rem; line-height: 1.8; color: var(--admin-text-secondary); }
+.public-style-hero-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 0.75rem; margin-top: 2rem; }
+.public-style-primary-link, .public-style-secondary-link, .public-style-closing-link { min-height: 3rem; display: inline-flex; align-items: center; justify-content: center; gap: 0.75rem; padding: 0.75rem 1.25rem; border-radius: 999px; font-size: 0.875rem; font-weight: 600; text-align: center; }
+.public-style-primary-link { background: var(--brand-primary); color: white; }
+a.public-style-primary-link:hover { background: var(--brand-primary-strong); }
+.public-style-secondary-link { border: 1px solid var(--brand-border); color: var(--brand-primary-strong); background: white; }
+a.public-style-secondary-link:hover { background: var(--brand-tint); }
+.public-style-hero-note { margin-top: 1.5rem; font-size: 0.8125rem; line-height: 1.7; color: var(--admin-text-secondary); }
+[data-public-style="elegant"] .public-style-hero-shade { background: linear-gradient(90deg, white 0%, rgb(255 255 255 / 96%) 35%, rgb(255 255 255 / 82%) 52%, transparent 78%); }
+[data-public-style="elegant"] .public-style-hero-media { left: 30%; }
+[data-public-style="precision"] .public-style-hero { background: var(--brand); }
+[data-public-style="precision"] .public-style-hero-media { left: 43%; }
+[data-public-style="precision"] .public-style-hero-shade { background: linear-gradient(90deg, var(--brand) 35%, color-mix(in srgb, var(--brand) 94%, transparent) 54%, transparent 90%); }
+[data-public-style="precision"] .public-style-hero-copy { border-left: 4px solid var(--brand-on-dark); padding-left: 1.5rem; }
+[data-public-style="precision"] .public-style-hero h1 { font-weight: 700; letter-spacing: -0.035em; }
+[data-public-style="precision"] .public-style-hero :is(h1, .public-style-hero-description, .public-style-hero-note) { color: white; }
+[data-public-style="precision"] .public-style-hero .public-style-eyebrow { color: var(--brand-on-dark); }
+[data-public-style="precision"] :is(.public-style-primary-link, .public-style-secondary-link, .public-style-closing, .public-style-closing-link) { border-radius: 0.5rem; }
+[data-public-style="retreat"] .public-style-hero-inner { min-height: 38rem; justify-content: center; text-align: center; }
+[data-public-style="retreat"] .public-style-hero-copy { width: 100%; max-width: 46rem; padding: 2rem; background: rgb(0 0 0 / 55%); border-radius: 1rem; }
+[data-public-style="retreat"] .public-style-hero-shade { background: rgb(0 0 0 / 20%); }
+[data-public-style="retreat"] .public-style-hero :is(h1, .public-style-eyebrow, .public-style-hero-description, .public-style-hero-note) { color: white; }
+[data-public-style="retreat"] .public-style-hero-description { margin-inline: auto; }
+[data-public-style="retreat"] .public-style-hero-actions { justify-content: center; }
+[data-public-style="friendly"] .public-style-hero { border-radius: 0 0 3rem 3rem; }
+[data-public-style="friendly"] .public-style-hero-copy { width: 49%; }
+[data-public-style="friendly"] .public-style-hero-media { left: 55%; inset-block: 2rem; right: max(1.5rem, calc((100vw - 72rem) / 2)); border-radius: 45% 45% 2rem 2rem; overflow: hidden; }
+[data-public-style="friendly"] .public-style-hero h1 { letter-spacing: -0.03em; }
+.public-style-visit-guide { padding-block: 1rem; }
+.public-style-closing { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 2rem; padding: clamp(1.5rem, 4vw, 3rem); background: var(--brand-primary-strong); color: white; border-radius: 1.5rem; }
+.public-style-closing > div { flex: 1 1 22rem; min-width: 0; }
+.public-style-closing h2 { font-size: clamp(1.8rem, 3vw, 2.75rem); line-height: 1.2; margin-top: 0.75rem; }
+.public-style-closing .public-style-eyebrow { color: white; }
+.public-style-closing-link { color: var(--brand-primary-strong); background: white; }
+.public-style-closing-link:hover { background: var(--brand-tint); }
+.public-style-footer { background: var(--brand); color: white; padding-bottom: 5.5rem; }
+.public-style-footer .public-style-eyebrow { color: var(--brand-on-dark); }
+.public-style-footer a:focus-visible, [data-public-style="precision"] .public-style-hero a:focus-visible, [data-public-style="retreat"] .public-style-hero a:focus-visible, .public-style-closing a:focus-visible { outline-color: white; }
+.public-page-style-preview .public-style-hero-inner { min-height: 24rem; padding: 2rem 1rem; }
+.public-page-style-preview .public-style-hero h1 { font-size: clamp(2rem, 3vw, 3rem); }
+@media (min-width: 640px) { .public-style-footer { padding-bottom: 0; } }
+@media (max-width: 767px) {
+  .public-style-hero-inner { min-height: 0; padding: 2.5rem 1rem; }
+  .public-style-hero-copy, [data-public-style="friendly"] .public-style-hero-copy { width: 100%; }
+  .public-style-hero h1 { font-size: clamp(2.3rem, 9vw, 3.5rem); }
+  [data-public-style="elegant"] .public-style-hero-media, [data-public-style="precision"] .public-style-hero-media, [data-public-style="friendly"] .public-style-hero-media { position: relative; inset: auto; width: 100%; height: 15rem; }
+  [data-public-style="friendly"] .public-style-hero-media { width: calc(100% - 2rem); margin: 1rem 1rem 0; border-radius: 2rem; }
+  [data-public-style="elegant"] .public-style-hero-shade, [data-public-style="precision"] .public-style-hero-shade { display: none; }
+  [data-public-style="retreat"] .public-style-hero-inner { min-height: 32rem; }
+  [data-public-style="retreat"] .public-style-hero-copy { padding: 1.5rem 1rem; }
+  [data-public-style="precision"] .public-style-hero-copy { padding-left: 1rem; }
+  .public-style-hero-actions > * { flex: 1 1 auto; }
+  .public-page-style-preview .public-style-hero-inner { min-height: 0; }
+}

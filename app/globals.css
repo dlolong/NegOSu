@@ -1,5 +1,6 @@
 @import "tailwindcss";
 @import "driver.js/dist/driver.css";
+@import "./public-page-styles.css";
 
 :root {
   --background: #f5f7fa;
@@ -155,6 +156,22 @@
   --admin-border: #dcdff0;
   --admin-border-strong: #bec4df;
   --accent: var(--brand-primary);
+}
+
+[data-public-theme="crimson"] {
+  --brand: #310c13;
+  --brand-primary: #b50924;
+  --brand-primary-strong: #92071c;
+  --brand-on-dark: #fda4af;
+  --brand-tint: #fff1f2;
+  --brand-border: #fecdd3;
+  --admin-canvas: #fff9f9;
+  --admin-surface-muted: #fff5f5;
+  --admin-border: #ead8dc;
+  --admin-border-strong: #cfa8b0;
+  --admin-text: #310c13;
+  --admin-text-secondary: #62363f;
+  --admin-text-muted: #73454e;
 }
 
 @theme inline {
