@@ -8,6 +8,7 @@ import { firstError, formValue } from "@/lib/crm";
 import { publicCatalogVisibilitySchema, branchPublicSchema, publicGallerySchema, publicOpeningHoursFromFormData, publicPageSchema, publicServiceSchema, publicServiceThumbnailSchema } from "@/lib/public-booking";
 import { roleHasPermission } from "@/lib/rbac";
 import { createClient } from "@/lib/supabase/server";
+import { isPublicPageTheme } from "@/modules/platform/public-page-theme";
 
 const path = "/dashboard/settings/public-page";
 function go(kind: "message" | "error", message: string, tab="profile"): never { redirect(`${path}?${new URLSearchParams({tab,[kind]:message})}`); }
@@ -20,6 +21,19 @@ function saved(slug: string, message: string, tab="profile"): never {
   revalidatePath(path); revalidatePath("/dashboard", "layout"); revalidatePath("/organizations"); revalidatePath("/onboarding/setup"); revalidatePath(`/shop/${slug}`, "layout");
   go("message", message, tab);
 }
+export async function savePublicPageTheme(data: FormData) {
+  const membership = await settingsContext();
+  const theme = formValue(data, "publicPageTheme");
+  if (!isPublicPageTheme(theme)) go("error", "Select a valid public page color theme.");
+  const supabase = await createClient();
+  // Available on every plan for now. Only update this preference so a theme
+  // save cannot overwrite concurrent edits to the business profile.
+  const { data: updated, error } = await supabase.from("organizations")
+    .update({ public_page_theme: theme }).eq("id", membership.organizationId).select("id").maybeSingle();
+  if (error || !updated) go("error", "Unable to save your public page theme. Please try again.");
+  saved(membership.organizationSlug, "Public page color theme saved.");
+}
+
 export async function savePublicPage(data: FormData) {
   const membership = await settingsContext();
   const parsed = publicPageSchema.safeParse({ description: formValue(data, "description"), logoUrl: formValue(data, "logoUrl"), coverUrl: formValue(data, "coverUrl"), instagramUrl: formValue(data, "instagramUrl"), facebookPage: formValue(data, "facebookPage"), website: formValue(data, "website"), enabled: data.get("enabled") === "on" });

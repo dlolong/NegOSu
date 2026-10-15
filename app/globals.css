@@ -41,7 +41,42 @@
   --accent: var(--brand-primary);
 }
 
-/* Workspace palettes apply only inside the authenticated workspace. */
+/* Public previews reset inherited workspace colors; theme values stay scoped. */
+[data-public-theme] {
+  --background: #f5f7fa;
+  --foreground: #07132b;
+  --panel: #ffffff;
+  --muted: #58667a;
+  --border: #dbe2ea;
+  --brand: #071a45;
+  --brand-primary: #0062dc;
+  --brand-on-dark: #60a5fa;
+  --brand-primary-strong: #004fb8;
+  --brand-tint: #edf6ff;
+  --brand-border: #bddcff;
+  --admin-canvas: #f5f7fa;
+  --admin-surface: #ffffff;
+  --admin-surface-raised: #ffffff;
+  --admin-surface-muted: #f8fafc;
+  --admin-border: #dbe2ea;
+  --admin-border-strong: #bcc8d6;
+  --admin-text: #0e1d36;
+  --admin-text-secondary: #3e4b5c;
+  --admin-text-muted: #526071;
+  --success: #047857;
+  --success-tint: #ecfdf5;
+  --warning: #a16207;
+  --warning-tint: #fffbeb;
+  --danger: #b91c1c;
+  --danger-tint: #fef2f2;
+  --info: #0369a1;
+  --info-tint: #f0f9ff;
+  --accent: var(--brand-primary);
+  accent-color: var(--brand-primary);
+}
+
+/* Reuse palettes in independently selected workspace and public themes. */
+[data-public-theme="blue"],
 [data-dashboard-theme="blue"] {
   --brand-on-dark: #83b7f4;
   --brand: #172331;
@@ -58,6 +93,7 @@
   --admin-text-muted: #526071;
 }
 
+[data-public-theme="plum"],
 [data-dashboard-theme="plum"] {
   --brand-on-dark: #e4afd0;
   --brand: #352536;
@@ -74,6 +110,7 @@
   --admin-text-muted: #6a5966;
 }
 
+[data-public-theme="teal"],
 [data-dashboard-theme="teal"] {
   --brand-on-dark: #73d9c1;
   --brand: #173735;
@@ -90,6 +127,7 @@
   --admin-text-muted: #52655c;
 }
 
+[data-public-theme="graphite"],
 [data-dashboard-theme="graphite"] {
   --brand-on-dark: #cbd5e1;
   --brand: #172033;
@@ -104,6 +142,7 @@
   --accent: var(--brand-primary);
 }
 
+[data-public-theme="indigo"],
 [data-dashboard-theme="indigo"] {
   --brand-on-dark: #a5b4fc;
   --brand: #1e1b4b;
@@ -189,7 +228,7 @@ input, select, textarea { font-weight: 400; }
     --text-base--line-height: calc(26 / 17);
   }
 
-  :root, [data-dashboard-theme] {
+  :root, [data-dashboard-theme], [data-public-theme] {
     --muted: #475569;
     --admin-text-secondary: #334155;
     --admin-text-muted: #475569;

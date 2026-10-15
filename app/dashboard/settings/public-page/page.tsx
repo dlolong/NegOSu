@@ -1,4 +1,6 @@
 import { PublicVisibilityItem } from "@/components/public-catalog-visibility";
+import { PublicPageThemeForm } from "@/components/public-page-theme-form";
+import { resolvePublicPageTheme } from "@/modules/platform/public-page-theme";
 import { SettingsFormSection } from "@/components/settings-form-section";
 import { ImageUploadField } from "@/components/image-upload-field";
 import { PlanUpgradeNotice } from "@/components/plan-upgrade";
@@ -54,7 +56,7 @@ export default async function Page({
     await Promise.all([
       supabase
         .from("organizations")
-        .select("slug,public_page_enabled,public_description,logo_url,cover_url,instagram_url,facebook_page,website")
+        .select("slug,public_page_enabled,public_page_theme,public_description,logo_url,cover_url,instagram_url,facebook_page,website")
         .eq("id", activeMembership.organizationId)
         .single(),
       supabase
@@ -121,6 +123,11 @@ export default async function Page({
 
       <ListTabs id="website-settings-tabs" baseHref="/dashboard/settings/public-page" query={{}} parameter="tab" value={tab} options={[{value:"profile",label:"Business details"},...(!hospitality ? [{value:"services",label:"Services",count:publicServiceCount}] : []),{value:"products",label:"Products",count:products.filter(item=>item.is_public).length},...(!hospitality ? [{value:"promos",label:"Promos",count:promos.filter(item=>item.is_public).length}] : []),{value:"locations",label:"Locations & hours",count:branches.length},{value:"gallery",label:"Gallery",count:gallery.length}]}/>
       <div id="public-page-settings-grid" className="mt-6 grid min-w-0 gap-5">
+        {tab === "profile" ? <Card id="public-page-theme-card" className="p-4 sm:p-6">
+          <h2 className="text-lg font-medium text-admin-text">Color theme</h2>
+          <p className="mt-1 text-sm text-admin-text-secondary">Set the colors customers see on your public website.</p>
+          <PublicPageThemeForm key={organization.public_page_theme} preference={resolvePublicPageTheme(organization.public_page_theme)}/>
+        </Card> : null}
         {tab==="profile"?<Card id="public-page-profile-card" className="p-4 sm:p-6">
           <h2 className="text-lg font-medium text-admin-text">Business details</h2>
           <p className="mt-1 text-sm text-admin-text-secondary">Update your public information, then save to apply your changes.</p>
