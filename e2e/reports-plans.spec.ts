@@ -45,7 +45,12 @@ for (const industry of ["automotive", "salon", "pet_care"] as const) {
       await expect(page.locator("#desktop-nav-reports")).toBeVisible();
       // Starter previously had no reporting access. A valid paid subscription now enables all sections.
       expect((await admin.from("organization_subscriptions").update({ plan_id: "starter", status: "active" }).eq("organization_id", organizationId)).error).toBeNull();
-      await page.reload();
+      await page.goto("/dashboard/reports");
+      await expect(page.locator("#client-purchases-page")).toBeVisible();
+      await expect(page.locator("#client-purchases-filters")).toBeVisible();
+      await page.locator("#client-purchases-overview").click();
+      await expect(page.locator("#reports-overview-section")).toBeVisible();
+      await page.goto("/dashboard/reports?preset=custom&start=2020-01-01&end=2020-03-01&branch=all&section=revenue");
       await expect(page.locator("#reports-free-plan-info")).toHaveCount(0);
       await expect(page.locator("#reports-revenue-section")).toBeVisible();
       await expect(page.locator("#reports-start-date-input")).toHaveValue("2020-01-01");
@@ -64,7 +69,12 @@ for (const industry of ["automotive", "salon", "pet_care"] as const) {
       expect(await page.locator("#dashboard-main-content").evaluate(element => element.scrollWidth <= element.clientWidth + 1)).toBe(true);
       await page.screenshot({ path: `/private/tmp/negosu-reports-paid-${industry}-320.png` });
       expect((await admin.from("organization_subscriptions").update({ status: "cancelled" }).eq("organization_id", organizationId)).error).toBeNull();
-      await page.reload();
+      await page.goto("/dashboard/reports");
+      await expect(page.locator("#client-purchases-page")).toBeVisible();
+      await expect(page.locator("#client-purchases-filters")).toHaveCount(0);
+      await page.locator("#client-purchases-overview").click();
+      await expect(page.locator("#reports-overview-section")).toBeVisible();
+      await page.goto("/dashboard/reports?preset=custom&start=2020-01-01&end=2020-03-01&branch=all&section=revenue");
       await expect(page.locator("#reports-free-plan-info")).toBeVisible();
       expect((await page.request.get("/dashboard/reports/export")).status()).toBe(403);
     } finally {

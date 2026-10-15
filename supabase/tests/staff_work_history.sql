@@ -62,8 +62,9 @@ insert into public.appointment_staff_assignments(organization_id,appointment_id,
 ('20550000-0000-4000-8000-000000000001','90550000-0000-4000-8000-000000000004','80550000-0000-4000-8000-000000000002');
 update public.appointments set status='completed' where id in('90550000-0000-4000-8000-000000000002','90550000-0000-4000-8000-000000000004');
 update public.organization_staff_profiles set is_active=false where id='80550000-0000-4000-8000-000000000003';
-update public.job_orders set primary_technician_staff_id='80550000-0000-4000-8000-000000000001',status='completed',completed_at=now() where id='90550000-0000-4000-8000-000000000001';
+-- Assign the service worker before completion snapshots the job history.
 update public.job_order_items set technician_staff_id='80550000-0000-4000-8000-000000000004',approval_status='approved' where id='a0550000-0000-4000-8000-000000000001';
+update public.job_orders set primary_technician_staff_id='80550000-0000-4000-8000-000000000001',status='completed',completed_at=now() where id='90550000-0000-4000-8000-000000000001';
 
 select ok((select 'security_invoker=true'=any(reloptions) from pg_class where oid='public.staff_work_participation'::regclass),'participation retains invoker RLS');
 select ok((select 'security_invoker=true'=any(reloptions) from pg_class where oid='public.staff_completed_work'::regclass),'completed history retains invoker RLS');

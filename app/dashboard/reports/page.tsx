@@ -1,4 +1,6 @@
 import { PageTitle } from "@/components/page-title";
+import { ClientPurchaseReportPage } from "@/components/reports/client-purchases-page";
+import { resolveReportsView } from "@/modules/core/reporting/report-view";
 import { CompactFilters } from "@/components/compact-filters";
 import { Input } from "@/components/ui/input";
 import { PlanUpgradeNotice } from "@/components/plan-upgrade";
@@ -24,8 +26,9 @@ const reportSections = ["overview", "revenue", "team", "branches"] as const;
 type ReportSection = (typeof reportSections)[number];
 
 export default async function Page({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
-  const [raw, { activeMembership }, supabase] = await Promise.all([
-    searchParams,
+  const raw = await searchParams;
+  if (resolveReportsView(raw) === "clients") return <ClientPurchaseReportPage searchParams={Promise.resolve(raw)}/>;
+  const [{ activeMembership }, supabase] = await Promise.all([
     getDashboardContext(),
     createClient(),
   ]);
@@ -67,6 +70,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<Rec
     ? Math.round(report.summary.repeatCustomers * 100 / report.summary.customersServed)
     : 0;
   const queryFor = (nextSection: ReportSection) => new URLSearchParams({
+    view: "overview",
     preset: filters.preset,
     start: range.start,
     end: range.end,
@@ -96,6 +100,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<Rec
           <p className="mt-2 text-sm text-zinc-600 sm:text-base">Revenue, customers, workload, and branch trends from operational records.</p>
         </div>
         <nav id="reports-header-actions" aria-label="Report actions" className="flex max-w-full flex-wrap items-center gap-2 sm:ml-auto sm:justify-end">
+        <Button asChild variant="secondary" size="sm"><Link id="reports-client-purchases-link" href="/dashboard/reports/clients">Client purchases</Link></Button>
         <Button asChild variant="secondary" size="sm"><Link id="reports-product-sales-link" href="/dashboard/reports/products">Product sales & handover</Link></Button>
         {advanced ? <Button id="reports-export-button" asChild variant="secondary" size="sm">
           <Link href={`/dashboard/reports/export?${exportQuery}`}><DownloadIcon aria-hidden="true" size={16} className="shrink-0"/>Export CSV</Link>
@@ -111,7 +116,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<Rec
         <PlanUpgradeNotice id="reports-plan-upgrade" capability="advanced_reports" compact/>
       </Card> : null}
 
-      {advanced ? <CompactFilters id="reports-filter-form" hasFilters hiddenFields={<><input type="hidden" name="section" value={section} /></>}>
+      {advanced ? <CompactFilters id="reports-filter-form" hasFilters clearHref="/dashboard/reports?view=overview" hiddenFields={<><input type="hidden" name="view" value="overview"/><input type="hidden" name="section" value={section} /></>}>
 
         <label className="grid gap-1 text-xs font-medium" htmlFor="reports-period-select">
           Period
@@ -174,7 +179,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<Rec
 }
 
 function ReportState({ title, description, retry, children }: { title: string; description: string; retry?: boolean; children?: ReactNode }) {
-  return <main id="reports-page" className="mx-auto w-full max-w-5xl"><header id="reports-page-header"><PageTitle className="text-2xl font-medium sm:text-3xl">Reports</PageTitle></header><Card id="reports-state" className="mt-5 p-6 text-center"><h2 className="font-medium">{title}</h2><p className="mt-2 text-sm text-zinc-600">{description}</p>{retry ? <Button id="reports-retry-button" asChild className="mt-4" variant="secondary"><Link href="/dashboard/reports"><RefreshCwIcon aria-hidden="true" size={16} className="shrink-0"/>Try again</Link></Button> : null}{children}</Card></main>;
+  return <main id="reports-page" className="mx-auto w-full max-w-5xl"><header id="reports-page-header"><PageTitle className="text-2xl font-medium sm:text-3xl">Reports</PageTitle></header><Card id="reports-state" className="mt-5 p-6 text-center"><h2 className="font-medium">{title}</h2><p className="mt-2 text-sm text-zinc-600">{description}</p>{retry ? <Button id="reports-retry-button" asChild className="mt-4" variant="secondary"><Link href="/dashboard/reports?view=overview"><RefreshCwIcon aria-hidden="true" size={16} className="shrink-0"/>Try again</Link></Button> : null}{children}</Card></main>;
 }
 
 function ReportList({ id, title, rows }: { id: string; title: string; rows: Array<[string, string]> }) {

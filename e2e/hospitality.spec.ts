@@ -121,7 +121,7 @@ test("Apartelle front desk, optional contacts, collections, reports and responsi
   await expect(page.locator("#negosu-sidebar")).toBeHidden();
   await page.emulateMedia({ media: "screen" });
   await page.goto("/dashboard/inventory"); await expect(page.locator("#salon-inventory-page")).toBeVisible(); await noOverflow(page);
-  await page.goto("/dashboard/reports"); await expect(page.locator("#hospitality-reports-page")).toBeVisible(); await noOverflow(page);
+  await page.goto("/dashboard/reports?view=overview"); await expect(page.locator("#hospitality-reports-page")).toBeVisible(); await noOverflow(page);
   const download = await fetchInBrowser(page, "/dashboard/reports/export?section=outstanding&preset=today"); expect(download.status).toBe(200); expect(download.text).toContain("Outstanding now");
   await page.screenshot({ path: `/private/tmp/negosu-hospitality-validation/reports-${info.project.name}.png`, fullPage: true });
   await page.goto("/dashboard/hospitality/rooms?dialog=room"); await page.locator("#hospitality-room-actions-cancel-button").click(); await expect(page.locator("dialog[open]")).toHaveCount(0); await noOverflow(page);
@@ -130,7 +130,7 @@ test("Apartelle front desk, optional contacts, collections, reports and responsi
 test("operational viewer has no financial report/export or payment access", async ({ page }) => {
   await login(page, "viewer");
   await expect(page.locator("#hospitality-bookings-page")).toBeVisible();
-  await page.goto("/dashboard/reports"); await expect(page.locator("#hospitality-reports-page")).toBeVisible();
+  await page.goto("/dashboard/reports?view=overview"); await expect(page.locator("#hospitality-reports-page")).toBeVisible();
   await expect(page.locator("#hospitality-report-summary")).not.toContainText(/Collected|Outstanding/);
   const denied = await fetchInBrowser(page, "/dashboard/reports/export?section=collections&preset=today"); expect(denied.status).toBe(403);
   const fixture = JSON.parse(readFileSync("/private/tmp/negosu-hospitality-fixture.json", "utf8"));
@@ -146,7 +146,7 @@ test("workspace switching and Free export enforcement", async ({ page }, info) =
   await page.locator("#negosu-business-switcher-submit-button").click();
   await expect(page.locator("#negosu-command-center-header")).toContainText("QA Other Inn");
   await page.goto("/dashboard/hospitality/bookings"); await expect(page.locator("#hospitality-booking-rooms")).toContainText("Other room"); await expect(page.locator("#hospitality-booking-rooms")).not.toContainText("Room 101");
-  await page.goto("/dashboard/reports"); await expect(page.locator("#hospitality-reports-page")).toContainText("Free plan");
+  await page.goto("/dashboard/reports?view=overview"); await expect(page.locator("#hospitality-reports-page")).toContainText("Free plan");
   expect((await fetchInBrowser(page, "/dashboard/reports/export?section=rooms&preset=today")).status).toBe(403);
   await page.locator("#negosu-business-switcher-select").selectOption(fixture.org); await page.locator("#negosu-business-switcher-submit-button").click();
   await expect(page.locator("#negosu-command-center-header")).toContainText("QA Apartelle & Inn");
@@ -372,7 +372,7 @@ test("monthly discounts, receipt, hourly extension and refundable deposit lifecy
 test("Apartelle owner can review monthly and yearly plan upgrades", async ({ page }, info) => {
   await login(page, "other");
   await expect(page.locator("#dashboard-plan-upgrade")).toHaveCount(0);
-  await page.goto("/dashboard/reports");
+  await page.goto("/dashboard/reports?view=overview");
   await page.locator("#hospitality-reports-plan-upgrade-button").click();
   await expect(page.locator("#billing-page")).toBeVisible();
   await page.locator("#billing-choose-plan-starter").click();

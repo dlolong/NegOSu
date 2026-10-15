@@ -17,6 +17,7 @@ export function HospitalityReportFilters({ advanced, mode, section, scope, branc
   const payments = mode === "payments";
   const form = <form id="hospitality-report-filters" method="get" className="grid min-w-0 gap-3 sm:grid-cols-2">
     <input type="hidden" name="section" value={section}/>
+    {mode === "report" ? <input type="hidden" name="view" value="overview"/> : null}
     {mode === "history" ? <input type="hidden" name="tab" value="history"/> : null}
     <Field label="Period" full={payments}><select id="hospitality-report-period" name="preset" defaultValue={scope.filters.preset} className={fieldClass}>
       <option value="today">Today</option><option value="7d">Last 7 days</option><option value="30d">Last 30 days</option>{advanced ? <option value="custom">Custom dates</option> : <option value="custom" disabled>Custom dates · Paid plan</option>}
