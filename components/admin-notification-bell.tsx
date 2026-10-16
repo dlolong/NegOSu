@@ -1,7 +1,7 @@
 "use client";
 
-import { usePlanNotifications } from "@/components/plan-upgrade";
-import { creditStatusMessage } from "@/modules/platform/credits";
+import { usePlanNotifications, useUpgradeDialog } from "@/components/plan-upgrade";
+import { creditStatusMessage, creditRefreshMessage } from "@/modules/platform/credits";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
@@ -14,6 +14,7 @@ class NotificationReadError extends Error {}
 const icons = { messages: MessageCircle, bookings: CalendarCheck, appointments: CalendarDays, stock: Package, jobs: Wrench, orders: Package, reminders: Bell } satisfies Record<AttentionKind, typeof Bell>;
 
 export function AdminNotificationBell({ organizationId, branchId, branchName }: { organizationId: string; branchId: string; branchName: string }) {
+  const openUpgrade = useUpgradeDialog();
   const pathname = usePathname();
   const planNotices = usePlanNotifications();
   const dialog = useRef<HTMLDialogElement>(null);
@@ -83,7 +84,7 @@ export function AdminNotificationBell({ organizationId, branchId, branchName }: 
           {partial ? <p id="dashboard-notification-partial" role="status" className="rounded-ui-md bg-status-warning-tint p-3 text-sm text-status-warning">Some updates are unavailable: {snapshot!.unavailable.join(", ")}. The count includes only available updates.</p> : null}
           {snapshot?.items.map(item => { const Icon = icons[item.id]; return <Link id={`dashboard-notification-${item.id}`} key={item.id} href={item.href} onClick={close} className="flex min-w-0 items-center gap-3 rounded-ui-md border border-admin-border p-3 hover:bg-brand-tint focus-visible:ring-2 focus-visible:ring-brand-primary"><Icon size={20} aria-hidden="true" className="shrink-0 text-brand-primary-strong"/><div className="min-w-0 flex-1 [overflow-wrap:anywhere]"><p className="text-sm font-medium">{item.title}</p><p className="mt-1 text-xs text-admin-text-secondary">{item.description}</p></div><span className="font-medium tabular-nums">{item.count}</span><ChevronRight size={16} aria-hidden="true" className="shrink-0"/></Link>; })}
           {planNotices.map(notice => <section id={`plan-notice-${notice.capability}`} key={notice.capability} className="rounded-xl border border-admin-border p-3 text-sm"><p className="font-medium">Plan access</p><p className="mt-1">{notice.description}</p>{!notice.isOwner ? <p className="mt-1 text-xs">Ask the business owner to manage the plan.</p> : null}<Link id={`plan-notice-${notice.capability}-link`} href={notice.href} onClick={close} className="mt-2 inline-flex min-h-11 items-center underline">{notice.isOwner ? "Manage plan" : "Compare plans"}</Link></section>)}
-          {snapshot?.creditNotices?.map(notice => <section id={`credit-notice-${notice.id}`} key={notice.id} className="rounded-xl border border-amber-200 p-3 text-sm"><p className="font-medium">{creditStatusMessage(notice.kind)}</p><p className="mt-1 text-xs">{notice.remaining} remaining when notified. Core features remain available.</p><div className="mt-2 flex flex-wrap items-center gap-3"><Link onClick={close} className="underline" href="/dashboard/settings/billing#account-credit-usage">View current usage</Link>{notice.readAt ? <span className="text-xs">Read</span> : <Button id={`credit-notice-read-${notice.id}`} disabled={Boolean(reading)} variant="secondary" size="sm" onClick={() => void markRead(notice.id)}>Mark read</Button>}</div></section>)}
+          {snapshot?.creditNotices?.map(notice => <section id={`credit-notice-${notice.id}`} key={notice.id} className="rounded-xl border border-amber-200 p-3 text-sm"><p className="font-medium">{creditStatusMessage(notice.kind)}</p><p className="mt-1 text-xs">{notice.remaining} remaining. Core features remain available. {creditRefreshMessage(notice.nextRefresh)}</p><div className="mt-2 flex flex-wrap items-center gap-3"><Link onClick={close} className="underline" href="/dashboard/settings/billing#account-credit-usage">View usage</Link><Button id={`credit-notice-compare-${notice.id}`} variant="secondary" size="sm" onClick={()=>{close();openUpgrade?.("usage_credits");}}>Compare plans</Button>{notice.readAt ? <span className="text-xs">Read</span> : <Button id={`credit-notice-read-${notice.id}`} disabled={Boolean(reading)} variant="secondary" size="sm" onClick={() => void markRead(notice.id)}>Mark read</Button>}</div></section>)}
           {snapshot && !total && !partial && !error ? <div id="dashboard-notification-empty" className="py-6 text-center"><CheckCircle2 size={28} aria-hidden="true" className="mx-auto text-status-success"/><p className="mt-3 font-medium">You’re all caught up</p><p className="mt-1 text-sm text-admin-text-secondary">No pending items for your role in this branch.</p></div> : null}
         </div>
         <footer className="flex shrink-0 items-start justify-between gap-3 border-t border-admin-border p-4"><p className="text-xs text-admin-text-secondary">Items clear when the work is resolved.</p><Button id="dashboard-notification-refresh" variant="secondary" size="icon" aria-label="Refresh notifications" title="Refresh notifications" disabled={loading} onClick={() => refresh.current?.()}><RefreshCw size={18} aria-hidden="true" className={loading ? "animate-spin" : ""}/></Button></footer>

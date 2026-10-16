@@ -32,7 +32,7 @@ class MemoryRepository implements NotificationOutboxRepository{
   constructor(public rows:ClaimedNotification[],public optedIn=true,public encrypted=encryptDeliverySecret(rawToken,encryptionKey)){}
   creditCode: Awaited<ReturnType<NotificationOutboxRepository["reserveCredit"]>>["code"] = "CREDIT_NOT_REQUIRED";
   reservations = 0;
-  async reserveCredit(){this.reservations++; return {code:this.creditCode};}
+  async reserveCredit(input?: Parameters<NotificationOutboxRepository["reserveCredit"]>[0]){void input;this.reservations++; return {code:this.creditCode};}
   async claimBatch(){return this.rows;}
   async getCurrentChannelOptIn(){return this.optedIn;}
   async getDeliverySecret(){return this.encrypted;}
@@ -41,7 +41,7 @@ class MemoryRepository implements NotificationOutboxRepository{
 }
 
 class StubProvider implements NotificationDeliveryProvider{
-  readonly name="stub";readonly configured=true;billingMode:"free"|"metered"="free";calls:DeliveryProviderMessage[]=[];
+  readonly name="stub";readonly configured=true;idempotentSubmissions=true;billingMode:"free"|"metered"="free";calls:DeliveryProviderMessage[]=[];
   constructor(private result:DeliveryProviderResult|Error={accepted:true,providerMessageId:"provider-1"}){}
   async send(message:DeliveryProviderMessage){this.calls.push(message);if(this.result instanceof Error)throw this.result;return this.result;}
 }
@@ -205,4 +205,23 @@ test("free console delivery never reserves or consumes credits",async()=>{
   const repository=new MemoryRepository([claimed({deliverySecretId:null})]); const provider=new StubProvider();
   await processNotificationOutboxBatch({repository,providers:{email:provider,sms:provider},render:()=>({body:"Synthetic"}),workerId:"test"});
   assert.equal(repository.reservations,0); assert.equal(provider.calls.length,1);
+});
+
+test("metered SMS reserves actual rendered segments for each recipient; email remains free",async()=>{
+  const repository=new MemoryRepository([claimed({channel:"sms",recipientAddress:"+639171234567",deliverySecretId:null}),claimed({channel:"sms",recipientAddress:"+639171234568",deliverySecretId:null})]);
+  const units:number[]=[];
+  repository.reserveCredit=async(input)=>{assert.ok(input);units.push(input.segments);assert.match(input.bodyHash,/^[a-f0-9]{64}$/);return {code:"CREDIT_RESERVED"};};
+  const provider=new StubProvider();provider.billingMode="metered";
+  await processNotificationOutboxBatch({repository,providers:{email:provider,sms:provider},render:()=>({body:"a".repeat(161)}),workerId:"segments"});
+  assert.deepEqual(units,[2,2]);assert.equal(provider.calls.length,2);
+  const email=new MemoryRepository([claimed({deliverySecretId:null})]);
+  await processNotificationOutboxBatch({repository:email,providers:{email:provider,sms:provider},render:()=>({body:"Email"}),workerId:"email"});
+  assert.equal(email.reservations,0);
+});
+
+test("metered SMS fails closed without provider retry deduplication",async()=>{
+  const repository=new MemoryRepository([claimed({channel:"sms",recipientAddress:"+639171234567",deliverySecretId:null})]);
+  const provider=new StubProvider();provider.billingMode="metered";provider.idempotentSubmissions=false;
+  const result=await processNotificationOutboxBatch({repository,providers:{email:provider,sms:provider},render:()=>({body:"Synthetic"}),workerId:"test"});
+  assert.equal(result.cancelled,1);assert.equal(provider.calls.length,0);assert.equal(repository.reservations,0);
 });

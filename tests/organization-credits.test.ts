@@ -17,7 +17,7 @@ test("public catalog claims reflect configured features, capacity and approved a
  assert.equal(presentLivePlans([{...row,id:"new-approved-plan"}])[0].id,"new-approved-plan");
  assert.ok(plan.highlights.includes("3 branch(es)"));assert.ok(!plan.highlights.some(x=>/Direct image|Detailed reports|credits per/.test(x)));
  assert.ok(!presentLivePlans([{...row,monthly_credits:12}])[0].highlights.some(x=>/credits per/.test(x)));
- assert.ok(presentLivePlans([{...row,monthly_credits:12,credit_grant_policy:"calendar_month_utc"}])[0].highlights.includes("12 credits per configured month"));
+ assert.ok(presentLivePlans([{...row,monthly_credits:12,credit_grant_policy:"calendar_month_utc"}])[0].highlights.includes("12 monthly usage credits"));
 });
 test("Free report dates include full month and recent custom periods without all-branch access",()=>{
  const id="81000000-0000-4000-8000-000000000001",member={branchId:id,timezone:"Asia/Manila",branches:[{id}]},now=new Date("2026-01-31T08:00:00Z");

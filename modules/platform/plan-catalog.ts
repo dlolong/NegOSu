@@ -1,3 +1,4 @@
+import { planCreditLabel } from "./credits";
 export type LaunchPlanId = "free" | "starter" | "business" | "pro" | "multi_branch";
 
 export type LaunchPlan = {
@@ -36,7 +37,7 @@ export const launchPlanCatalog: readonly LaunchPlan[] = [
   },
   {
     id: "business",
-    name: "Business",
+    name: "Growth",
     monthlyPriceCentavos: 99_900,
     yearlyPriceCentavos: 999_000,
     custom: false,
@@ -51,7 +52,7 @@ export const launchPlanCatalog: readonly LaunchPlan[] = [
     yearlyPriceCentavos: 1_999_000,
     custom: false,
     summary: "For established teams with higher volume and more locations.",
-    highlights: ["5 branches", "50 staff", "Higher operating capacity", "Includes Business capabilities available for your industry", "Detailed reports and CSV exports", "Direct image uploads"],
+    highlights: ["5 branches", "50 staff", "Higher operating capacity", "Includes Growth capabilities available for your industry", "Detailed reports and CSV exports", "Direct image uploads"],
   },
   {
     id: "multi_branch",
@@ -107,10 +108,10 @@ export function visiblePlanFeatureLabels(industry: string, features: Record<stri
 
 export type LivePlan = Omit<LaunchPlan, "id"> & { id: string };
 
-export function presentLivePlans(rows: readonly { id: string; name: string; monthly_price_centavos: number; yearly_price_centavos: number | null; is_custom: boolean; limits?: Record<string, number>; features?: Record<string, boolean>; monthly_credits?: number | null; credit_grant_policy?: string | null }[]): LivePlan[] {
+export function presentLivePlans(rows: readonly { id: string; name: string; monthly_price_centavos: number; yearly_price_centavos: number | null; is_custom: boolean; limits?: Record<string, number>; features?: Record<string, boolean>; one_time_credits?: number; monthly_credits?: number | null; credit_grant_policy?: string | null }[]): LivePlan[] {
   return rows.map(row => {
     const template = findLaunchPlan(row.id) ?? { id: row.id, summary: "Review the included features and capacity." };
-    return { ...template, name: row.name, monthlyPriceCentavos: Number(row.monthly_price_centavos), yearlyPriceCentavos: row.yearly_price_centavos == null ? null : Number(row.yearly_price_centavos), custom: row.is_custom, highlights: row.features && row.limits ? [ ...capacityHighlight(row.limits.branches, "branch(es)"), ...capacityHighlight(row.limits.staff, "staff"), "Customers, services and appointments", ...visiblePlanFeatureLabels("salon", row.features), ...(row.monthly_credits != null && row.credit_grant_policy ? [`${row.monthly_credits} credits per configured month`] : []) ] : ["See plan details for included capabilities"] };
+    return { ...template, name: row.name, monthlyPriceCentavos: Number(row.monthly_price_centavos), yearlyPriceCentavos: row.yearly_price_centavos == null ? null : Number(row.yearly_price_centavos), custom: row.is_custom, highlights: row.features && row.limits ? [ ...capacityHighlight(row.limits.branches, "branch(es)"), ...capacityHighlight(row.limits.staff, "staff"), "Customers, services and appointments", ...visiblePlanFeatureLabels("salon", row.features), ...(planCreditLabel(row) ? [planCreditLabel(row)!] : []) ] : ["See plan details for included capabilities"] };
   });
 }
 

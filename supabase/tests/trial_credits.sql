@@ -12,9 +12,9 @@ insert into branches(id,organization_id,name,is_primary) values(pg_temp.cid('mai
 insert into membership_branch_assignments(organization_id,membership_id,branch_id) values(pg_temp.cid('org'),pg_temp.cid('viewer-member'),pg_temp.cid('main'));
 insert into customers(id,organization_id,full_name) select pg_temp.cid('customer-'||n),pg_temp.cid('org'),'Client '||lpad(n::text,3,'0') from generate_series(1,51)n;
 insert into appointments(id,organization_id,branch_id,customer_id,starts_at,expected_duration_minutes,status) select pg_temp.cid('visit-'||n),pg_temp.cid('org'),pg_temp.cid('main'),pg_temp.cid('customer-'||n),now(),30,'completed' from generate_series(1,51)n;
-create function pg_temp.payload(kind text default 'clients',action text default 'advanced_report',branch uuid default null) returns jsonb language sql as $$select jsonb_build_object('kind',kind,'action',action,'start',current_date-2,'end',current_date+1,'branch',branch)$$;
+create function pg_temp.payload(kind text default 'clients',action text default 'advanced_report',branch uuid default null) returns jsonb language sql as $$select jsonb_build_object('kind',kind,'action',action,'start',current_date-2,'end',current_date,'branch',branch)$$;
 
--- Reports have an explicit metered Free path; other entitlements remain plan-only.
+-- Basic reports are free; advanced reports and images use plan entitlements.
 create function pg_temp.balance() returns integer language sql as $$select (public.get_credit_usage(pg_temp.cid('org'))->>'remaining')::integer$$;
 insert into trial_credit_accounts(organization_id,remaining) values(pg_temp.cid('org'),73);
 select set_config('request.jwt.claims',jsonb_build_object('sub',pg_temp.cid('owner'),'role','authenticated')::text,true);
@@ -23,7 +23,7 @@ select is(pg_temp.balance(),73,'existing one-time balance preserved exactly');
 select is(pg_temp.balance(),73,'opening migration is idempotent');
 select ok(not public.get_org_entitlements(pg_temp.cid('org')) ? 'trialCredits','entitlements do not expose billing balances');
 select is(public.get_credit_usage(pg_temp.cid('org'))->>'nextRefresh',null,'unconfigured plan has no refresh date');
-select is((public.generate_credit_report(pg_temp.cid('org'),pg_temp.cid('locked'),pg_temp.payload())->>'cost')::integer,1,'Free report consumes one approved credit');
+select is((public.generate_credit_report(pg_temp.cid('org'),pg_temp.cid('locked'),pg_temp.payload('clients','advanced_report',pg_temp.cid('main')))->>'cost')::integer,0,'Free basic report consumes no credits');
 select is(public.prepare_credit_image(pg_temp.cid('org'),pg_temp.cid('locked-image'),repeat('a',64),'png')->>'code','FEATURE_NOT_ENTITLED','credits cannot unlock uploads');
 select is(public.can_upload_business_image(pg_temp.cid('org')||'/photo.png','{}'),false,'Free storage writes rejected');
 select throws_ok($$select public.get_client_purchase_report(pg_temp.cid('org'),current_date-2,current_date+1)$$,'42501',null,'direct premium RPC denied');
@@ -48,7 +48,7 @@ reset role;
 insert into storage.objects(bucket_id,name,metadata) values('business-images',pg_temp.cid('org')||'/'||pg_temp.cid('image1')||'.png','{"size":100}');
 set local role authenticated;
 select is((public.prepare_credit_image(pg_temp.cid('org'),pg_temp.cid('image1'),repeat('a',64),'png')->>'completed')::boolean,true,'committed upload safely replayed');
-select is(pg_temp.balance(),72,'paid reports and images do not add credit charges');
+select is(pg_temp.balance(),73,'paid reports and images do not add credit charges');
 select set_config('request.jwt.claims',jsonb_build_object('sub',pg_temp.cid('manager'),'role','authenticated')::text,true);
 select throws_ok($$select public.get_credit_usage(pg_temp.cid('org'))$$,'42501',null,'manager cannot read owner billing usage');
 select throws_ok($$select public.get_credit_notices(pg_temp.cid('org'))$$,'42501',null,'manager not billing notification recipient');
@@ -65,6 +65,6 @@ select lives_ok($$select public.read_credit_report(pg_temp.cid('org'),pg_temp.ci
 select is(public.can_upload_business_image(pg_temp.cid('org')||'/new.png','{}'),false,'downgrade prevents new uploads');
 reset role;
 select is((select count(*) from storage.objects where name=pg_temp.cid('org')||'/'||pg_temp.cid('image1')||'.png'),1::bigint,'downgrade preserves existing image');
-select is((select count(*) from organization_credit_grants where organization_id=pg_temp.cid('org') and credit_class='plan'),0::bigint,'no recurring credits granted by unconfigured plans');
+select is((select count(*) from organization_credit_grants where organization_id=pg_temp.cid('org') and credit_class='plan'),0::bigint,'missing authoritative billing start does not invent a grant');
 select * from finish();
 rollback;

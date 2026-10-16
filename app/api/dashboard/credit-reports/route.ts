@@ -14,6 +14,8 @@ export async function GET(request: Request) {
   if (error || !data) return reply({ error: creditErrorMessage(error?.code) }, 403);
   const snapshot = data as CreditSnapshot;
   if (params.get("download") === "1") {
+    const entitlement = await db.rpc("get_org_entitlements", { p_organization_id: member.organizationId });
+    if (entitlement.error || entitlement.data?.features?.advanced_reports !== true) return reply({error:"CSV export requires an eligible plan.",code:"FEATURE_NOT_ENTITLED"},403);
     if (snapshot.payload.action !== "csv_export") return reply({ error: "Use Export CSV to prepare a download." }, 403);
     return new Response(creditReportCsv(snapshot), { headers: { "Content-Type": "text/csv; charset=utf-8", "Content-Disposition": `attachment; filename="negosu-${snapshot.payload.kind}-${snapshot.payload.start}-${snapshot.payload.end}.csv"`, "Cache-Control": "private, no-store" } });
   }

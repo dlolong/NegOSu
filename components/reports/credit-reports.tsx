@@ -1,4 +1,6 @@
 "use client";
+import { reportListColumns } from "@/modules/core/reporting/table-columns";
+import { staffReportTable, staffReportNote, staffReportTotal, type StaffReport } from "@/modules/core/reporting/staff-report";
 import { reportCategories, catalogReportTable, catalogReportNote, type CatalogReport, type ReportCategory } from "@/modules/core/reporting/catalog-report";
 import { hospitalityReportTable } from "@/modules/core/reporting/hospitality-table";
 import type { HospitalityWorkspace } from "@/modules/hospitality/contracts";
@@ -10,7 +12,7 @@ import { bookingReportTable } from "@/modules/core/reporting/booking-tables";
 import type { OwnerReport } from "@/lib/reporting";
 import { PaymentTotals } from "./payment-totals";
 import { FilterPopover } from "@/components/ui/filter-popover";
-import { PlanUpgradeNotice } from "@/components/plan-upgrade";
+import { PlanUpgradeNotice, useUpgradeDialog } from "@/components/plan-upgrade";
 import { useRef, useState, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,6 +25,7 @@ const field = "block min-h-11 w-full min-w-0 rounded-xl border border-admin-bord
 type Category = ReportCategory;
 type Props = { categoryTables?: Partial<Record<Category, ReactNode>>; defaultBranch?: string; organizationId: string; actorId: string; paid: boolean; industry: string; currency: string; branches: readonly { id: string; name: string }[]; range: { start: string; end: string } };
 export function CreditReports(props: Props) {
+  const openUpgrade = useUpgradeDialog();
   const [view, setView] = useState<"weekly" | "custom">("weekly");
   const [category, setCategory] = useState<Category>("bookings");
   const [searchOpen, setSearchOpen] = useState(false);
@@ -31,20 +34,22 @@ export function CreditReports(props: Props) {
   const formRef = useRef<HTMLFormElement>(null);
   const [dates, setDates] = useState(props.range);
   function categoryKind(next:Category):CreditReportPayload["kind"] {
+    if(next === "staff") return "staff";
     if(next === "promos" || next === "rooms") return "catalog";
     return ["bookings","payments"].includes(next) ? props.industry === "hospitality"?"hospitality":"overview" : "clients";
   }
   function selectCategory(next: Category) {setCategory(next);setView("weekly");setSearch("");setKind(categoryKind(next));}
   function resetFilters() {formRef.current?.reset();setKind(categoryKind(category));setDates(props.range);setError("");}
-  function setPeriod(period: "week" | "month" | "previous") {
+  function setPeriod(period: "today" | "week" | "month" | "previous") {
     const end = props.range.end;
+    if (period === "today") { setDates({start:end,end}); return; }
     if (period === "week") { setDates(props.range); return; }
     if (period === "month") { setDates({ start: `${end.slice(0, 7)}-01`, end }); return; }
     const last = new Date(`${end.slice(0, 7)}-01T12:00:00Z`); last.setUTCDate(0);
     const lastDay = last.toISOString().slice(0, 10);
     setDates({ start: `${lastDay.slice(0, 7)}-01`, end: lastDay });
   }
-  const reportLabel = (value: string) => value === "catalog" ? category === "rooms" ? "Rooms" : "Promos" : value === "clients" ? "Client purchases & staff" : value === "hospitality" ? "Apartelle operations" : "Business overview";
+  const reportLabel = (value: string) => value === "staff" ? "Staff transactions" : value === "catalog" ? category === "rooms" ? "Rooms" : "Promos" : value === "clients" ? "Client purchases & staff" : value === "hospitality" ? "Apartelle operations" : "Business overview";
   const [kind, setKind] = useState<CreditReportPayload["kind"]>(props.industry === "hospitality" ? "hospitality" : "overview");
   const [snapshot, setSnapshot] = useState<CreditSnapshot | null>(null);
   const [busy, setBusy] = useState(false), [error, setError] = useState("");
@@ -67,7 +72,7 @@ export function CreditReports(props: Props) {
   async function generate(form: HTMLFormElement, action: CreditReportPayload["action"]) {
     if (lock.current) return;
     const values = Object.fromEntries(new FormData(form));
-    const parsed = creditReportPayloadSchema.safeParse({ ...values, kind, action, maxCost: props.paid ? 0 : 1, branch: values.branch === "all" ? null : values.branch });
+    const parsed = creditReportPayloadSchema.safeParse({ ...values, kind, action, maxCost: 0, branch: values.branch === "all" ? null : values.branch });
     if (!parsed.success) { setError("Choose valid dates in order, covering up to 732 days, and search text up to 120 characters."); return; }
     lock.current = true; setBusy(true); setError("");
     try {
@@ -79,18 +84,18 @@ export function CreditReports(props: Props) {
       const response = await fetch("/api/dashboard/credit-reports", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(request) });
       const result = await response.json();
       window.dispatchEvent(new Event("negosu-usage-changed"));
-      if (!response.ok) { setExhausted(result.code === "INSUFFICIENT_CREDITS"); setError(result.code === "INSUFFICIENT_CREDITS" ? "This report could not be prepared. Check notifications for details. Your last seven days remain available." : result.error ?? "Unable to generate this report."); return; }
+      if (!response.ok) { if(result.code === "FEATURE_NOT_ENTITLED") openUpgrade?.("advanced_reports"); setExhausted(result.code === "FEATURE_NOT_ENTITLED"); setError(result.code === "INSUFFICIENT_CREDITS" ? "This report could not be prepared. Check notifications for details. Your last seven days remain available." : result.error ?? "Unable to generate this report."); return; }
       setExhausted(false);
       received(result); requestRef.current = null;
       try { sessionStorage.removeItem(storageKey); } catch { /* Optional reload recovery. */ }
-    } catch { setError("Could not confirm the result. Retry with the same filters; the same request will not spend twice."); }
+    } catch { setError("Could not confirm the result. Retry with the same filters."); }
     finally { lock.current = false; setBusy(false); }
   }
   const tables = snapshot && snapshot.payload.kind !== "clients" ? creditReportSections(snapshot) : [];
   const bookingTable = snapshot?.payload.kind === "overview" && (["salon","pet_care","automotive"].includes(props.industry) && (category === "bookings" || category === "payments")) && ((snapshot.report as OwnerReport).bookingDetails ?? (snapshot.report as OwnerReport).salonDetails) ? bookingReportTable(snapshot.report as OwnerReport,category,props.currency,props.industry) : null;
   const extraTable=snapshot?.payload.kind === "catalog" ? catalogReportTable(snapshot.report as CatalogReport,props.currency) : snapshot?.payload.kind === "hospitality" ? hospitalityReportTable(snapshot.report as HospitalityWorkspace,snapshot.payload.section,props.currency) : null;
-  const detailTable=bookingTable??extraTable;
-  const totals=snapshot ? snapshot.payload.kind === "catalog" ? {sales:(snapshot.report as CatalogReport).summary.amount,revenue:(snapshot.report as CatalogReport).summary.revenue,note:catalogReportNote(category)}
+  const detailTable=snapshot?.payload.kind === "staff" ? staffReportTable(snapshot.report as StaffReport,props.currency) : bookingTable??extraTable;
+  const totals=snapshot ? snapshot.payload.kind === "staff" ? {sales:staffReportTotal(snapshot.report as StaffReport),revenue:0} : snapshot.payload.kind === "catalog" ? {sales:(snapshot.report as CatalogReport).summary.amount,revenue:(snapshot.report as CatalogReport).summary.revenue,note:catalogReportNote(category)}
     : snapshot.payload.kind === "clients" ? {sales:(snapshot.report as ClientPurchaseReport).summary.total,revenue:(snapshot.report as ClientPurchaseReport).summary.paid,note:"Whole matching appointments/bills across all clients. Revenue is paid to date on those records."}
     : snapshot.payload.kind === "overview" ? {sales:(snapshot.report as OwnerReport).summary.grossSalesCentavos,revenue:(snapshot.report as OwnerReport).summary.paymentsReceivedCentavos}
     : (snapshot.report as HospitalityWorkspace).reportTotals ? {sales:(snapshot.report as HospitalityWorkspace).reportTotals!.amount,revenue:(snapshot.report as HospitalityWorkspace).reportTotals!.revenue,note:"Amount: bills issued in this period. Revenue: paid receipts in this period."} : null : null;
@@ -109,12 +114,12 @@ export function CreditReports(props: Props) {
       <FilterPopover id="reports-filters" title="Report filters" iconOnly>
     <form ref={formRef} id="credit-report-form" onSubmit={event => { event.preventDefault(); void generate(event.currentTarget, "advanced_report"); }} className="space-y-3">
       <fieldset disabled={busy} className="grid min-w-0 gap-3">
-        <div id="reports-filter-actions" className="grid grid-cols-2 gap-2 border-b border-admin-border bg-admin-surface py-3"><Button id="credit-report-generate" type="submit" title={props.paid ? "Included with your plan" : "Apply custom filters · 1 credit"}>{busy ? "Preparing…" : "Apply filters"}</Button><Button id="credit-report-export" title={props.paid ? "Included with your plan" : "Prepare CSV · 1 credit"} type="button" variant="secondary" onClick={event => { const form = event.currentTarget.form; if (form?.reportValidity()) void generate(form, "csv_export"); }}>Prepare CSV</Button></div>
-        <div className="flex flex-wrap items-center gap-1" aria-label="Date shortcuts"><Button id="reports-period-week" type="button" size="sm" variant="ghost" onClick={() => setPeriod("week")}>Last 7 days</Button><Button id="reports-period-month" type="button" size="sm" variant="ghost" onClick={() => setPeriod("month")}>This month</Button><Button id="reports-period-previous" type="button" size="sm" variant="ghost" onClick={() => setPeriod("previous")}>Last month</Button></div>
+        <div id="reports-filter-actions" className="grid grid-cols-2 gap-2 border-b border-admin-border bg-admin-surface py-3"><Button id="credit-report-generate" type="submit" title="Apply report filters">{busy ? "Preparing…" : "Apply filters"}</Button><Button id="credit-report-export" title={props.paid ? "Export included with your plan" : "CSV export requires an eligible plan"} type="button" variant="secondary" onClick={event => { if (!props.paid) { openUpgrade?.("advanced_reports"); setExhausted(true); return; } const form = event.currentTarget.form; if (form?.reportValidity()) void generate(form, "csv_export"); }}>Prepare CSV</Button></div>
+        <div className="flex flex-wrap items-center gap-1" aria-label="Date shortcuts"><Button id="reports-period-today" type="button" size="sm" variant="ghost" onClick={() => setPeriod("today")}>Today</Button><Button id="reports-period-week" type="button" size="sm" variant="ghost" onClick={() => setPeriod("week")}>Last 7 days</Button><Button id="reports-period-month" type="button" size="sm" variant="ghost" onClick={() => setPeriod("month")}>This month</Button>{props.paid ? <Button id="reports-period-previous" type="button" size="sm" variant="ghost" onClick={() => setPeriod("previous")}>Last month</Button> : null}</div>
 
         <label className="text-sm">Start date<Input id="credit-report-start" name="start" type="date" required value={dates.start} onChange={event => setDates(current => ({ ...current, start: event.target.value }))}/></label>
         <label className="text-sm">End date<Input id="credit-report-end" name="end" type="date" required value={dates.end} onChange={event => setDates(current => ({ ...current, end: event.target.value }))}/></label>
-        <label className="text-sm">Branch<select id="credit-report-branch" name="branch" defaultValue={props.defaultBranch ?? "all"} className={field}><option value="all">All accessible branches</option>{props.branches.map(branch => <option key={branch.id} value={branch.id}>{branch.name}</option>)}</select></label>
+        <label className="text-sm">Branch<select id="credit-report-branch" name="branch" defaultValue={props.defaultBranch ?? "all"} className={field}>{props.paid ? <option value="all">All accessible branches</option> : null}{props.branches.map(branch => <option key={branch.id} value={branch.id}>{branch.name}</option>)}</select></label>
         <input type="hidden" name="purchaseKind" value={category === "products" ? "product" : category === "services" ? "service" : "all"}/>
         <input type="hidden" name="section" value={category === "promos" ? "promos" : category === "rooms" ? "rooms" : category === "payments" ? "collections" : "stays"}/>
         <Button id="reports-reset-filters" type="button" variant="ghost" onClick={resetFilters}>Reset filters</Button>
@@ -132,9 +137,10 @@ export function CreditReports(props: Props) {
     {snapshot ? <section id="credit-report-result" className="min-w-0 space-y-4">
       <div><h2 className="text-lg font-medium">{reportLabel(snapshot.payload.kind)}</h2><p className="mt-1 text-sm text-admin-text-secondary">{snapshot.payload.start} – {snapshot.payload.end} · {props.branches.find(branch => branch.id === snapshot.payload.branch)?.name ?? "All accessible branches"}</p><p className="mt-1 text-xs text-admin-text-muted">Saved {new Date(snapshot.createdAt).toLocaleString()}. Apply filters to update these results.</p></div>
       {snapshot.payload.action === "csv_export" ? <Button asChild variant="secondary"><a id="credit-report-download" href={`/api/dashboard/credit-reports?id=${snapshot.id}&download=1`}>Download CSV</a></Button> : null}
+      {snapshot.payload.kind === "staff" ? <p className="text-xs text-admin-text-secondary">{staffReportNote}</p> : null}
       {totals ? <PaymentTotals {...totals} currency={props.currency}/> : null}
       {detailTable ? <>
-        <RecordTable reportSearch id="credit-report-table" caption={category.charAt(0).toUpperCase()+category.slice(1)} columns={detailTable.columns} rows={detailTable.rows.slice((page-1)*50,page*50)}/>
+        <RecordTable reportSearch id="credit-report-table" caption={category.charAt(0).toUpperCase()+category.slice(1)} columns={reportListColumns(detailTable.columns)} rows={detailTable.rows.slice((page-1)*50,page*50)}/>
         {props.industry === "automotive" && category === "bookings" ? <p className="text-xs text-admin-text-secondary">Total billed includes posted job and product invoices. Bookings without posted invoices show zero.</p> : null}
         <nav aria-label="Report pages" className="flex items-center justify-between gap-2"><Button id="credit-report-previous" variant="secondary" disabled={page===1} onClick={()=>setPage(page-1)}>Previous</Button><span>Page {page} of {maxPages}</span><Button id="credit-report-next" variant="secondary" disabled={page===maxPages} onClick={()=>setPage(page+1)}>Next</Button></nav>
       </> : snapshot.payload.kind === "clients" ? <ClientPurchases toolbarSearch filters={{ preset: "custom", start: snapshot.payload.start, end: snapshot.payload.end, branch: snapshot.payload.branch ?? "all", q: snapshot.payload.client, item: snapshot.payload.item, kind: snapshot.payload.purchaseKind, page }} range={snapshot.payload} branches={props.branches} currency={props.currency} report={{ ...(snapshot.report as ClientPurchaseReport), rows: (snapshot.report as ClientPurchaseReport).rows.slice((page - 1) * 50, page * 50) }} onPageChange={setPage}/> : table ? <>

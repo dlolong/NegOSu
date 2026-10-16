@@ -2,7 +2,7 @@
 
 ## Launch catalog contract
 
-`modules/platform/plan-catalog.ts` is the single customer-facing launch catalog used by both `/plans` and authenticated Billing presentation. It defines the public plan names, Philippine-peso prices, summaries, and honest plan highlights. The database remains authoritative for subscription state, provider configuration, and entitlement enforcement.
+`public.plans` is the canonical live catalog used by `/plans`, Billing, entitlements and credit allowances. `modules/platform/plan-catalog.ts` supplies summaries and the existing provider price baseline. Display names, prices, feature flags and credit allowances come from the database.
 
 Authenticated Billing compares each active database plan with this launch catalog before enabling its checkout. A name, price, annual price, or custom-plan mismatch disables checkout for that plan and suppresses launch marketing annotations; it does not hide the subscription or other plans. Displayed prices come from the database. Changes to launch pricing therefore require one coordinated change to the catalog, append-only database migration, and Stripe Prices. The launch regression test verifies the seeded database values match the shared catalog.
 
@@ -12,7 +12,7 @@ ServiceCore uses Stripe-hosted Checkout and Customer Portal behind the `BillingP
 
 ## Production configuration
 
-1. Create recurring monthly and yearly Stripe Prices for Starter, Business, and Pro.
+1. Create recurring monthly and yearly Stripe Prices for Starter, Growth (internal ID `business`), and Pro.
 2. Set `plans.provider_monthly_price_id` and `plans.provider_yearly_price_id` to those Price IDs. Price amounts in Stripe must match the corresponding NegOSu launch catalog before launch.
 3. Set server-only `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `SUPABASE_SERVICE_ROLE_KEY`, and a random `BILLING_RECONCILIATION_SECRET` of at least 24 characters.
 4. Register `POST /api/billing/stripe/webhook` for `checkout.session.completed` and `customer.subscription.created`, `updated`, and `deleted` events.
@@ -23,7 +23,7 @@ Use Stripe CLI forwarding and test-mode products before production. Never put se
 
 ## Access behavior
 
-- `trialing` and `active` subscriptions receive their selected plan.
+- `trialing` and `active` subscriptions receive their selected plan while their authoritative access period remains valid.
 - `past_due` receives a seven-day grace period, then safely falls back to Free access.
 - `cancelled` and `paused` fall back to Free access.
 - Downgrades prevent new over-limit resources but never delete branches, staff, jobs, photos, or history.
@@ -34,3 +34,11 @@ Use Stripe CLI forwarding and test-mode products before production. Never put se
 `lib/billing/overview.ts` loads the base catalog/subscription separately from provider configuration and `get_org_entitlements`. Missing provider columns or RPCs must not hide readable billing information. Catalog and subscription errors have separate recovery states. Checkout and portal controls remain unavailable when setup or subscription reads fail. Effective access is displayed only from the entitlement RPC; when unavailable, existing subscription data is labeled Subscription plan instead of inventing effective entitlements.
 
 The provider columns and entitlement RPC require `0028_phase11_revenue_phase12_billing.sql`. Verify migration history and schema together before applying pending migrations in order through the release workflow. Do not blindly rerun this migration on a partially migrated database: it also changes invoice/revenue behavior and contains a data update. Plan viewing can work without online billing; checkout still requires the canonical billing schema and configured provider prices/credentials.
+
+## Approved usage allowances (0152)
+
+The database plan catalog now supplies Free 100 one-time / 0 monthly; Starter 100 monthly; Growth 300 monthly; Pro 750 monthly. Growth retains internal ID `business`; provider price IDs and actual prices are unchanged. Public pricing, Billing and upgrade comparison read these values from the database rather than duplicate numeric allowances in JSX.
+
+Included credits refresh on authoritative monthly billing anniversaries (monthly subdivisions for annual subscriptions), without rollover. Mid-cycle upgrades add only the allowance difference; downgrades keep already-granted current-period credits. Cancellation never grants another starter balance. See [CREDITS.md](CREDITS.md) for accounting and provider limitations.
+
+Apply migrations 0152 then 0153 only through the normal reviewed release process. They configure future/lazy grants; no production backfill, deployment, provider configuration or subscription mutation was executed by this phase. Active paid records must have a valid current period to receive access; reconcile missing provider dates before release. The old report-credit charging policy is superseded.

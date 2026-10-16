@@ -1,3 +1,4 @@
+import { staffTransactionRows, type StaffReport } from "@/modules/core/reporting/staff-report";
 import type { CatalogReport } from "@/modules/core/reporting/catalog-report";
 import { bookingReportLabels } from "@/modules/core/reporting/booking-tables";
 import { z } from "zod";
@@ -8,7 +9,7 @@ import type { HospitalityWorkspace } from "@/modules/hospitality/contracts";
 export const trialCreditsSchema = z.object({ initial: z.literal(100), remaining: z.number().int().min(0).max(100) });
 export const creditReportPayloadSchema = z.object({
   maxCost: z.number().int().min(0).max(1).default(1),
-  kind: z.enum(["clients", "overview", "hospitality", "catalog"]), action: z.enum(["advanced_report", "csv_export"]),
+  kind: z.enum(["clients", "overview", "hospitality", "catalog", "staff"]), action: z.enum(["advanced_report", "csv_export"]),
   start: z.iso.date(), end: z.iso.date(), branch: z.uuid().nullable(),
   client: z.string().trim().max(120).default(""), item: z.string().trim().max(120).default(""),
   purchaseKind: z.enum(["all", "service", "product", "other"]).default("all"),
@@ -16,11 +17,15 @@ export const creditReportPayloadSchema = z.object({
 }).refine(input => input.start <= input.end && Date.parse(input.end) - Date.parse(input.start) <= 731 * 86400000, "Choose dates in order, covering no more than 732 days.");
 export const creditReportRequestSchema = z.object({ requestId: z.uuid(), payload: creditReportPayloadSchema });
 export type CreditReportPayload = z.infer<typeof creditReportPayloadSchema>;
-export type CreditSnapshot = { id: string; payload: CreditReportPayload; report: ClientPurchaseReport | OwnerReport | HospitalityWorkspace | CatalogReport; cost: number; remaining: number; createdAt: string };
+export type CreditSnapshot = { id: string; payload: CreditReportPayload; report: ClientPurchaseReport | OwnerReport | HospitalityWorkspace | CatalogReport | StaffReport; cost: number; remaining: number; createdAt: string };
 export type CreditHistory = { id: string; kind: string; action: string; createdAt: string }[];
 export type ReportSection = { title: string; columns: string[]; rows: (string | number)[][] };
 /** The same data mapping is used for the snapshot tables and CSV. Amounts are explicitly centavos. */
 export function creditReportSections(snapshot: CreditSnapshot): ReportSection[] {
+  if (snapshot.payload.kind === "staff") {
+    const data = snapshot.report as StaffReport;
+    return [{title:"Staff transactions",columns:["Staff","Date and time","Timezone","Transaction","Client / guest","Price centavos"],rows:staffTransactionRows(data).map(row=>[row.staff,row.occurred_at,row.timezone,row.transaction,row.client,row.price])}];
+  }
   if (snapshot.payload.kind === "catalog") {
     const data=snapshot.report as CatalogReport;
     return [{title:data.category,columns:["Name","Branch","Status","Price / rates centavos","Bookings / bills","Total amount centavos","Revenue centavos"],rows:data.rows.map(r=>[r.name,r.branch,r.status,r.price??r.rates?.map(rate=>`${rate.label}: ${rate.priceCentavos}`).join("; ")??"",r.bookings??r.bills??0,r.amount,r.revenue])},{title:"Totals",columns:["Total amount centavos","Revenue centavos"],rows:[[data.summary.amount,data.summary.revenue]]}];

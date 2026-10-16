@@ -1,3 +1,5 @@
+import { createHash } from "node:crypto";
+import { smsSegments } from "./sms-segments";
 import type { CreditOperationCode } from "@/modules/platform/credits";
 import { decryptDeliverySecret, type EncryptedDeliverySecret } from "@/lib/notifications/delivery-secret";
 import { evaluateNotificationDeliveryEligibility, type NotificationChannel } from "@/lib/notifications/eligibility";
@@ -18,7 +20,7 @@ export type RenderedNotification={subject?:string;body:string};
 export type NotificationTemplateRenderer=(input:{templateKey:string;payload:unknown;deliverySecret:string|null})=>RenderedNotification;
 
 export interface NotificationOutboxRepository{
-  reserveCredit(input:{outboxId:string;workerId:string}):Promise<{code:CreditOperationCode}>;
+  reserveCredit(input:{outboxId:string;workerId:string;segments:number;bodyHash:string}):Promise<{code:CreditOperationCode}>;
   claimBatch(input:{workerId:string;batchSize:number;leaseMinutes:number}):Promise<ClaimedNotification[]>;
   getCurrentChannelOptIn(input:{organizationId:string;customerId:string;channel:NotificationChannel}):Promise<boolean>;
   getDeliverySecret(secretId:string):Promise<EncryptedDeliverySecret|null>;
@@ -66,6 +68,10 @@ export async function processNotificationOutboxBatch(input:{
       await input.repository.recordResult({outboxId:row.id,workerId:input.workerId,result:"cancelled",provider:provider.name,errorCode:"CHANNEL_DISABLED"});
       result.cancelled++;continue;
     }
+    if(row.channel === "sms" && provider.billingMode === "metered" && !provider.idempotentSubmissions) {
+      await input.repository.recordResult({outboxId:row.id,workerId:input.workerId,result:"cancelled",provider:provider.name,errorCode:"MESSAGE_CONFIGURATION_INVALID",errorMessage:"Metered SMS requires an idempotent provider adapter."});
+      result.cancelled++;continue;
+    }
     let deliverySecret:string|null=null;
     let rendered:RenderedNotification;
     try{
@@ -76,6 +82,7 @@ export async function processNotificationOutboxBatch(input:{
         deliverySecret=decryptDeliverySecret(encryptedSecret,input.deliverySecretKey);
       }
       rendered=input.render({templateKey:row.templateKey,payload:row.payload,deliverySecret});
+      if(row.channel === "sms" && (smsSegments(rendered.body).segments < 1 || smsSegments(rendered.body).segments > 1000)) throw new Error("SMS length is invalid.");
     }catch(error){
       await input.repository.recordResult({outboxId:row.id,workerId:input.workerId,result:"cancelled",provider:provider.name,errorCode:"MESSAGE_CONFIGURATION_INVALID",errorMessage:safeErrorMessage(error)});
       result.cancelled++;continue;
@@ -90,8 +97,8 @@ export async function processNotificationOutboxBatch(input:{
       result.cancelled++;continue;
     }
 
-    if(provider.billingMode === "metered") {
-      const credit = await input.repository.reserveCredit({outboxId:row.id,workerId:input.workerId});
+    if(row.channel === "sms" && provider.billingMode === "metered") {
+      const credit = await input.repository.reserveCredit({outboxId:row.id,workerId:input.workerId,segments:smsSegments(rendered.body).segments,bodyHash:createHash("sha256").update(rendered.body).digest("hex")});
       if (!["CREDIT_NOT_REQUIRED","CREDIT_RESERVED","CREDIT_COMMITTED"].includes(credit.code)) {
         await input.repository.recordResult({outboxId:row.id,workerId:input.workerId,result:"retry",provider:provider.name,errorCode:credit.code,nextAvailableAt:notificationRetryAt(row.attemptCount+1,input.now).toISOString()});
         if (row.attemptCount + 1 >= row.maxAttempts) result.failed++; else result.retried++; continue;

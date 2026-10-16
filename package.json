@@ -10,7 +10,7 @@
     "build": "next build",
     "prestart": "npm run release:env -- --production",
     "start": "next start",
-    "test": "tsx --test tests/**/*.test.ts",
+    "test": "tsx --test \"tests/**/*.test.ts\"",
     "test:e2e": "playwright test",
     "test:e2e:release": "playwright test e2e/release-smoke.spec.ts",
     "qa:seed": "node --env-file-if-exists=.env.local --import tsx scripts/qa-seed.ts",

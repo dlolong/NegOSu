@@ -5,7 +5,7 @@ select no_plan();
 insert into auth.users(id,instance_id,aud,role,email,encrypted_password,email_confirmed_at,raw_app_meta_data,raw_user_meta_data,created_at,updated_at)
 select ('75100000-0000-4000-8000-'||lpad(n::text,12,'0'))::uuid,'00000000-0000-0000-0000-000000000000','authenticated','authenticated','core-report-'||n||'@local.test','',now(),'{}','{}',now(),now() from generate_series(1,4)n;
 insert into organizations(id,name,slug,industry) values('75200000-0000-4000-8000-000000000001','Report salon','core-report-salon','salon'),('75200000-0000-4000-8000-000000000002','Report pet','core-report-pet','pet_care');
-insert into organization_subscriptions(organization_id,plan_id,status) select id,'pro','active' from organizations where id in('75200000-0000-4000-8000-000000000001','75200000-0000-4000-8000-000000000002');
+insert into organization_subscriptions(organization_id,plan_id,status,current_period_start,current_period_end) select id,'pro','active',now()-interval '1 day',now()+interval '29 days' from organizations where id in('75200000-0000-4000-8000-000000000001','75200000-0000-4000-8000-000000000002');
 insert into organization_memberships(id,organization_id,user_id,role) values
 ('75300000-0000-4000-8000-000000000001','75200000-0000-4000-8000-000000000001','75100000-0000-4000-8000-000000000001','owner'),
 ('75300000-0000-4000-8000-000000000002','75200000-0000-4000-8000-000000000002','75100000-0000-4000-8000-000000000002','owner'),

@@ -36,7 +36,7 @@ for (const width of [320, 768, 1440]) test(`included paid reports, saved paginat
   await expect(page.locator("#credit-report-generate")).toBeEnabled();
   await expect(page.locator("#credit-report-cost")).toHaveCount(0);
   await expect(page.locator("#reports-bookings-table")).toBeVisible();
-  await expect(page.locator("#credit-report-generate")).toHaveAttribute("title", "Apply custom filters · 1 credit");
+  await expect(page.locator("#credit-report-generate")).toHaveAttribute("title", "Apply report filters");
   await page.locator("#reports-category-clients").click();
   await page.locator("#reports-filters-button").click();
   await page.locator("#credit-report-generate").click();
@@ -44,7 +44,8 @@ for (const width of [320, 768, 1440]) test(`included paid reports, saved paginat
   await expect(page.locator("#credit-report-result")).not.toContainText("remaining");
   await page.locator("#reports-filters-button").click();
   await page.locator("#credit-report-export").click();
-  await expect(page.locator("#credit-report-download")).toBeVisible();
+  await expect(page.locator("#upgrade-dialog")).toBeVisible();
+  await expect(page.locator("#credit-report-download")).toHaveCount(0);
 
   await page.goto("https://forms.test/reports?empty=1&paid=1");
   await expect(page.locator("#credit-report-generate")).toBeEnabled();
@@ -91,8 +92,9 @@ test("table-first tabs and hidden popup filters do not charge on navigation", as
  }
  await page.locator("#reports-filters-button").click();
  await expect(page.locator("#reports-filters-popover")).toBeVisible();
- await page.locator("#reports-period-previous").click();
- await expect(page.locator("#credit-report-start")).toHaveValue("2026-09-01");
+ await expect(page.locator("#reports-period-previous")).toHaveCount(0);
+ await page.locator("#reports-period-month").click();
+ await expect(page.locator("#credit-report-start")).toHaveValue("2026-10-01");
  await page.locator("#reports-reset-filters").click();
  await page.keyboard.press("Escape");
  await expect(page.locator("#reports-filters-popover")).toBeHidden();
@@ -114,12 +116,14 @@ test("salon filtered appointments retain details and payments show full-period t
  await expect(page.locator("#credit-report-table")).toContainText("Jamie");
  await expect(page.locator("#credit-report-table")).toContainText("Shampoo × 2");
  await expect(page.locator("#credit-report-table")).toContainText("150.00");
+ await expect(page.locator("#reports-total-sales")).toContainText("150.00");
  await expect(page.locator("#credit-report-table-section")).toHaveCount(0);
  await page.locator("#reports-category-payments").click();
  await page.locator("#reports-filters-button").click();
  await page.locator("#credit-report-generate").click();
  await expect(page.locator("#reports-total-sales")).toContainText("150.00");
- await expect(page.locator("#reports-revenue-collected")).toContainText("120.00");
+ await expect(page.locator("#reports-revenue-collected")).toHaveCount(0);
+ await expect(page.locator("#credit-report-table")).not.toContainText("Total amount");
  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);
 });
 
@@ -165,7 +169,9 @@ for(const industry of ["automotive","pet_care"]) test(`${industry} filtered book
  const table=page.locator("#credit-report-table");
  await expect(table).toContainText(industry==="automotive"?"Customer":"Pet owner");
  await expect(table).toContainText(industry==="automotive"?"Technicians":"Grooming staff");
- for(const value of ["Alex","Jamie","Product × 2","150.00"]) await expect(table).toContainText(value);
+ for(const value of ["Alex","Jamie","Product × 2"]) await expect(table).toContainText(value);
+ await expect(table).toContainText("150.00");
+ await expect(page.locator("#reports-total-sales")).toContainText("150.00");
  await expect(page.locator("#credit-report-table-section")).toHaveCount(0);
  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);
 });
@@ -184,8 +190,31 @@ for(const category of ["promos","rooms"]) test(`${category} tab keeps prices and
  await page.locator("#reports-filters-button").click();await page.locator("#credit-report-generate").click();
  await expect(page.locator(`#reports-category-${category}`)).toHaveAttribute("aria-pressed","true");
  await expect(page.locator("#reports-total-sales")).toContainText("150.00");
- await expect(page.locator("#reports-revenue-collected")).toContainText("120.00");
+ await expect(page.locator("#reports-revenue-collected")).toHaveCount(0);
+ await expect(page.locator("#credit-report-table")).not.toContainText("Total amount");
  await expect(page.locator("#credit-report-table")).toContainText("50.00");
  const cards=await page.locator("#reports-payment-totals").boundingBox(),table=await page.locator("#credit-report-table").boundingBox();expect(cards!.y+cards!.height).toBeLessThanOrEqual(table!.y);
+ expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);
+});
+
+for (const width of [320,1440]) test(`staff transactions have one total card and detail columns at ${width}px`,async({page})=>{
+ await page.setViewportSize({width,height:900});
+ await page.route("https://forms.test/**",route=>route.fulfill({contentType:"text/html",body:html}));
+ await page.route("**/api/dashboard/credit-reports",async route=>{
+  const body=route.request().postDataJSON();expect(body.payload.kind).toBe("staff");expect(body.payload.maxCost).toBe(0);
+  await route.fulfill({json:{id:body.requestId,payload:body.payload,cost:0,remaining:0,createdAt:"2026-10-15T04:00:00Z",report:{rows:[{key:"appointment:work:taylor",staff:"Taylor",occurred_at:"2026-10-15T04:00:00Z",timezone:"Asia/Manila",transaction:"Grooming",client:"Alex",price:75000},{key:"appointment:work:morgan",staff:"Morgan",occurred_at:"2026-10-15T04:00:00Z",timezone:"Asia/Manila",transaction:"Grooming",client:"Alex",price:75000}]}}});
+ });
+ await page.goto("https://forms.test/reports");await page.locator("#reports-category-staff").click();
+ await expect(page.locator("#reports-staff-table")).toContainText("Jamie 1");
+ await expect(page.locator("#reports-main-content")).not.toContainText("Total revenue");
+ await expect(page.locator("#reports-total-sales")).toContainText("25,500.00");
+ await expect(page.locator("#reports-staff-table")).not.toContainText("Total amount");
+ await page.locator("#reports-staff-next").click();await expect(page.locator("#reports-staff-table")).toContainText("Jamie 51");
+ await page.locator("#reports-filters-button").click();await page.locator("#credit-report-generate").click();
+ await expect(page.locator("#credit-report-table")).toContainText("Morgan, Taylor");await expect(page.locator("#credit-report-table")).toContainText("Grooming");
+ await expect(page.locator("#credit-report-table")).toContainText("750.00");
+ await expect(page.locator("#credit-report-result")).not.toContainText("Total revenue");
+ await expect(page.locator("#reports-total-sales")).toContainText("750.00");
+ await expect(page.locator("#credit-report-table")).not.toContainText("Total amount");
  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);
 });

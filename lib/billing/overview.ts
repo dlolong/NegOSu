@@ -3,7 +3,7 @@ import { findLaunchPlan, planMatchesLaunchCatalog } from "@/modules/platform/pla
 
 export type BillingPlan = {
   id: string; name: string; monthly_price_centavos: number; yearly_price_centavos: number | null;
-  monthly_credits?: number | null; credit_grant_policy?: string | null;
+  one_time_credits?: number; monthly_credits?: number | null; credit_grant_policy?: string | null;
   limits: Record<string, number>; features: Record<string, boolean>;
   is_custom: boolean; provider_monthly_price_id: string | null; provider_yearly_price_id: string | null;
   matchesCatalog: boolean;
@@ -22,7 +22,7 @@ type Configuration = Pick<BillingPlan, "id" | "is_custom" | "provider_monthly_pr
 // effective entitlements or enable checkout from the public marketing catalog.
 export async function loadBillingOverview(db: Pick<SupabaseClient, "from" | "rpc">, organizationId: string) {
   const [catalog, subscription, configuration, entitlements] = await Promise.all([
-    db.from("plans").select("id,name,monthly_price_centavos,yearly_price_centavos,limits,features,monthly_credits,credit_grant_policy").eq("is_active", true).order("sort_order"),
+    db.from("plans").select("id,name,monthly_price_centavos,yearly_price_centavos,limits,features,one_time_credits,monthly_credits,credit_grant_policy").eq("is_active", true).order("sort_order"),
     db.from("organization_subscriptions").select("provider,plan_id,status,current_period_end,cancel_at_period_end,provider_customer_id").eq("organization_id", organizationId).maybeSingle(),
     db.from("plans").select("id,is_custom,provider_monthly_price_id,provider_yearly_price_id").eq("is_active", true),
     db.rpc("get_org_entitlements", { p_organization_id: organizationId }),

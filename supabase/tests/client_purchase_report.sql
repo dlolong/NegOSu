@@ -37,8 +37,8 @@ select add_manual_invoice_charge(bill,'Existing agreed charge',1,10000,pg_temp.c
 select create_estimate(pg_temp.cid('job'),0,0,null);
 select record_estimate_authorization((select id from estimates where job_order_id=pg_temp.cid('job')),'approve','in_person','Agreed service');
 insert into ctx(name,bill) values('automotive',issue_invoice(pg_temp.cid('job'),(select id from estimates where job_order_id=pg_temp.cid('job')),null));
-insert into organization_subscriptions(organization_id,plan_id,status)
-select pg_temp.cid(v),'pro','active' from unnest(array['salon','pet_care','automotive','hospitality','other'])v;
+insert into organization_subscriptions(organization_id,plan_id,status,current_period_start,current_period_end)
+select pg_temp.cid(v),'pro','active',now()-interval '1 day',now()+interval '29 days' from unnest(array['salon','pet_care','automotive','hospitality','other'])v;
 insert into hospitality_rooms(id,organization_id,branch_id,name,capacity) values(pg_temp.cid('room'),pg_temp.cid('hospitality'),pg_temp.cid('branch-hospitality'),'Room 1',2);
 insert into hospitality_stays(id,organization_id,branch_id,room_id,guest_id,room_name_snapshot,guest_name_snapshot,occupants,request_key)
 values(pg_temp.cid('stay'),pg_temp.cid('hospitality'),pg_temp.cid('branch-hospitality'),pg_temp.cid('room'),pg_temp.cid('customer-hospitality'),'Room 1','Checkout Client',1,pg_temp.cid('stay-request'));
@@ -173,7 +173,9 @@ reset role;
 update organization_subscriptions set plan_id='free',status='free' where organization_id=pg_temp.cid('salon');
 set local role authenticated;
 select set_config('request.jwt.claims',jsonb_build_object('sub',pg_temp.cid('owner'),'role','authenticated')::text,true);
-select throws_ok($$select get_client_purchase_report(pg_temp.cid('salon'),current_date,current_date,pg_temp.cid('branch-salon'))$$,'42501','Advanced reports require an eligible plan','free plan cannot bypass detailed report access');
+select lives_ok($$select get_client_purchase_report(pg_temp.cid('salon'),current_date,current_date,pg_temp.cid('branch-salon'))$$,'Free recent basic purchase table remains usable');
+select throws_ok($$select get_client_purchase_report(pg_temp.cid('salon'),current_date-90,current_date,pg_temp.cid('branch-salon'))$$,'42501',null,'Free basic reader cannot bypass historical entitlement');
+select throws_ok($$select get_client_purchase_report(pg_temp.cid('salon'),current_date,current_date,pg_temp.cid('branch-salon'),'','product')$$,'42501',null,'Free advanced item search requires entitlement');
 set local role anon;
 select throws_ok($$select get_client_purchase_report(pg_temp.cid('salon'),current_date,current_date)$$,'42501',null,'anonymous access denied');
 select * from finish();

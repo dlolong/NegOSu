@@ -5,16 +5,16 @@ const limits = z.record(z.string(), z.number().int().min(-1));
 const features = z.record(z.string(), z.boolean());
 export const upgradePlanSchema = z.object({
   id: z.string().min(1), name: z.string().min(1), sort_order: z.number().int(),
-  is_active: z.boolean(), limits, features,
+  is_active: z.boolean(), monthly_credits: z.number().nullable().optional(), one_time_credits: z.number().optional(), credit_grant_policy: z.string().nullable().optional(), limits, features,
 });
 export const upgradeEntitlementsSchema = z.object({
-  planId: z.string().min(1), planName: z.string().min(1), limits, features,
+  planId: z.string().min(1), planName: z.string().min(1), monthlyCredits: z.number().nullable().optional(), oneTimeCredits: z.number().optional(), limits, features,
 });
 export type UpgradeState = {
   current: z.infer<typeof upgradeEntitlementsSchema>;
   higherPlans: z.infer<typeof upgradePlanSchema>[];
 };
-export type UpgradeCapability = "image_uploads" | "advanced_reports" | "public_page" | "reminders" | "staff" | "branches" | "monthly_jobs";
+export type UpgradeCapability = "usage_credits" | "image_uploads" | "advanced_reports" | "public_page" | "reminders" | "staff" | "branches" | "monthly_jobs";
 
 /** Presentation only: effective entitlements and database enforcement remain authoritative. */
 export function resolveUpgradeState(entitlements: unknown, catalog: unknown): UpgradeState | null {
@@ -48,6 +48,10 @@ const limitLabels = { staff: "staff logins", branches: "active branches", monthl
 export function selectUpgrade(state: UpgradeState | null, industry: IndustryKey, capability: UpgradeCapability, limitReached = false) {
   if (!state) return null;
   if (!supportsCapability(industry, capability)) return null;
+  if (capability === "usage_credits") {
+    const plan = state.higherPlans.find(plan => (plan.monthly_credits ?? 0) > (state.current.monthlyCredits ?? 0));
+    return plan ? {plan, description:`${plan.name} includes ${plan.monthly_credits} monthly usage credits for automation.`} : null;
+  }
   if (capability in featureLabels) {
     if (state.current.features[capability] !== false) return null;
     const plan = state.higherPlans.find(plan => plan.features[capability] === true);

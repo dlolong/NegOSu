@@ -583,3 +583,40 @@ The shell retains one main page scroll. Sidebar and overlay scrolling are bounde
 Public pricing and authenticated Billing now share one catalog contract, onboarding exposes a data-derived next step without trapping the owner, and high-value mutations return controlled guidance instead of raw infrastructure messages. Canonical optional Staff profiles drive onboarding completion with an exact rolling-schema fallback.
 
 Release operations now include typed production environment validation, fail-closed startup, a safe liveness endpoint, guarded/idempotent non-production QA personas, authenticated desktop/mobile route smoke, and cloud-neutral deployment, migration, rollback, and release-checklist runbooks. This establishes controlled-pilot evidence; general production launch still requires operator-owned production configuration, current migrations, backups/restore verification, real notification delivery where promised, monitoring, and external legal/tax/privacy review.
+
+## Approved production credit configuration — 0152/0153
+
+Execution: single Developer Agent, no delegation, no production SQL or deployment.
+
+Implementation map:
+- **Reuse:** canonical plans, subscription synchronization, organization grant/allocation ledger, notification outbox, report readers, storage entitlement policies, four vertical command centers.
+- **Extend:** approved catalog allowances, monthly anniversary/difference grants, tested SMS segment metering, Account usage, read-only platform summary, owner notices and standard upgrade dialog.
+- **Migrate safely:** append-only 0152/0153; preserve exact legacy starter balance and historical images/snapshots; preserve current-period credits after downgrade; add future purchased expiry constraint without rewriting history.
+- **Remove duplicate logic:** premium access no longer comes from report contexts or credit spending; report charge copy removed; presentation reads canonical allowance values.
+- **Defer:** actual SMS provider/send preview, provider refund receipt reconciliation, AI operations and paid credit purchases because those end-to-end features do not exist.
+
+Security boundaries remain database-side. Acceptance requires exact-once grants, no negative concurrent spending, server-side feature gates, useful Free basic reports, owner-only billing notices, and no change to core workflow charging. See CREDITS.md, ENTITLEMENTS.md, REPORTS.md and TESTING.md for policy and validation commands. Earlier phase reports describe historical behavior and are superseded by these policies.
+
+### Approved credit policy — execution evidence (2026-10-16)
+
+Implemented locally by the single Developer Agent. No production SQL, deployment, provider send, customer charge, or subscription mutation was performed. Migrations 0152 and 0153 are pending deployment review; apply them in sequence with the updated notification worker. The legacy two-argument SMS reservation fails closed so an old worker cannot incorrectly reserve one credit for multipart SMS.
+
+Validation performed:
+
+- `npm ci`: succeeded. Installation reported nine dependency advisories (eight high, one critical); dependency upgrades remain outside this phase.
+- `npm run lint`: passed.
+- `npm run typecheck`: passed.
+- `npm test`: 658 passed. Quoted the test glob so npm executes the whole suite instead of only shell-matched nested tests.
+- `npm run build`: Turbopack failed on the local environment's port-binding restriction. `npx next build --webpack`: passed, including TypeScript and all 86 static pages.
+- Local disposable PostgreSQL, schema migrations through 0153: 558 assertions passed across organization credits (63), approved allowances (36), report policy (29), legacy trial compatibility (34), image uploads (13), notification outbox (47), shared checkout (111), walk-ins (18), pet release (43), hospitality (35), salon appointments (10), client reports (103), and shared appointment reporting (16). Suites ran through `psql -X -v ON_ERROR_STOP=1`, with TAP failures checked separately; all test transactions rolled back.
+- `CREDIT_TEST_DATABASE=negosu_usage_dashboard_0145_20261016 CREDIT_TEST_CONTAINER=supabase_db_negosu-full-qa python3 scripts/test-credit-concurrency.py`: passed two simultaneous service-role reservations against one last credit, with synthetic fixture cleanup. The disposable database was subsequently removed.
+- `E2E_BASE_URL=https://forms.test PLAYWRIGHT_CHROME_PATH='/Applications/Google Chrome.app/Contents/MacOS/Google Chrome' npx playwright test e2e/usage-dashboard.spec.ts e2e/trial-credits.spec.ts --project=desktop-chromium --workers=2`: 44 passed. Fixture viewports include 320×740, 375×812, 390×844, 430×932, 1366×768, 1440×900 and tablet report coverage.
+- `git diff --check`: passed.
+
+Self-review found and fixed a direct-report authorization short circuit: a combined conditional could skip the authorization function for empty search filters. Authorization now executes separately, and direct Free historical access has a regression test. Security assertions cover cross-tenant ledger access, self-grant denial, overspend, entitlement bypass, and billing permissions. Existing tenant/branch checks and RLS remain authoritative.
+
+Automotive, Salon, Pet Care, and Apartelle & Inn regression coverage passed in the applicable SQL suites and dashboard component fixtures. This is not a claim of four live authenticated browser journeys or real provider integration. Production billing-period synchronization should be audited before rollout; no dates were guessed for incomplete subscriptions.
+
+Remaining limits: no live idempotent SMS provider or user-send workflow exists, so actual provider acceptance, delivery, cost-preview UX, and provider reconciliation remain unverified. AI remains unavailable and top-up purchasing is intentionally absent. Export has a configurable registry entry at zero, but the report adapter currently performs no debit; enabling future paid exports still requires adapter/consent changes and is not a configuration-only capability. No public adjustment UI was introduced; existing privileged ledger adjustment/refund primitives remain private.
+
+Recommended next phase: Pilot Monetization & Retention Measurement. Measure organization/vertical usage, SMS segments, starter-credit utilization, warning frequency, upgrade-dialog and comparison engagement, conversions, paid allowance utilization, and 30/60/90-day retention before changing approved allowances.

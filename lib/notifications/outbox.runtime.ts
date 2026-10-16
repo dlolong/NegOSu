@@ -17,7 +17,7 @@ function controlledDatabaseError(message:string,error:{message:string}|null):nev
 
 export const notificationOutboxRepository:NotificationOutboxRepository={
   async reserveCredit(input){
-    const {data,error}=await createAdminClient().rpc("reserve_notification_credit",{p_outbox:input.outboxId,p_worker:input.workerId});
+    const {data,error}=await createAdminClient().rpc("reserve_notification_credit",{p_outbox:input.outboxId,p_worker:input.workerId,p_segments:input.segments,p_body_hash:input.bodyHash});
     if(error||!data?.code) controlledDatabaseError("Unable to reserve notification credits.",error);
     return creditOperationResultSchema.parse(data);
   },

@@ -3,10 +3,11 @@
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ServiceThumbnail } from "@/components/service-thumbnail";
-import { PlanUpgradeNotice } from "@/components/plan-upgrade";
+import { PlanUpgradeNotice, useUpgradeDialog } from "@/components/plan-upgrade";
 import { MAX_IMAGE_BYTES } from "@/modules/platform/image-upload";
 
 export function ImageUploadButton({ id, onUploaded, onBusyChange, disabled = false }: { id: string; onUploaded: (url: string) => void; onBusyChange?: (busy: boolean) => void; disabled?: boolean }) {
+  const openUpgrade = useUpgradeDialog();
   const [access, setAccess] = useState<{ allowed: boolean; owner: boolean; organizationId?: string; actorId?: string; cost?: number; remaining?: number } | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -57,7 +58,7 @@ export function ImageUploadButton({ id, onUploaded, onBusyChange, disabled = fal
     finally { lock.current = false; setBusy(false); onBusyChange?.(false); }
   }
   return <div ref={container} id={id} className="mt-3 space-y-2 text-xs">
-    {access?.allowed ? <><label htmlFor={`${id}-file`} className="block font-medium">Upload a photo</label><input id={`${id}-file`} type="file" accept="image/jpeg,image/png,image/webp" disabled={busy || disabled} className="block w-full min-w-0 rounded-lg border border-admin-border p-2" onChange={event => { void upload(event.target.files?.[0]); event.target.value = ""; }}/><p className="text-admin-text-muted">JPG, PNG or WebP · Up to 2 MB. Uploaded images are public.</p></> : access ? <><p className="text-sm text-admin-text-secondary">Image uploads are unavailable on this plan. See notifications for details.</p><PlanUpgradeNotice id={`${id}-plan-notice`} capability="image_uploads"/></> : !error ? <p role="status">Checking upload availability…</p> : null}
+    {access?.allowed ? <><label htmlFor={`${id}-file`} className="block font-medium">Upload a photo</label><input id={`${id}-file`} type="file" accept="image/jpeg,image/png,image/webp" disabled={busy || disabled} className="block w-full min-w-0 rounded-lg border border-admin-border p-2" onChange={event => { void upload(event.target.files?.[0]); event.target.value = ""; }}/><p className="text-admin-text-muted">JPG, PNG or WebP · Up to 2 MB. Uploaded images are public.</p></> : access ? <><Button id={`${id}-plan-access`} type="button" variant="secondary" onClick={() => openUpgrade?.("image_uploads")}>Upload a photo · Plan feature</Button><PlanUpgradeNotice id={`${id}-plan-notice`} capability="image_uploads"/></> : !error ? <p role="status">Checking upload availability…</p> : null}
     {busy ? <p role="status">Uploading… Wait for the preview before saving.</p> : null}
     {success ? <p role="status">Uploaded. Save this form to use the photo.</p> : null}
     {pendingFile && error ? <Button id={`${id}-retry`} type="button" variant="secondary" disabled={busy || disabled} onClick={() => void upload(pendingFile)}>Retry this upload</Button> : null}

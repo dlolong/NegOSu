@@ -15,6 +15,8 @@ export interface NotificationDeliveryProvider{
   readonly name:string;
   readonly configured:boolean;
   readonly billingMode:"free"|"metered";
+  /** Metered adapters must deduplicate retries after ambiguous acceptance. */
+  readonly idempotentSubmissions?: boolean;
   send(message:DeliveryProviderMessage):Promise<DeliveryProviderResult>;
 }
 

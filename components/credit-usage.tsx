@@ -3,6 +3,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { RecordTable } from "@/components/record-table";
+import Link from "next/link";
 import { creditUsageSchema, type CreditUsage } from "@/modules/platform/credits";
 
 export function CreditUsageSection({ organizationId, initial }: { organizationId: string; initial: CreditUsage | null }) {
@@ -27,13 +28,14 @@ export function CreditUsageSection({ organizationId, initial }: { organizationId
   return <section id="account-credit-usage" className="my-4 min-w-0 rounded-xl border border-admin-border bg-admin-surface p-4">
     <div className="flex flex-wrap items-center justify-between gap-3"><div><h2 className="font-medium">Usage credits</h2><p className="text-xs text-admin-text-secondary">Shared by your business. Everyday operations do not use credits.</p></div><Button id="account-credit-refresh" variant="secondary" disabled={busy} onClick={() => void load()}>Refresh usage</Button></div>
     {error ? <p id="account-credit-error" role="alert" className="mt-3 text-sm text-red-700">{error}</p> : null}
-    {usage ? <><p id="account-credit-remaining" className="mt-3 text-2xl">{usage.remaining.toLocaleString()} <span className="text-sm text-admin-text-secondary">remaining</span></p><p className="text-sm">{usage.oneTimeRemaining} of 100 one-time credits remaining</p>
-      <progress id="account-credit-progress" aria-label="One-time credits remaining" max={100} value={usage.oneTimeRemaining} className="mt-2 h-2 w-full accent-brand-primary"/>
-      {usage.nextRefresh ? <div className="mt-2 text-sm"><p>{usage.monthlyRemaining} / {usage.monthlyAllowance} included period credits remaining</p><p>Next refresh (UTC): {new Intl.DateTimeFormat("en-PH", { timeZone: "UTC", dateStyle: "medium" }).format(new Date(usage.nextRefresh))}</p></div> : <p className="mt-2 text-xs text-admin-text-secondary">One-time credits do not renew.</p>}
+    {usage ? <><p id="account-credit-remaining" className="mt-3 text-2xl">{usage.remaining.toLocaleString()} <span className="text-sm text-admin-text-secondary">remaining</span></p><p className="text-sm">{usage.monthlyAllowance > 0 ? `${usage.monthlyRemaining} of ${usage.monthlyAllowance} included credits remaining` : `${usage.oneTimeRemaining}${usage.oneTimeAllowance != null ? ` of ${usage.oneTimeAllowance}` : ""} one-time starter credits remaining`}</p><p id="account-credit-used" className="text-xs text-admin-text-secondary">{usage.monthlyAllowance > 0 ? `${usage.usedThisPeriod} included credits used this period` : "These credits do not automatically refresh."}</p>
+      <progress id="account-credit-progress" aria-label="Usage credits remaining" max={usage.monthlyAllowance || usage.oneTimeAllowance || usage.allowance || 1} value={usage.monthlyAllowance ? usage.monthlyRemaining : usage.oneTimeRemaining} className="mt-2 h-2 w-full accent-brand-primary"/>
+      {usage.nextRefresh ? <div className="mt-2 text-sm"><p>{usage.monthlyRemaining} / {usage.monthlyAllowance} included period credits remaining</p><p id="account-credit-refresh-date">Next refresh (UTC): {new Intl.DateTimeFormat("en-PH", { timeZone: "UTC", dateStyle: "medium" }).format(new Date(usage.nextRefresh))}</p></div> : <p className="mt-2 text-xs text-admin-text-secondary">One-time credits do not renew.</p>}
+      {usage.monthlyAllowance > 0 ? <p className="mt-2 text-xs">{usage.oneTimeRemaining} one-time credits also available · {usage.purchasedRemaining} purchased credits</p> : null}
       {usage.reserved > 0 ? <p className="mt-2 text-xs">{usage.reserved} credits reserved for pending operations.</p> : null}
 
     </> : null}
-    <div className="mt-3 flex flex-wrap gap-2"><Button id="account-credit-history-button" variant="secondary" onClick={() => { dialog.current?.showModal(); void load(1); }}>View usage history</Button></div>
+    <div className="mt-3 flex flex-wrap gap-2"><Button id="account-credit-history-button" variant="secondary" onClick={() => { dialog.current?.showModal(); void load(1); }}>View usage history</Button><Button asChild variant="secondary"><Link id="account-compare-plans-button" href="/dashboard/settings/billing#billing-plan-catalog">Compare plans</Link></Button></div>
     <dialog ref={dialog} id="credit-usage-dialog" aria-labelledby="credit-usage-title" onCancel={event => { event.preventDefault(); close(); }} className="m-auto max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] max-w-3xl overflow-y-auto rounded-xl border border-admin-border bg-white p-4 backdrop:bg-slate-950/40">
       <header className="flex items-center justify-between gap-3"><h2 id="credit-usage-title" className="font-medium">Usage history</h2><Button id="credit-usage-close" variant="ghost" size="icon" aria-label="Close usage history" onClick={close}><X size={20}/></Button></header>
       {busy ? <p role="status" className="my-2 text-sm">Loading usage…</p> : null}

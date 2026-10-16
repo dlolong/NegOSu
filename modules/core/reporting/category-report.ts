@@ -1,3 +1,4 @@
+import { staffReportSchema, staffReportTable, staffReportNote, type StaffReport } from "./staff-report";
 import { catalogReportSchema, catalogReportTable, catalogReportNote } from "./catalog-report";
 import { hospitalityReportTable } from "./hospitality-table";
 import type { HospitalityWorkspace } from "@/modules/hospitality/contracts";
@@ -14,15 +15,22 @@ type Row = { id: string; cells: Record<string, string | number> };
 export async function loadCategoryTableData({ db, member, category, start }: { db: SupabaseClient; member: OrganizationMembership; category: "bookings" | "payments" | "products" | "clients" | "services" | "staff" | "promos" | "rooms"; start: string }) {
   const finance = ["owner", "manager", "advisor", "cashier"].includes(member.role);
   if (category === "payments" && !finance || category === "products" && !checkoutRoles.includes(member.role)) return { denied: true as const };
+  let staffReport: StaffReport | undefined;
   let note: string | undefined;
   let summary: {sales:number;revenue:number} | undefined;
   let rows: Row[] = [], total = 0, failed = false;
-  const purchase = ["products", "clients", "services", "staff"].includes(category);
-  let columns = purchase ? [{key:"name",label:"Client"}, {key:"details",label:category === "staff" ? "Staff who served client" : category === "products" ? "Products availed" : category === "services" ? "Services / treatments" : "Purchases"}, {key:"total",label:"Total amount"},{key:"paid",label:"Revenue collected"}] : category === "payments" ? [{key:"date",label:"Received"},{key:"method",label:"Method"},{key:"status",label:"Status"},{key:"amount",label:"Amount"}] : [{key:"date",label:"Date"},{key:"name",label:member.industry === "hospitality" ? "Guest / room" : "Client"},{key:"status",label:"Status"}];
+  const purchase = ["products", "clients", "services"].includes(category);
+  let columns = purchase ? [{key:"date",label:"Last activity date"},{key:"name",label:"Client"}, {key:"details",label:category === "products" ? "Products availed" : category === "services" ? "Services / treatments" : "Purchases"}, {key:"total",label:"Total amount"},{key:"paid",label:"Revenue collected"}] : category === "payments" ? [{key:"date",label:"Received"},{key:"method",label:"Method"},{key:"status",label:"Status"},{key:"amount",label:"Amount"}] : [{key:"date",label:"Date"},{key:"name",label:member.industry === "hospitality" ? "Guest / room" : "Client"},{key:"status",label:"Status"}];
   const date = (value: string) => new Intl.DateTimeFormat("en-PH", { timeZone: member.timezone, dateStyle: "medium", timeStyle: "short" }).format(new Date(value));
   try {
     const endDate = new Date(`${start}T12:00:00Z`); endDate.setUTCDate(endDate.getUTCDate()+6);
-    if (category === "promos" || category === "rooms") {
+    if (category === "staff") {
+      const {data,error}=await db.rpc("get_staff_transaction_report",{p_org:member.organizationId,p_branch:member.branchId,p_start:start,p_end:endDate.toISOString().slice(0,10)});
+      if(error) throw error;
+      staffReport=staffReportSchema.parse(data);
+      const table=staffReportTable(staffReport,member.currency);
+      columns=table.columns;rows=table.rows;total=rows.length;note=staffReportNote;
+    } else if (category === "promos" || category === "rooms") {
       const {data,error}=await db.rpc("get_catalog_financial_report",{p_org:member.organizationId,p_branch:member.branchId,p_start:start,p_end:endDate.toISOString().slice(0,10),p_category:category});
       if(error) throw error;
       const report=catalogReportSchema.parse(data),table=catalogReportTable(report,member.currency);
@@ -47,7 +55,7 @@ export async function loadCategoryTableData({ db, member, category, start }: { d
       const {data,error} = await db.rpc("get_recent_client_purchases", {p_org:member.organizationId,p_branch:member.branchId,p_kind:kind,p_page:1});
       if (error) throw error;
       const report = clientPurchaseReportSchema.parse(data);
-      rows = report.rows.map(row => ({id:row.key,cells:{name:row.name, details:category === "staff" ? row.staff.map(staff=>staff.name).join(", ") || "No recorded staff" : row.items.filter(item=>kind === "all" || item.kind === kind).map(item=>`${item.name} × ${item.quantity}${item.unit ? ` ${item.unit}` : ""}${item.included ? " (included)" : ""}`).join(", ") || "—",total:formatMoney(row.total,member.currency),paid:formatMoney(row.paid,member.currency)}}));
+      rows = report.rows.map(row => ({id:row.key,cells:{date:row.lastActivity || "—",name:row.name, details:row.items.filter(item=>kind === "all" || item.kind === kind).map(item=>`${item.name} × ${item.quantity}${item.unit ? ` ${item.unit}` : ""}${item.included ? " (included)" : ""}`).join(", ") || "—",total:formatMoney(row.total,member.currency),paid:formatMoney(row.paid,member.currency)}}));
       total = report.count; summary={sales:report.summary.total,revenue:report.summary.paid};note="Totals cover whole matching appointments/bills across all clients, not an item-price allocation. Revenue is paid to date on those records.";
     } else {
       const range = appointmentAgendaRange(start, 7, member.timezone);
@@ -67,5 +75,5 @@ export async function loadCategoryTableData({ db, member, category, start }: { d
       }
     }
   } catch (error) { failed = true; reportActionError(`reports.category.${category}`, error, "Report unavailable."); }
-  return { denied: false as const, failed, rows, total, columns, summary, note };
+  return { denied: false as const, failed, rows, total, columns, summary, note, staffReport };
 }

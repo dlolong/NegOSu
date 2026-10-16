@@ -4,7 +4,7 @@ let html:string;
 test.beforeAll(async()=>{html=await renderFormFixture("e2e/fixtures/usage-dashboard.tsx");});
 const org="81000000-0000-4000-8000-000000000001",branch="81000000-0000-4000-8000-000000000002",notice="81000000-0000-4000-8000-000000000008";
 const usage={organizationId:org,remaining:10,allowance:100,oneTimeRemaining:10,reserved:0,monthlyRemaining:0,monthlyAllowance:0,nextRefresh:null,periodStart:null,periodKey:"one-time",status:"CRITICAL",count:0,history:[]};
-for(const [width,height] of [[375,812],[390,844],[1366,768]])test(`usage, notifications, recovery and upgrade interactions ${width}x${height}`,async({page})=>{
+for(const [width,height] of [[320,740],[375,812],[390,844],[430,932],[1366,768]])test(`usage, notifications, recovery and upgrade interactions ${width}x${height}`,async({page})=>{
  await page.setViewportSize({width,height});let recovered=false,read=false;
  await page.route("https://forms.test/**",route=>route.fulfill({contentType:"text/html",body:html}));
  await page.route("**/api/dashboard/credits**",route=>route.fulfill({json:recovered?{...usage,remaining:100,oneTimeRemaining:100,status:"NORMAL"}:usage}));
@@ -65,4 +65,22 @@ test("all-branch overview asks for a branch before operational work",async({page
  await expect(page.locator("#negosu-command-center-quick-action-new-appointment")).toHaveCount(0);
  await expect(page.locator("#negosu-command-center-quick-actions-branch-guidance")).toContainText("Select a branch");
  await expect(page.locator("#negosu-action-item-work")).toHaveAttribute("href","#negosu-command-center-branch-selector");
+});
+
+test("dashboard warning is dismissible, updates after recovery and stays off normal dashboards",async({page})=>{
+ await page.setViewportSize({width:320,height:740});let dismissed=false,recovered=false;
+ await page.route("https://forms.test/**",route=>route.fulfill({contentType:"text/html",body:html}));
+ await page.route("**/api/dashboard/credits**",route=>route.fulfill({json:usage}));
+ await page.route("**/api/dashboard/notifications",route=>{
+  if(route.request().method()==="POST"){dismissed=true;return route.fulfill({json:{success:true}});}
+  return route.fulfill({json:{organizationId:org,branchId:branch,total:0,items:[],unavailable:[],creditNotices:recovered?[]:[{id:notice,kind:"EMPTY",remaining:0,createdAt:"2026-10-16T00:00:00Z",readAt:dismissed?"2026-10-16T01:00:00Z":null,nextRefresh:null}]}});
+ });
+ await page.goto("https://forms.test/account?pathname=/dashboard");
+ await expect(page.locator("#credit-empty-notice")).toContainText("Starter credits do not refresh");
+ await expect(page.locator("#dashboard-credit-view-usage")).toHaveAttribute("href","/dashboard/settings/billing#account-credit-usage");
+ expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);
+ await page.locator("#dashboard-credit-dismiss").click();await expect(page.locator("#credit-empty-notice")).toHaveCount(0);
+ await page.reload();await expect(page.locator("#credit-empty-notice")).toHaveCount(0);
+ dismissed=false;recovered=true;await page.evaluate(()=>window.dispatchEvent(new Event("negosu-usage-changed")));
+ await expect(page.locator("#credit-empty-notice")).toHaveCount(0);
 });

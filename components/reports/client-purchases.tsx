@@ -1,3 +1,5 @@
+import { reportListColumns } from "@/modules/core/reporting/table-columns";
+import { PaymentTotals } from "./payment-totals";
 import Link from "next/link";
 import { CompactFilters } from "@/components/compact-filters";
 import { RecordTable } from "@/components/record-table";
@@ -32,12 +34,13 @@ export function ClientPurchases({ filters, range, branches, currency, report, on
     </CompactFilters> : null}
     <p id="client-purchases-scope" className="text-sm text-admin-text-secondary">{range.start} – {range.end} · {filters.branch === "all" ? "All accessible branches" : branches.find(branch => branch.id === filters.branch)?.name} · {report.count} client{report.count === 1 ? "" : "s"} with purchases · {report.summary.records} records</p>
     {filters.kind !== "all" || filters.item ? <p className="mt-1 text-sm">Matching records: {filters.kind === "all" ? "any purchase type" : filters.kind === "service" ? "services / treatments" : filters.kind === "product" ? "products" : "other charges"}{filters.item ? ` · “${filters.item}”` : ""}. Items and totals include the entire matching appointment or bill.</p> : null}
-    {!toolbarSearch ? <dl id="client-purchases-totals" className="my-4 grid gap-3 sm:grid-cols-3">{[["Total billed", report.summary.total], ["Paid to date", report.summary.paid], ["Balance", report.summary.balance]].map(([label, amount]) => <div key={label} className="rounded-xl border border-admin-border bg-admin-surface p-4"><dt className="text-sm text-admin-text-secondary">{label}</dt><dd className="mt-1 text-xl font-medium">{formatMoney(Number(amount), currency)}</dd></div>)}</dl> : null}
-    <RecordTable reportSearch={toolbarSearch} id="client-purchases-table" caption="Client purchases" columns={[{ key: "client", label: "Client" }, { key: "staff", label: "Staff" }, { key: "services", label: "Services / treatments" }, { key: "products", label: "Products" }, { key: "other", label: "Other charges" }, { key: "total", label: "Total billed", align: "right" }]} rows={report.rows.map(row => ({ id: `client-purchase-${row.key}`, cells: {
+    {!toolbarSearch ? <PaymentTotals sales={report.summary.total} revenue={report.summary.paid} currency={currency}/> : null}
+    <RecordTable reportSearch={toolbarSearch} id="client-purchases-table" caption="Client purchases" columns={reportListColumns([{ key: "date", label: "Last activity date" }, { key: "client", label: "Client" }, { key: "staff", label: "Staff" }, { key: "services", label: "Services / treatments" }, { key: "products", label: "Products" }, { key: "other", label: "Other charges" }, { key: "total", label: "Total billed", align: "right" as const }])} rows={report.rows.map(row => ({ id: `client-purchase-${row.key}`, cells: {
+      date: row.lastActivity || "—",
       client: <>{row.clientId ? <Link id={`client-purchases-open-${row.clientId}`} className="font-medium underline" href={`/dashboard/customers/${row.clientId}`}>{row.name}</Link> : <><span className="font-medium">{row.name}</span><small className="block">Unlinked bill · kept separate</small></>}<small className="mt-1 block text-admin-text-secondary">{row.branches.join(", ")}<br/>{row.records} records · Last: {row.lastActivity}</small></>,
       staff: row.staff.length ? <ul className="space-y-1">{row.staff.map(person => <li key={person.id}>{person.name}</li>)}</ul> : <span className="text-admin-text-muted">Not recorded</span>,
       services: items(row, "service"), products: items(row, "product"), other: items(row, "other"),
-      total: <><strong className="font-medium">{formatMoney(row.total, currency)}</strong><small className="mt-1 block text-admin-text-secondary">Paid {formatMoney(row.paid, currency)}<br/>Balance {formatMoney(row.balance, currency)}</small></>,
+      total: formatMoney(row.total, currency),
     } }))} empty="No client purchases match these filters."/>
     <nav id="client-purchases-pagination" aria-label="Client purchase pages" className="my-4 flex flex-wrap items-center justify-between gap-3">
       {filters.page > 1 ? onPageChange ? <Button id="client-purchases-previous" variant="secondary" onClick={() => onPageChange(filters.page - 1)}>Previous</Button> : <Link id="client-purchases-previous" className="inline-flex min-h-11 items-center underline" href={pageHref(Math.min(filters.page - 1, pages))}>Previous</Link> : <span/>}

@@ -9,7 +9,7 @@ insert into auth.users(id,instance_id,aud,role,email,encrypted_password,email_co
 insert into organizations(id,name,slug,industry,business_type) values
 ('7c200000-0000-4000-8000-000000000001','Milo Grooming Test','pet-a-test','pet_care','pet_grooming'),
 ('7c200000-0000-4000-8000-000000000002','Other Grooming Test','pet-b-test','pet_care','pet_grooming');
-insert into organization_subscriptions(organization_id,plan_id,status) select id,'pro','active' from organizations where id in('7c200000-0000-4000-8000-000000000001','7c200000-0000-4000-8000-000000000002');
+insert into organization_subscriptions(organization_id,plan_id,status,current_period_start,current_period_end) select id,'pro','active',now()-interval '1 day',now()+interval '29 days' from organizations where id in('7c200000-0000-4000-8000-000000000001','7c200000-0000-4000-8000-000000000002');
 insert into organization_memberships(organization_id,user_id,role) values('7c200000-0000-4000-8000-000000000001','7c100000-0000-4000-8000-000000000001','owner'),('7c200000-0000-4000-8000-000000000002','7c100000-0000-4000-8000-000000000002','owner');
 insert into branches(id,organization_id,name,is_primary) values('7c300000-0000-4000-8000-000000000001','7c200000-0000-4000-8000-000000000001','Main',true),('7c300000-0000-4000-8000-000000000002','7c200000-0000-4000-8000-000000000002','Other',true);
 update branches set opening_hours=(select jsonb_object_agg(d,jsonb_build_object('open','00:00','close','23:59')) from unnest(array['monday','tuesday','wednesday','thursday','friday','saturday','sunday'])d) where id in('7c300000-0000-4000-8000-000000000001','7c300000-0000-4000-8000-000000000002');

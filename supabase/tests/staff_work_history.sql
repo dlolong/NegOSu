@@ -60,6 +60,7 @@ insert into public.appointment_staff_assignments(organization_id,appointment_id,
 ('20550000-0000-4000-8000-000000000001','90550000-0000-4000-8000-000000000002','80550000-0000-4000-8000-000000000003'),
 ('20550000-0000-4000-8000-000000000001','90550000-0000-4000-8000-000000000003','80550000-0000-4000-8000-000000000002'),
 ('20550000-0000-4000-8000-000000000001','90550000-0000-4000-8000-000000000004','80550000-0000-4000-8000-000000000002');
+insert into public.appointment_services(appointment_id,service_id,service_name_snapshot,unit_price_centavos,duration_minutes) values('90550000-0000-4000-8000-000000000002','60550000-0000-4000-8000-000000000001','Haircut',50000,30);
 update public.appointments set status='completed' where id in('90550000-0000-4000-8000-000000000002','90550000-0000-4000-8000-000000000004');
 update public.organization_staff_profiles set is_active=false where id='80550000-0000-4000-8000-000000000003';
 -- Assign the service worker before completion snapshots the job history.
@@ -92,5 +93,25 @@ select is((select count(*) from public.staff_completed_work where branch_id='405
 set local "request.jwt.claims"='{"sub":"10550000-0000-4000-8000-000000000002","role":"authenticated"}';
 select is((select count(*) from public.staff_completed_work where record_id='90550000-0000-4000-8000-000000000001'),2::bigint,'job lead and service worker both retain job history');
 select is((select source from public.staff_work_participation where staff_id='80550000-0000-4000-8000-000000000004'),'service_assignment','service-specific contributor remains identifiable');
+
+-- Staff report keeps work-level attribution instead of grouping by customer.
+reset role;
+set local "request.jwt.claims"='{"sub":"10550000-0000-4000-8000-000000000001","role":"authenticated"}';
+set local role authenticated;
+set local "request.jwt.claims"='{"sub":"10550000-0000-4000-8000-000000000001","role":"authenticated"}';
+select is(jsonb_array_length(public.get_staff_transaction_report('20550000-0000-4000-8000-000000000001',(now() at time zone 'Asia/Manila')::date,(now() at time zone 'Asia/Manila')::date,'40550000-0000-4000-8000-000000000001')->'rows'),2,'staff report retains each participating staff member including inactive history');
+select is((public.get_staff_transaction_report('20550000-0000-4000-8000-000000000001',(now() at time zone 'Asia/Manila')::date,(now() at time zone 'Asia/Manila')::date,'40550000-0000-4000-8000-000000000001')->'rows'->0->>'price')::bigint,50000::bigint,'staff price is appointment amount, not a client aggregate');
+select ok(public.get_staff_transaction_report('20550000-0000-4000-8000-000000000001',(now() at time zone 'Asia/Manila')::date,(now() at time zone 'Asia/Manila')::date,'40550000-0000-4000-8000-000000000001')->'rows'->0 ?& array['staff','occurred_at','timezone','transaction','client','price'],'staff details include authoritative date and transaction');
+select is(jsonb_array_length(public.get_staff_transaction_report('20550000-0000-4000-8000-000000000001',(now() at time zone 'Asia/Manila')::date-1,(now() at time zone 'Asia/Manila')::date-1,'40550000-0000-4000-8000-000000000001')->'rows'),0,'date filter excludes other work dates');
+select throws_ok($$select public.get_staff_transaction_report('20550000-0000-4000-8000-000000000002',current_date,current_date,'40550000-0000-4000-8000-000000000003')$$,'42501',null,'staff transaction report rejects another tenant');
+select throws_ok($$select public.get_staff_transaction_report('20550000-0000-4000-8000-000000000001',current_date-90,current_date,'40550000-0000-4000-8000-000000000001')$$,'42501',null,'Free staff report cannot bypass historical scope');
+select is((public.generate_credit_report('20550000-0000-4000-8000-000000000001','c0550000-0000-4000-8000-000000000001',jsonb_build_object('kind','staff','action','advanced_report','start',(now() at time zone 'Asia/Manila')::date,'end',(now() at time zone 'Asia/Manila')::date,'branch','40550000-0000-4000-8000-000000000001'))->>'cost')::integer,0,'Free filtered staff report costs zero');
+select is(jsonb_array_length(public.generate_credit_report('20550000-0000-4000-8000-000000000001','c0550000-0000-4000-8000-000000000001',jsonb_build_object('kind','staff','action','advanced_report','start',(now() at time zone 'Asia/Manila')::date,'end',(now() at time zone 'Asia/Manila')::date,'branch','40550000-0000-4000-8000-000000000001'))->'report'->'rows'),2,'staff snapshot retry returns the same transaction details');
+set local "request.jwt.claims"='{"sub":"10550000-0000-4000-8000-000000000003","role":"authenticated"}';
+select throws_ok($$select public.get_staff_transaction_report('20550000-0000-4000-8000-000000000001',current_date,current_date,'40550000-0000-4000-8000-000000000001')$$,'42501',null,'staff transaction report rejects restricted branch');
+reset role;
+set local role anon;
+select throws_ok($$select public.get_staff_transaction_report('20550000-0000-4000-8000-000000000001',current_date,current_date,'40550000-0000-4000-8000-000000000001')$$,'42501',null,'anonymous staff report access denied');
+
 select * from finish();
 rollback;

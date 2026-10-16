@@ -1,3 +1,4 @@
+import { CreditDashboardNotice } from "@/components/credit-dashboard-notice";
 import { LookupScopeProvider } from "@/components/lookup-scope";
 import { isPlatformAdmin } from "@/modules/platform/admin-access";
 import { loadPlanUpgrades } from "@/lib/billing/upgrades";
@@ -15,5 +16,5 @@ export default async function DashboardLayout({ children }: { children: React.Re
   const context = await getDashboardContext();
   const upgrades = await loadPlanUpgrades(await createClient(), context.activeMembership.organizationId);
   const scope = JSON.stringify([context.user.id, context.activeMembership.organizationId, context.activeMembership.branchId, context.activeMembership.role]);
-  return <AppShell platformAdmin={isPlatformAdmin(context.user.id, process.env.PLATFORM_ADMIN_USER_IDS)} upgrades={upgrades} activeMembership={context.activeMembership} memberships={context.memberships} profileName={context.profile.fullName} dashboardTheme={context.profile.dashboardTheme}><LookupScopeProvider key={scope} scope={scope}>{children}</LookupScopeProvider></AppShell>;
+  return <AppShell platformAdmin={isPlatformAdmin(context.user.id, process.env.PLATFORM_ADMIN_USER_IDS)} upgrades={upgrades} activeMembership={context.activeMembership} memberships={context.memberships} profileName={context.profile.fullName} dashboardTheme={context.profile.dashboardTheme}><LookupScopeProvider key={scope} scope={scope}>{context.activeMembership.role === "owner" ? <CreditDashboardNotice key={context.activeMembership.organizationId} organizationId={context.activeMembership.organizationId}/> : null}{children}</LookupScopeProvider></AppShell>;
 }

@@ -118,3 +118,11 @@ test("hospitality offers website upgrades without advertising appointment bookin
   assert.equal(upgrade?.description, "business includes a public website.");
   assert.equal(selectUpgrade(state(2), "hospitality", "public_page"), null);
 });
+
+test("credit upgrade recommendations use live allowances and skip unconfigured custom plans", () => {
+  const catalog=plans.map((plan,index)=>({...plan,monthly_credits:[0,100,300,750,null][index],credit_grant_policy:index>0?"subscription_month":null}));
+  const growth=resolveUpgradeState({...entitlements(2),monthlyCredits:300},catalog);
+  assert.equal(selectUpgrade(growth,"salon","usage_credits")?.plan.id,"pro");
+  const pro=resolveUpgradeState({...entitlements(3),monthlyCredits:750},catalog);
+  assert.equal(selectUpgrade(pro,"salon","usage_credits"),null);
+});

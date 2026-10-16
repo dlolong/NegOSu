@@ -124,3 +124,16 @@ Staff access layout regression: `npm run test:e2e -- e2e/staff-access.spec.ts e2
 The staff-access browser suite also checks that the permission info box starts collapsed, expands with the keyboard, retains desktop/mobile role details for both industries, and does not overflow the viewport.
 
 Billing availability: `tests/billing-overview.test.ts` covers missing provider columns/RPCs, scoped organization queries, valid provider intervals, per-plan drift, denied reads, null entitlement payloads, and empty catalogs. `e2e/billing.spec.ts` checks the actual billing view at desktop/320px/390px with missing setup, configured checkout, subscription failure, catalog failure, and empty results. Checkout calls are mocked; tests do not create real provider sessions or charges.
+
+## Approved credit policy regression
+
+Run `npm test` (quoted glob includes both root and nested tests), `npm run lint`, `npm run typecheck`, and `npm run build`. On environments where Turbopack cannot bind its worker port, record that failure and separately run `npx next build --webpack`; do not describe the Turbopack command as passing.
+
+Apply migrations in order to an isolated local database. Run rollback-only pgTAP suites:
+`approved_credit_allowances.sql`, `organization_credits.sql`, `credit_funded_reports.sql` (now entitlement-policy regression), `trial_credits.sql`, `plan_image_uploads.sql`, `notification_outbox.sql`, and the four-vertical checkout/report suites. Check output for `not ok` as well as SQL process exit status.
+
+`CREDIT_TEST_DATABASE=negosu_credit_test_<suffix> CREDIT_TEST_CONTAINER=<local-container> python3 scripts/test-credit-concurrency.py` creates a synthetic organization, runs two simultaneous service-role reservations against one credit, asserts one success and one insufficient result, then removes its fixtures. It rejects database names outside disposable QA prefixes. Never point it at production.
+
+`E2E_BASE_URL=https://forms.test PLAYWRIGHT_CHROME_PATH=<local-chrome> npx playwright test e2e/usage-dashboard.spec.ts e2e/trial-credits.spec.ts --project=desktop-chromium --workers=2` uses browser fixtures, not a live customer workspace. These verify 320/375/390/430 mobile and 1366 desktop layout, usage/history, notification read state, filters/retries and gated CSV. Live end-to-end workflows and provider delivery require separate isolated credentials and actual provider configuration.
+
+Staff report update (migration 0154): `npm test` passed 660 tests; `npm run lint` and `npm run typecheck` passed; `npx next build --webpack` passed. `e2e/trial-credits.spec.ts --project=desktop-chromium --workers=2` passed 14 browser fixture checks, including Staff default pagination and filtered details without total cards at 320px and 1440px. Local SQL passed staff_work_history (24), credit_funded_reports (29), client_purchase_report (103), shared_appointment_reporting (16), and hospitality_general_availability (35): 207 assertions total. New assertions verify authoritative service-backed price, separate staff participation, date scope, snapshot retry, zero-cost Free basic access, and tenant/branch/anonymous denial. Tests use synthetic data, not live customer sessions. Migration 0154 must follow 0153; no production SQL was executed.
