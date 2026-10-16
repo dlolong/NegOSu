@@ -29,31 +29,30 @@ export default async function StayPage({ params, searchParams }: { params: Promi
   if (!result.data) notFound();
   const stay = result.data as Stay, base = `/dashboard/hospitality/stays/${stay.id}`, finance = canHospitality(m.role, "financeRead"), sameBranch = m.branchId === stay.branch_id;
   const canWrite = sameBranch && canHospitality(m.role, "financeWrite"), operate = sameBranch && canHospitality(m.role, "operate");
-  const branch = await db.from("branches").select("name,timezone").eq("id", stay.branch_id).single();
-  const tz = branch.data?.timezone ?? m.timezone, page = pageNumber(q.page);
-  let bill: Bill | null = null, financeError = false, debtAcknowledged = false;
-  let deposit: Deposit | null = null;
-  let rateSnapshot: { priceCentavos: number; finalCentavos?: number; discountType?: string; discountCard?: string; extensionHourlyCentavos?: number } | null = null;
-  let arrival: { tendered: number; change: number } | null = null;
-  if (finance) {
-    const link = await db.from("hospitality_stay_bills").select("invoice_id,checkout_debt_acknowledged,rate_snapshot,check_in_request").eq("stay_id", stay.id).maybeSingle();
-    financeError = Boolean(link.error);
-    debtAcknowledged = link.data?.checkout_debt_acknowledged ?? false;
-    rateSnapshot = link.data?.rate_snapshot ?? null;
-    if (link.data?.check_in_request?.method === "cash" && link.data.rate_snapshot) arrival = { tendered: Number(link.data.check_in_request.tendered), change: Number(link.data.check_in_request.tendered) - Number(link.data.rate_snapshot.finalCentavos ?? link.data.rate_snapshot.priceCentavos) - Number(link.data.check_in_request.deposit ?? 0) };
-    if (link.data) { const invoice = await db.from("invoices").select("id,invoice_number,status,total_centavos,paid_centavos,balance_centavos,customer_name_snapshot,external_receipt_number").eq("id", link.data.invoice_id).single(); bill = invoice.data as Bill | null; financeError ||= Boolean(invoice.error); }
-  }
-  if (bill) { const result = await db.from("invoice_deposits").select("amount_centavos,method,received_at,refunded_at,refund_method,refund_reference").eq("invoice_id", bill.id).maybeSingle(); deposit = result.data; financeError ||= Boolean(result.error); }
-  const extensions = finance && bill ? await db.from("hospitality_stay_extensions").select("id,hours,from_at,to_at,base_centavos,final_centavos,discount_type,receipt_number,created_at", { count: "exact" }).eq("stay_id", stay.id).order("created_at", { ascending: false }).order("id").range((page - 1) * 50, page * 50 - 1) : { data: [], error: null, count: 0 };
-  const extensionRoom = q.dialog === "extend" && canWrite ? await db.from("hospitality_rooms").select("rates,rates_version").eq("id", stay.room_id).single() : { data: null, error: null };
-  financeError ||= Boolean(extensions.error || extensionRoom.error);
-  const staffEvents = await db.from("hospitality_stay_staff_events").select("phase,cashier_name,housekeeper_name,recorded_at").eq("organization_id", m.organizationId).eq("stay_id", stay.id).order("recorded_at");
-  let shiftStaff: Awaited<ReturnType<typeof hospitalityShiftStaff>> = [], staffError = false;
-  if (q.dialog === "checkout" && operate) { try { shiftStaff = await hospitalityShiftStaff(m.organizationId, m.branchId); } catch { staffError = true; } }
-  const [charges, payments] = bill && (q.tab === "charges" || q.dialog) ? await Promise.all([
-    db.from("invoice_items").select("id,description_snapshot,quantity,unit_price_centavos,line_total_centavos", { count: "exact" }).eq("invoice_id", bill.id).order("id").range((page - 1) * 50, page * 50 - 1),
-    db.from("payments").select("id,amount_centavos,method,status,reference,paid_at,receipt_number", { count: "exact" }).eq("invoice_id", bill.id).order("paid_at", { ascending: false }).range((page - 1) * 50, page * 50 - 1),
-  ]) : [{ data: [], error: null, count: 0 }, { data: [], error: null, count: 0 }];
+  const page = pageNumber(q.page);
+  const [branch, link, extensions, extensionRoom, staffEvents, staffResult] = await Promise.all([
+    db.from("branches").select("name,timezone").eq("id", stay.branch_id).single(),
+    finance ? db.from("hospitality_stay_bills").select("invoice_id,checkout_debt_acknowledged,rate_snapshot,check_in_request").eq("stay_id", stay.id).maybeSingle() : Promise.resolve({data:null,error:null}),
+    finance ? db.from("hospitality_stay_extensions").select("id,hours,from_at,to_at,base_centavos,final_centavos,discount_type,receipt_number,created_at", { count: "exact" }).eq("stay_id", stay.id).order("created_at", { ascending: false }).order("id").range((page - 1) * 50, page * 50 - 1) : Promise.resolve({ data: [], error: null, count: 0 }),
+    q.dialog === "extend" && canWrite ? db.from("hospitality_rooms").select("rates,rates_version").eq("id", stay.room_id).single() : Promise.resolve({ data: null, error: null }),
+    db.from("hospitality_stay_staff_events").select("phase,cashier_name,housekeeper_name,recorded_at").eq("organization_id", m.organizationId).eq("stay_id", stay.id).order("recorded_at"),
+    q.dialog === "checkout" && operate ? hospitalityShiftStaff(m.organizationId, m.branchId).then(data => ({data,error:false})).catch(() => ({data:[],error:true})) : Promise.resolve({data:[],error:false}),
+  ]);
+  const tz = branch.data?.timezone ?? m.timezone;
+  const debtAcknowledged = link.data?.checkout_debt_acknowledged ?? false;
+  const rateSnapshot: { priceCentavos: number; finalCentavos?: number; discountType?: string; discountCard?: string; extensionHourlyCentavos?: number } | null = link.data?.rate_snapshot ?? null;
+  const arrival = link.data?.check_in_request?.method === "cash" && rateSnapshot ? { tendered: Number(link.data.check_in_request.tendered), change: Number(link.data.check_in_request.tendered) - Number(rateSnapshot.finalCentavos ?? rateSnapshot.priceCentavos) - Number(link.data.check_in_request.deposit ?? 0) } : null;
+  const shiftStaff = staffResult.data, staffError = staffResult.error;
+  const invoiceId = link.data?.invoice_id;
+  // These all depend on the bill link, not on one another. Never cache money/status.
+  const [invoice, depositResult, charges, payments] = await Promise.all([
+    invoiceId ? db.from("invoices").select("id,invoice_number,status,total_centavos,paid_centavos,balance_centavos,customer_name_snapshot,external_receipt_number").eq("id", invoiceId).single() : Promise.resolve({data:null,error:null}),
+    invoiceId ? db.from("invoice_deposits").select("amount_centavos,method,received_at,refunded_at,refund_method,refund_reference").eq("invoice_id", invoiceId).maybeSingle() : Promise.resolve({data:null,error:null}),
+    invoiceId && (q.tab === "charges" || q.dialog === "reverse") ? db.from("invoice_items").select("id,description_snapshot,quantity,unit_price_centavos,line_total_centavos", { count: "exact" }).eq("invoice_id", invoiceId).order("id").range((page - 1) * 50, page * 50 - 1) : Promise.resolve({data:[],error:null,count:0}),
+    invoiceId && (q.tab === "charges" || q.dialog === "reverse") ? db.from("payments").select("id,amount_centavos,method,status,reference,paid_at,receipt_number", { count: "exact" }).eq("invoice_id", invoiceId).order("paid_at", { ascending: false }).range((page - 1) * 50, page * 50 - 1) : Promise.resolve({data:[],error:null,count:0}),
+  ]);
+  const bill = invoice.data as Bill | null, deposit = depositResult.data as Deposit | null;
+  const financeError = Boolean(link.error || invoice.error || depositResult.error || extensions.error || extensionRoom.error);
   const payment = payments.data?.find(p => p.id === q.payment);
   const tab = q.tab === "charges" && finance ? "charges" : q.tab === "history" ? "history" : "overview";
   return <main id="hospitality-stay-details" className="mx-auto min-w-0 max-w-6xl">
@@ -72,7 +71,7 @@ export default async function StayPage({ params, searchParams }: { params: Promi
     {tab === "overview" ? <section className="mt-4 rounded-xl border border-admin-border bg-white p-5 shadow-sm"><h2 className="text-lg">Stay information</h2><p className="mt-3 text-sm">Guest: {stay.guest_id ? <Link className="text-brand-primary underline" href={`/dashboard/customers/${stay.guest_id}`}>{stay.guest_name_snapshot}</Link> : stay.guest_name_snapshot === "Walk-in" ? "No name recorded" : stay.guest_name_snapshot}</p><p className="mt-2 whitespace-pre-wrap text-sm">{stay.notes || "No stay notes."}</p>{stay.checked_out_at ? <p className="mt-3 text-sm">Checked out {dateLabel(stay.checked_out_at, tz)}. Check Rooms for current cleaning status and availability. Financial records remain available for later collection.</p> : null}<p className="mt-3 text-xs text-slate-500">Room and guest names above are preserved from check-in.</p></section> : null}
     {tab === "history" ? <section className="mt-4 rounded-xl border border-admin-border bg-white p-5 shadow-sm"><h2 className="text-lg">Occupancy history</h2><ol className="mt-3 space-y-3 text-sm"><li>Checked in · {dateLabel(stay.checked_in_at, tz)}</li><li>{stay.checked_out_at ? `Checked out · ${dateLabel(stay.checked_out_at, tz)}` : "Currently in house"}</li>{finance && debtAcknowledged ? <li>Outstanding balance acknowledged at checkout; bill preserved.</li> : null}</ol></section> : null}
     {tab === "charges" && !financeError ? <section id="hospitality-stay-charges" className="mt-4 space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-3"><h2 className="text-lg">Charges & payments</h2><div className="flex flex-wrap justify-end gap-2">{canWrite && bill?.status !== "void" ? <Button id="hospitality-add-charge-button" asChild variant="secondary"><Link href={`${base}?tab=charges&dialog=charge`}><Plus size={16}/>Additional charge</Link></Button> : null}{canWrite && bill && bill.status!=="void" ? <CheckoutEntry invoiceId={bill.id} id="hospitality-checkout-button" label="Checkout / Review charges"/> : null}{bill ? <Button asChild variant="secondary"><Link id="hospitality-receipt-link" href={`${base}/receipt`}><Printer size={16}/>Statement</Link></Button> : null}</div></div>
+      <div className="flex flex-wrap items-center justify-between gap-3"><h2 className="text-lg">Charges & payments</h2><div className="flex flex-wrap justify-end gap-2">{canWrite && bill?.status !== "void" ? <Button id="hospitality-add-charge-button" asChild variant="secondary"><Link href={`${base}?tab=charges&dialog=charge`}><Plus size={16}/>Additional charge</Link></Button> : null}{canWrite && bill && bill.status!=="void" ? <CheckoutEntry invoiceId={bill.id} id="hospitality-checkout-button" label="Checkout / Review charges"/> : null}{bill ? <Button asChild variant="secondary"><Link id="hospitality-customer-receipt-link" href={`${base}/check-in-receipt`}><Printer size={16}/>Customer receipt</Link></Button> : null}{bill ? <Button asChild variant="secondary"><Link id="hospitality-receipt-link" href={`${base}/receipt`}><Printer size={16}/>Statement</Link></Button> : null}</div></div>
       <p className="text-xs text-slate-500">Charges use the agreed final prices. Refundable deposits are separate from room revenue and do not pay down the bill. Additional charges do not deduct inventory. Recorded payments document money received by the business; NegOSu does not process the transaction.</p>
       {bill ? <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-admin-border bg-white p-4"><p className="min-w-0 break-words text-sm">Paper receipt: {bill.external_receipt_number || "Not recorded"}</p>{canWrite ? <Button asChild variant="secondary" size="sm"><Link id="hospitality-edit-receipt-button" href={`${base}?tab=charges&dialog=receipt`}><ReceiptText size={16}/>Edit receipt number</Link></Button> : null}</div> : null}
       {(extensions.data ?? []).length ? <RecordTable searchable id="hospitality-extension-table" caption="Stay extensions" columns={[{ key: "period", label: "Extension" }, { key: "price", label: "Final price", align: "right" }]} rows={(extensions.data ?? []).map(e => ({ id: `hospitality-extension-${e.id}`, cells: { period: <>{e.hours} hour(s) · Ends {dateLabel(e.to_at, tz)}<p className="text-xs text-slate-500">Original {formatMoney(e.base_centavos, m.currency)} · {e.discount_type === "none" ? "No discount" : e.discount_type}{e.receipt_number ? ` · Receipt ${e.receipt_number}` : ""}</p></>, price: formatMoney(e.final_centavos, m.currency) } }))}/> : null}

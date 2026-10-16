@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { ClientPurchases } from "@/components/reports/client-purchases";
 import { ErrorState, PageHeader } from "@/components/page-patterns";
-import { PlanUpgradeNotice } from "@/components/plan-upgrade";
+import { CreditReportPage } from "@/components/reports/credit-reports-page";
 import { getDashboardContext } from "@/lib/auth/context";
 import { createClient } from "@/lib/supabase/server";
 import { roleHasPermission } from "@/lib/rbac";
@@ -18,7 +18,7 @@ export async function ClientPurchaseReportPage({ searchParams }: { searchParams:
   const access = await db.rpc("get_org_entitlements", { p_organization_id: membership.organizationId });
   const entitlement = reportAccessSchema.safeParse(access.data);
   if (access.error || !entitlement.success) return shell(<ErrorState id="client-purchases-plan-error" description="Could not check report access. Refresh to try again."/>);
-  if (!entitlement.data.features.advanced_reports) return shell(<><p className="text-sm">Client purchase details and custom filters are included with advanced reports. Your summary reports remain available.</p><PlanUpgradeNotice id="client-purchases-plan-upgrade" capability="advanced_reports"/></>);
+  if (!entitlement.data.features.advanced_reports) return <CreditReportPage/>;
   const parsed = clientPurchaseQuerySchema.safeParse(Object.fromEntries(Object.entries(raw).filter(([, value]) => value !== "" && value !== undefined)));
   if (!parsed.success) return shell(<ErrorState id="client-purchases-filter-error" title="Check your filters" description="Choose valid dates in order (up to 732 days), a branch, purchase type, and search text up to 120 characters." action={<Link id="client-purchases-reset" href="/dashboard/reports/clients" className="underline">Reset filters</Link>}/>);
   let result: Awaited<ReturnType<typeof loadClientPurchaseReport>>;

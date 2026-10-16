@@ -148,6 +148,14 @@ export async function getAutomotiveCommandCenter(shared: SharedCommandCenterSnap
     staff: deriveAutomotiveStaff(staff),
   });
 
+  if (shared.activity) snapshot.metrics = [
+    ...shared.metrics.filter(metric => metric.key === "appointments_today"),
+    { key: "jobs_progress", label: "Jobs in progress", value: shared.activity.jobsInProgress, valueKind: "count" },
+    { key: "approval", label: "Awaiting approval", value: shared.activity.awaitingApproval, valueKind: "count" },
+    { key: "ready", label: "Ready for release", value: shared.activity.readyRelease, valueKind: "count" },
+    ...shared.metrics.filter(metric => metric.valueKind === "currency"),
+  ];
+
   return {
     snapshot,
     sectionErrors: {

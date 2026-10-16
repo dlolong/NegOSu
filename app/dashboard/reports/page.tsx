@@ -1,3 +1,4 @@
+import { CreditReportPage } from "@/components/reports/credit-reports-page";
 import { PageTitle } from "@/components/page-title";
 import { ClientPurchaseReportPage } from "@/components/reports/client-purchases-page";
 import { resolveReportsView } from "@/modules/core/reporting/report-view";
@@ -27,13 +28,11 @@ type ReportSection = (typeof reportSections)[number];
 
 export default async function Page({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const raw = await searchParams;
-  if (resolveReportsView(raw) === "clients") return <ClientPurchaseReportPage searchParams={Promise.resolve(raw)}/>;
   const [{ activeMembership }, supabase] = await Promise.all([
     getDashboardContext(),
     createClient(),
   ]);
 
-  if (activeMembership.industry === "hospitality") { const { HospitalityReport } = await import("@/components/hospitality/report"); return <HospitalityReport query={Object.fromEntries(Object.entries(raw).flatMap(([key, value]) => typeof value === "string" ? [[key, value]] : []))}/>; }
   if (!roleHasPermission(activeMembership.role, "reports.view")) {
     return <ReportState title="Reports are not available" description="You do not have reporting access." />;
   }
@@ -50,6 +49,9 @@ export default async function Page({ searchParams }: { searchParams: Promise<Rec
     return <ReportState title="Could not check report access" description="Try loading this page again shortly." retry />;
   }
   const advanced = entitlement.data.features.advanced_reports;
+  if (raw.view !== "basic") return <CreditReportPage/>;
+  if (advanced && resolveReportsView(raw) === "clients") return <ClientPurchaseReportPage searchParams={Promise.resolve(raw)}/>;
+  if (activeMembership.industry === "hospitality") { const { HospitalityReport } = await import("@/components/hospitality/report"); return <HospitalityReport query={Object.fromEntries(Object.entries(raw).flatMap(([key, value]) => typeof value === "string" ? [[key, value]] : []))}/>; }
   const { filters, branch, range } = resolveReportScope(parsed.success ? parsed.data : reportQuerySchema.parse({}), activeMembership, advanced);
   const requestedSection = typeof raw.section === "string" ? raw.section : "overview";
   const candidateSection: ReportSection = reportSections.includes(requestedSection as ReportSection)
@@ -102,21 +104,16 @@ export default async function Page({ searchParams }: { searchParams: Promise<Rec
         <nav id="reports-header-actions" aria-label="Report actions" className="flex max-w-full flex-wrap items-center gap-2 sm:ml-auto sm:justify-end">
         <Button asChild variant="secondary" size="sm"><Link id="reports-client-purchases-link" href="/dashboard/reports/clients">Client purchases</Link></Button>
         <Button asChild variant="secondary" size="sm"><Link id="reports-product-sales-link" href="/dashboard/reports/products">Product sales & handover</Link></Button>
+        <Button asChild variant="secondary" size="sm"><Link id="reports-saved-link" href="/dashboard/reports/trial">Saved reports</Link></Button>
         {advanced ? <Button id="reports-export-button" asChild variant="secondary" size="sm">
           <Link href={`/dashboard/reports/export?${exportQuery}`}><DownloadIcon aria-hidden="true" size={16} className="shrink-0"/>Export CSV</Link>
         </Button> : null}
         </nav>
       </header>
 
-      {!advanced ? <Card id="reports-free-plan-info" className="mt-5 flex min-w-0 flex-wrap items-center justify-between gap-3 p-3">
-        <div className="min-w-0">
-          <h2 className="text-sm font-medium">Free reports · Last 30 days</h2>
-          <p className="mt-1 text-sm text-admin-text-secondary">{activeMembership.branchName} · Summary reports</p>
-        </div>
-        <PlanUpgradeNotice id="reports-plan-upgrade" capability="advanced_reports" compact/>
-      </Card> : null}
+      {!advanced ? <PlanUpgradeNotice id="reports-plan-upgrade" capability="advanced_reports"/> : null}
 
-      {advanced ? <CompactFilters id="reports-filter-form" hasFilters clearHref="/dashboard/reports?view=overview" hiddenFields={<><input type="hidden" name="view" value="overview"/><input type="hidden" name="section" value={section} /></>}>
+      {<CompactFilters id="reports-filter-form" hasFilters clearHref="/dashboard/reports?view=overview" hiddenFields={<><input type="hidden" name="view" value="overview"/><input type="hidden" name="section" value={section} /></>}>
 
         <label className="grid gap-1 text-xs font-medium" htmlFor="reports-period-select">
           Period
@@ -128,13 +125,13 @@ export default async function Page({ searchParams }: { searchParams: Promise<Rec
         <label className="grid gap-1 text-xs font-medium" htmlFor="reports-end-date-input">To<Input id="reports-end-date-input" className={inputClass} type="date" name="end" defaultValue={range.end} /></label>
         <label className="grid gap-1 text-xs font-medium" htmlFor="reports-branch-select">
           Branch
-          <select id="reports-branch-select" className={inputClass} name="branch" defaultValue={branch}>
-            <option value="all">All accessible branches</option>
+          <select id="reports-branch-select" className={inputClass} name="branch" defaultValue={branch} disabled={!advanced}>
+            {advanced ? <option value="all">All accessible branches</option> : null}
             {activeMembership.branches.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}
           </select>
         </label>
         <Button id="reports-apply-filters-button" type="submit"><SearchIcon aria-hidden="true" size={16} className="shrink-0"/>Apply</Button>
-      </CompactFilters> : null}
+      </CompactFilters>}
       <p id="reports-range-description" className="mt-2 text-xs text-zinc-500">{range.start} to {range.end} · local calendar dates per branch timezone{appointmentBased ? " · Sales: completed appointments by scheduled date. Receipts: payment date. Outstanding: current balances for appointments in this period." : ""}</p>
 
       <section id="reports-summary" aria-label="Report summary" className="mt-4 grid grid-cols-2 gap-3 lg:grid-cols-5">

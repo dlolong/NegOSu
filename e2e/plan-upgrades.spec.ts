@@ -21,7 +21,7 @@ async function noBanner(page: Page) {
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1)).toBe(true);
 }
 
-test("Free workspace has no general upsells; Reports upgrade stays within limited-access info", async ({ page }, info) => {
+test("Free workspace routes report upgrade notices to the notification bell", async ({ page }, info) => {
   await login(page, "other");
   for (const path of ["/dashboard", "/dashboard/hospitality/rooms", "/dashboard/payments", "/dashboard/settings/staff", "/dashboard/settings/branches/new"]) {
     await page.goto(path);
@@ -30,13 +30,11 @@ test("Free workspace has no general upsells; Reports upgrade stays within limite
   }
   await page.goto("/dashboard/reports");
   await noBanner(page);
-  await expect(page.locator("#hospitality-reports-plan-upgrade")).toBeVisible();
-  await expect(page.locator("#hospitality-reports-plan-upgrade-button")).toHaveAttribute("href", "/dashboard/settings/billing#billing-plan-starter");
+  await expect(page.locator("#hospitality-reports-plan-upgrade")).toHaveCount(0);
+  await page.locator("#dashboard-notification-bell").click();
+  await expect(page.locator("#plan-notice-advanced_reports-link")).toHaveAttribute("href", "/dashboard/settings/billing#billing-plan-starter");
   await page.screenshot({ path: `/private/tmp/negosu-upgrade-${info.project.name}.png`, fullPage: true });
-  await page.emulateMedia({ media: "print" });
-  await expect(page.locator("#hospitality-reports-plan-upgrade")).toBeHidden();
-  await page.emulateMedia({ media: "screen" });
-  await page.locator("#hospitality-reports-plan-upgrade-button").click();
+  await page.locator("#plan-notice-advanced_reports-link").click();
   await expect(page.locator("#billing-plan-starter")).toBeVisible();
 });
 
@@ -49,9 +47,10 @@ test("branch upgrade appears only after the database rejects an over-limit addit
   await page.locator("#branch-city-input").fill("Test city");
   await page.locator("#branch-province-input").fill("Test province");
   await page.locator("#branch-save-button").click();
-  await expect(page.locator("#form-plan-upgrade")).toBeVisible();
-  await expect(page.locator("#form-plan-upgrade")).toContainText("limit has been reached");
-  await expect(page.locator("#form-plan-upgrade-button")).toHaveAttribute("href", "/dashboard/settings/billing#billing-plan-business");
+  await expect(page.locator("#form-plan-upgrade")).toHaveCount(0);
+  await page.locator("#dashboard-notification-bell").click();
+  await expect(page.locator("#plan-notice-branches")).toContainText("limit has been reached");
+  await expect(page.locator("#plan-notice-branches-link")).toHaveAttribute("href", "/dashboard/settings/billing#billing-plan-business");
   await noBanner(page);
 });
 

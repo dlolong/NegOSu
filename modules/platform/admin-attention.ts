@@ -1,3 +1,4 @@
+import type { CreditNotice } from "@/modules/platform/credits";
 import { reminderAttentionCutoff } from "@/modules/core/crm/client-reminders";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { OrganizationMembership } from "@/lib/auth/context";
@@ -8,6 +9,7 @@ import { automotiveActiveJobStatuses } from "@/modules/automotive/command-center
 export type AttentionKind = "messages" | "bookings" | "appointments" | "stock" | "jobs" | "orders" | "reminders";
 export type AttentionItem = { id: AttentionKind; title: string; description: string; count: number; href: string };
 export type AttentionSnapshot = {
+  creditNotices?: CreditNotice[];
   organizationId: string; branchId: string; branchName: string;
   items: AttentionItem[]; total: number; unavailable: string[]; updatedAt: string;
 };

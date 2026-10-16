@@ -1,8 +1,6 @@
 import { PageTitle } from "@/components/page-title";
 import { WorkspaceColumns } from "@/components/workspace-columns";
 import { DashboardDiscovery } from "@/components/dashboard-discovery";
-import { DashboardChart } from "@/components/dashboard-chart";
-import { statusChart } from "@/modules/platform/chart-data";
 
 import { ArrowRight as ArrowRightIcon, CalendarDays, Plus as PlusIcon, Settings as SettingsIcon } from "lucide-react";
 import Link from "next/link";
@@ -26,7 +24,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
   const [query, context] = await Promise.all([searchParams, getDashboardContext()]);
   const { activeMembership, profile } = context;
   if (activeMembership.industry === "hospitality") { const { HospitalityOverview } = await import("@/components/hospitality/overview"); return <HospitalityOverview branch={query.branch}/>; }
-  if (activeMembership.industry === "pet_care") redirect("/dashboard/pet-care");
+  if (activeMembership.industry === "pet_care") { if (["owner", "manager"].includes(activeMembership.role)) { const { PetOverview } = await import("@/components/pet-care/overview"); return <PetOverview branch={query.branch}/>; } redirect("/dashboard/pet-care"); }
   const isCommandCenterRole = activeMembership.role === "owner" || activeMembership.role === "manager";
   if (!isCommandCenterRole) {
     if (activeMembership.industry === "automotive" && activeMembership.role === "technician") redirect("/dashboard/my-work");
@@ -102,7 +100,6 @@ async function StaffOperationalDashboard({ query, context }: { query: DashboardQ
       })}</div>
       {!appointments.length && !error ? <p id="negosu-staff-dashboard-empty" className="py-8 text-center text-sm text-slate-500">No Appointments are scheduled for this branch today.</p> : null}
     </section>
-    {!error ? <DashboardChart id="staff-appointments-chart" title="Appointment status" description="Today · Status of the first 10 appointments in this branch schedule." points={statusChart(appointments)}/> : null}
     </WorkspaceColumns>
   </main>;
 }

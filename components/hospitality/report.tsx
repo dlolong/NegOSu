@@ -1,5 +1,7 @@
+import { PaymentsLayout } from "@/components/payments-layout";
 import { PlanUpgradeNotice } from "@/components/plan-upgrade";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { Download } from "lucide-react";
 import { reportAccessSchema, reportQuerySchema } from "@/lib/reporting";
 import { resolveHospitalityReportScope } from "@/modules/hospitality/reporting";
@@ -21,13 +23,19 @@ export async function HospitalityReport({ query: q, mode = "report" }: { query: 
   const { db, activeMembership: m } = await hospitalityContext();
   const finance = canHospitality(m.role, "financeRead"), inventory = roleHasPermission(m.role, "inventory.manage");
   if ((mode === "report" && !roleHasPermission(m.role, "reports.view")) || (mode === "payments" && !finance)) return <LoadError>You do not have access to this page.</LoadError>;
+  // Existing stay-history bookmarks continue to work from the Bookings workspace.
+  if (mode === "payments" && q.section === "stays") {
+    const params = new URLSearchParams({tab:"history"});
+    for (const key of ["preset","start","end","page"] as const) if(q[key]) params.set(key,q[key]!);
+    redirect(`/dashboard/hospitality/bookings?${params}`);
+  }
   const access = await db.rpc("get_org_entitlements", { p_organization_id: m.organizationId });
   const entitlement = reportAccessSchema.safeParse(access.data);
   if (access.error || !entitlement.success) return <LoadError>Could not check report access. Refresh to try again.</LoadError>;
   const advanced = entitlement.data.features.advanced_reports, parsed = reportQuerySchema.safeParse(q);
   const filters = parsed.success ? parsed.data : reportQuerySchema.parse({ branch: m.branchId });
   const scope = resolveHospitalityReportScope(filters, m, advanced, mode);
-  const options = mode === "payments" ? [sections[3], sections[2], sections[6], sections[0]] : mode === "history" ? [sections[0]] : sections.filter(s => (!['collections', 'outstanding', 'deposits'].includes(s.value) || finance) && (!['inventory', 'movements'].includes(s.value) || inventory));
+  const options = mode === "payments" ? [sections[3], sections[2], sections[6]] : mode === "history" ? [sections[0]] : sections.filter(s => (!['collections', 'outstanding', 'deposits'].includes(s.value) || finance) && (!['inventory', 'movements'].includes(s.value) || inventory));
   const section = options.some(s => s.value === q.section) ? q.section! : options[0].value, page = pageNumber(q.page);
   let report: HospitalityWorkspace;
   try { report = await loadHospitalityWorkspace({ branch: scope.branch === "all" ? null : scope.branch, start: scope.range.start, end: scope.range.end, section, page, mode }); } catch { return <LoadError>Could not load these records. Check the selected dates and branch, then try again.</LoadError>; }
@@ -57,12 +65,20 @@ export async function HospitalityReport({ query: q, mode = "report" }: { query: 
     </> : null}
     {advanced ? <Button asChild variant="secondary" size="sm"><Link id="hospitality-report-export" href={`/dashboard/reports/export?${qs}`}><Download size={16} aria-hidden="true"/>Export CSV</Link></Button> : null}
   </nav>;
-  return <main id={mode === "report" ? "hospitality-reports-page" : mode === "payments" ? "hospitality-payments-page" : "hospitality-stay-history-page"} className="mx-auto min-w-0 max-w-7xl">
-    {finance && mode === "payments"?<div className="flex flex-wrap gap-4"><Link id="hospitality-product-sales-link" className="inline-flex min-h-11 items-center underline" href="/dashboard/reports/products">Product sales & handover</Link><Link id="hospitality-product-sale-link" className="inline-flex min-h-11 items-center underline" href="/dashboard/checkout/new">New product sale</Link><Link id="hospitality-all-balances-link" className="inline-flex min-h-11 items-center underline" href="/dashboard/payments/ledger">All bills & product balances</Link></div>:null}
-    <PageHeader id={`hospitality-${mode}-header`} title={mode === "report" ? "Reports" : mode === "payments" ? "Payments" : "Bookings"} description={mode === "history" ? "Review guest stays, check-ins and checkouts for the selected dates." : mode === "payments" ? "Guest collections and balances." : "Activity uses each branch’s local dates. Room status, in-house stays, balances and stock are current snapshots."} action={mode === "payments" ? filterControls : mode === "report" ? reportActions : undefined}/>
+  if (mode === "payments") return <PaymentsLayout key={section} id="hospitality-payments-page" headerId="hospitality-payments-header" description="Guest collections, deposits and outstanding balances." localSearch
+    tabs={<ListTabs id="hospitality-report-tabs" baseHref={base} parameter="section" query={query} value={section} options={options}/>}
+    toolbar={<>{filterControls}<Button asChild variant="secondary"><Link id="hospitality-all-balances-link" href="/dashboard/payments/ledger">Bills & balances</Link></Button><Button asChild variant="secondary"><Link id="hospitality-product-sale-link" href="/dashboard/checkout/new">New product sale</Link></Button><Button asChild variant="ghost"><Link id="hospitality-payments-bookings-link" href="/dashboard/hospitality/bookings">Bookings</Link></Button>{roleHasPermission(m.role,"reports.view") ? <Button asChild variant="ghost"><Link id="hospitality-payments-reports-link" href="/dashboard/reports">Reports & exports</Link></Button> : null}</>}
+    summary={<><p className="text-xs text-admin-text-secondary">Activity period: {scope.range.start} to {scope.range.end}</p><div id="hospitality-report-summary" className="mt-3 grid grid-cols-2 gap-3">{metrics.map(metric=><Metric key={metric.label} {...metric}/>)}</div></>}>
+    <p className="mb-3 text-xs text-admin-text-secondary">{section === "deposits" ? "Held deposits and deposits received or returned in this period. Deposits are excluded from revenue." : section === "outstanding" ? "All current outstanding balances, independent of the activity period." : section === "collections" ? "Payments received in this period. Voided and refunded entries are excluded from collected totals." : "Current in-house stays plus arrivals and departures during this period."} Totals cover the full authorized scope; search applies to loaded rows.</p>
+    <ReportRows toolbarSearch rows={report.rows} section={section} timezone={m.timezone} currency={m.currency} canCheckout={false}/>
+    <PageLinks page={page} count={report.rowCount} href={p=>`${base}?${qs}&page=${p}`}/>
+    {section === "collections" && report.finance ? <details id="hospitality-payments-methods" className="mt-4 rounded-xl border p-4 text-sm"><summary className="cursor-pointer">Collections by method</summary><div className="mt-3 flex flex-wrap gap-3">{report.finance.methods.map(method=><span key={method.method}>{method.method.replaceAll("_"," ")}: {formatMoney(method.amount,m.currency)}</span>)}</div></details> : null}
+  </PaymentsLayout>;
+  return <main id={mode === "report" ? "hospitality-reports-page" : "hospitality-stay-history-page"} className="mx-auto min-w-0 max-w-7xl">
+    <PageHeader id={`hospitality-${mode}-header`} title={mode === "report" ? "Reports" : "Bookings"} description={mode === "history" ? "Review guest stays, check-ins and checkouts for the selected dates." : "Activity uses each branch’s local dates. Room status, in-house stays, balances and stock are current snapshots."} action={mode === "report" ? reportActions : undefined}/>
     {mode === "history" ? <BookingTabs value="history"/> : null}
-    {!advanced ? <div className="mt-4 flex flex-wrap items-center gap-3 rounded-xl border border-admin-border bg-admin-surface-muted p-3 text-sm"><p className="text-admin-text-secondary">Free plan · Current branch · Up to 30 days. Custom dates require a paid plan.</p><PlanUpgradeNotice id="hospitality-reports-plan-upgrade" capability="advanced_reports" compact/></div> : null}
-    {mode !== "payments" ? filterControls : null}
+    {!advanced ? <PlanUpgradeNotice id="hospitality-reports-plan-upgrade" capability="advanced_reports"/> : null}
+    {filterControls}
     <p className="mt-4 text-xs text-slate-500">Activity period: {scope.range.start} to {scope.range.end}</p>
     <div id="hospitality-report-summary" className="mt-3 grid grid-cols-2 gap-3 lg:grid-cols-3">{metrics.map(metric => <Metric key={metric.label} {...metric}/>)}</div>
     {mode !== "history" ? <ListTabs id="hospitality-report-tabs" baseHref={base} parameter="section" query={query} value={section} options={options}/> : null}
@@ -72,11 +88,11 @@ export async function HospitalityReport({ query: q, mode = "report" }: { query: 
   </main>;
 }
 function Metric({ label, value }: { label: string; value: number | string }) { return <div className="min-w-0 rounded-xl border border-admin-border bg-white p-4 shadow-sm"><p className="text-xs text-slate-500">{label}</p><p className="mt-1 text-xl [overflow-wrap:anywhere]">{value}</p></div>; }
-function ReportRows({ rows, section, timezone, currency, canCheckout }: { canCheckout: boolean; rows: WorkspaceRow[]; section: string; timezone: string; currency: string }) {
+function ReportRows({ rows, section, timezone, currency, canCheckout, toolbarSearch = false }: { toolbarSearch?: boolean; canCheckout: boolean; rows: WorkspaceRow[]; section: string; timezone: string; currency: string }) {
   const fields: Record<string, [string, string][]> = { deposits: [["room", "Room"], ["received_at", "Received"], ["refunded_at", "Returned"], ["status", "Status"], ["amount", "Deposit"]], stays: [["room", "Room"], ["guest", "Guest"], ["checked_in_at", "Checked in"], ["checked_out_at", "Checked out"]], outstanding: [["guest", "Guest / room"], ["charges", "Charges"], ["paid", "Paid"], ["balance", "Balance"]], collections: [["guest", "Guest / room"], ["paid_at", "Received"], ["method", "Method / status"], ["amount", "Amount"]], rooms: [["room", "Room"], ["guest", "Current guest"], ["capacity", "Capacity"], ["status", "Status"]], inventory: [["name", "Product"], ["unit", "Unit"], ["reorder_level", "Low-stock threshold"], ["quantity_on_hand", "On hand"]], movements: [["name", "Product"], ["created_at", "Date"], ["movement_type", "Movement"], ["quantity_delta", "Quantity"]] };
   const columns = [...(fields[section] ?? fields.stays), ...(canCheckout ? [["actions", "Actions"] as [string, string]] : [])];
   const display = (row: WorkspaceRow, key: string) => ['charges', 'paid', 'balance', 'amount'].includes(key) ? formatMoney(Number(row[key] ?? 0), currency) : key === "refunded_at" && !row[key] ? "Not returned" : key.endsWith('_at') ? dateLabel(row[key] as string | null, String(row.timezone ?? timezone)) : String(row[key] ?? "—").replaceAll("_", " ");
-  return <RecordTable searchable id="hospitality-report-table" caption={section} columns={columns.map(([key, label], index) => ({ key, label, secondary: index > 0 && index < columns.length - 1, ...(index === columns.length - 1 ? { align: "right" as const } : {}) }))} rows={rows.map((row, index) => {
+  return <RecordTable searchable={!toolbarSearch} reportSearch={toolbarSearch} id="hospitality-report-table" caption={section} columns={columns.map(([key, label], index) => ({ key, label, secondary: index > 0 && index < columns.length - 1, ...(index === columns.length - 1 ? { align: "right" as const } : {}) }))} rows={rows.map((row, index) => {
     const href = row.invoice_id ? `/dashboard/invoices/${row.invoice_id}` : section === "inventory" ? `/dashboard/inventory?dialog=details&itemId=${row.id}` : section === "rooms" ? row.stay_id ? `/dashboard/hospitality/stays/${row.stay_id}` : `/dashboard/hospitality/rooms/${row.id}` : section === "movements" ? "/dashboard/inventory?view=history" : `/dashboard/hospitality/stays/${row.id}`;
     return { id: `hospitality-report-row-${row.payment_id ?? row.id ?? index}`, cells: Object.fromEntries(columns.map(([key], i) => [key, key === "actions" ? (!row.checked_out_at ? <Button asChild size="sm" variant="secondary"><Link id={`hospitality-history-checkout-${row.id}`} href={`/dashboard/hospitality/stays/${row.id}?dialog=checkout`}>Check out</Link></Button> : "Checked out") : i === 0 ? <><RecordLink href={href}>{display(row, key)}</RecordLink>{row.branch ? <p className="mt-1 text-xs text-slate-500">{String(row.branch)}</p> : null}{section === "collections" || section === "outstanding" ? <p className="mt-1 text-xs text-slate-500">{String(row.room)}{row.checked_out_at ? " · Checked out" : ""}</p> : null}</> : key === "method" ? `${display(row, key)} · ${row.status}` : display(row, key)])), mobile: <>{columns.slice(1, -1).map(([key, label]) => <p key={key}>{label}: {display(row, key)}{key === "method" ? ` · ${row.status}` : ""}</p>)}</> };
   })}/>;

@@ -51,14 +51,14 @@ insert into inventory_movements(organization_id,branch_id,inventory_item_id,move
 ('20540000-0000-4000-8000-000000000001','40540000-0000-4000-8000-000000000001','b0540000-0000-4000-8000-000000000001','opening',2),
 ('20540000-0000-4000-8000-000000000001','40540000-0000-4000-8000-000000000002','b0540000-0000-4000-8000-000000000002','opening',4);
 
-select plan(16);
+select no_plan();
 select has_function('public','get_command_center_shared_metrics',array['uuid','uuid[]'],'shared metric RPC exists');
 
 set local role authenticated;
 set local "request.jwt.claims"='{"sub":"10540000-0000-4000-8000-000000000001","role":"authenticated"}';
 select is((select revenue_today_centavos from get_command_center_shared_metrics('20540000-0000-4000-8000-000000000001',array['40540000-0000-4000-8000-000000000001']::uuid[])),4000::bigint,'revenue uses paid payments in branch local today');
 select is((select appointments_today from get_command_center_shared_metrics('20540000-0000-4000-8000-000000000001',array['40540000-0000-4000-8000-000000000001']::uuid[])),1::bigint,'appointments use Manila local today');
-select is((select outstanding_centavos from get_command_center_shared_metrics('20540000-0000-4000-8000-000000000001',array['40540000-0000-4000-8000-000000000001']::uuid[])),12000::bigint,'outstanding combines invoice and completed Appointment balances');
+select is((select outstanding_centavos from get_command_center_shared_metrics('20540000-0000-4000-8000-000000000001',array['40540000-0000-4000-8000-000000000001']::uuid[])),5000::bigint,'automotive outstanding uses invoices without double-counting appointments');
 select is((select low_stock_count from get_command_center_shared_metrics('20540000-0000-4000-8000-000000000001',array['40540000-0000-4000-8000-000000000001']::uuid[])),1::bigint,'low stock reuses inventory_stock semantics');
 select is((select revenue_today_centavos from get_command_center_shared_metrics('20540000-0000-4000-8000-000000000001',array['40540000-0000-4000-8000-000000000002']::uuid[])),2000::bigint,'New York branch uses its own local today');
 select is((select appointments_today from get_command_center_shared_metrics('20540000-0000-4000-8000-000000000001',array['40540000-0000-4000-8000-000000000002']::uuid[])),1::bigint,'New York appointments use its local today');
@@ -80,5 +80,21 @@ select throws_ok($$select * from get_command_center_shared_metrics('20540000-000
 select throws_ok($$select * from get_command_center_shared_metrics('20540000-0000-4000-8000-000000000001',array['40540000-0000-4000-8000-000000000001','40540000-0000-4000-8000-000000000001']::uuid[])$$,'42501','Command Center access denied','duplicate branch scope is rejected');
 select throws_ok($$select * from get_command_center_shared_metrics('20540000-0000-4000-8000-000000000001','{}'::uuid[])$$,'42501','Command Center access denied','empty branch scope is rejected');
 
+
+select is((get_command_center_activity('20540000-0000-4000-8000-000000000001',array['40540000-0000-4000-8000-000000000001']::uuid[])->>'completedToday')::integer,1,'activity count uses local completed appointments');
+select throws_ok($$select get_command_center_activity('20540000-0000-4000-8000-000000000001',array['40540000-0000-4000-8000-000000000003']::uuid[])$$,'42501',null,'activity RPC enforces cross-tenant branch boundary');
+reset role;
+set local "request.jwt.claims"='{"role":"service_role"}';
+update organizations set industry='salon' where id='20540000-0000-4000-8000-000000000001';
+set local role authenticated;
+set local "request.jwt.claims"='{"sub":"10540000-0000-4000-8000-000000000001","role":"authenticated"}';
+select is((select outstanding_centavos from get_command_center_shared_metrics('20540000-0000-4000-8000-000000000001',array['40540000-0000-4000-8000-000000000001']::uuid[])),7000::bigint,'salon outstanding uses completed appointment minus valid payments; excludes duplicate base invoice');
+reset role;
+update invoices set status='draft' where id='90540000-0000-4000-8000-000000000001';
+set local "request.jwt.claims"='{"role":"service_role"}';
+update organizations set industry='automotive' where id='20540000-0000-4000-8000-000000000001';
+set local role authenticated;
+set local "request.jwt.claims"='{"sub":"10540000-0000-4000-8000-000000000001","role":"authenticated"}';
+select is((select outstanding_centavos from get_command_center_shared_metrics('20540000-0000-4000-8000-000000000001',array['40540000-0000-4000-8000-000000000001']::uuid[])),0::bigint,'draft invoices are not collectible balances');
 select * from finish();
 rollback;

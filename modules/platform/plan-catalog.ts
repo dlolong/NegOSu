@@ -23,7 +23,7 @@ export const launchPlanCatalog: readonly LaunchPlan[] = [
     yearlyPriceCentavos: 0,
     custom: false,
     summary: "Explore the essentials and prepare your first workflow.",
-    highlights: ["1 branch", "2 staff", "Customers or Clients", "Services or Treatments", "Appointments", "Reports: last 30 days"],
+    highlights: ["1 branch", "2 staff", "Customers or Clients", "Services or Treatments", "Appointments", "Recent basic reports"],
   },
   {
     id: "starter",
@@ -92,22 +92,26 @@ export function planMatchesLaunchCatalog(plan: {
 }
 
 export function visiblePlanFeatureLabels(industry: string, features: Record<string, boolean>) {
-  if (industry === "hospitality") return [...(features.public_page ? ["Public business page"] : []), features.advanced_reports ? "Detailed reports and CSV exports" : "Reports: last 30 days, one branch", ...(features.image_uploads ? ["Direct image uploads"] : [])];
+  if (industry === "hospitality") return [...(features.public_page ? ["Public business page"] : []), features.advanced_reports ? "Detailed reports and CSV exports" : "Recent basic reports, one branch", ...(features.image_uploads ? ["Direct image uploads"] : [])];
   if (industry !== "automotive" && industry !== "salon" && industry !== "pet_care") return [];
 
   const labels: string[] = features.image_uploads ? ["Direct image uploads"] : [];
   if (features.public_page) labels.push("Public business page");
   if (features.reminders) labels.push(industry !== "automotive" ? "Appointment reminders" : "Maintenance reminders");
-  labels.push(features.advanced_reports ? "Detailed reports and CSV exports" : "Reports: last 30 days, one branch");
+  labels.push(features.advanced_reports ? "Detailed reports and CSV exports" : "Recent basic reports, one branch");
 
   // `ai` exists in the historical entitlement catalog but has no launch-ready
   // customer workflow. Do not advertise it until the product enables one.
   return labels;
 }
 
-export function presentLivePlans(rows: readonly { id: string; name: string; monthly_price_centavos: number; yearly_price_centavos: number | null; is_custom: boolean }[]): LaunchPlan[] {
-  return rows.flatMap(row => {
-    const template = findLaunchPlan(row.id);
-    return template ? [{ ...template, name: row.name, monthlyPriceCentavos: Number(row.monthly_price_centavos), yearlyPriceCentavos: row.yearly_price_centavos == null ? null : Number(row.yearly_price_centavos), custom: row.is_custom }] : [];
+export type LivePlan = Omit<LaunchPlan, "id"> & { id: string };
+
+export function presentLivePlans(rows: readonly { id: string; name: string; monthly_price_centavos: number; yearly_price_centavos: number | null; is_custom: boolean; limits?: Record<string, number>; features?: Record<string, boolean>; monthly_credits?: number | null; credit_grant_policy?: string | null }[]): LivePlan[] {
+  return rows.map(row => {
+    const template = findLaunchPlan(row.id) ?? { id: row.id, summary: "Review the included features and capacity." };
+    return { ...template, name: row.name, monthlyPriceCentavos: Number(row.monthly_price_centavos), yearlyPriceCentavos: row.yearly_price_centavos == null ? null : Number(row.yearly_price_centavos), custom: row.is_custom, highlights: row.features && row.limits ? [ ...capacityHighlight(row.limits.branches, "branch(es)"), ...capacityHighlight(row.limits.staff, "staff"), "Customers, services and appointments", ...visiblePlanFeatureLabels("salon", row.features), ...(row.monthly_credits != null && row.credit_grant_policy ? [`${row.monthly_credits} credits per configured month`] : []) ] : ["See plan details for included capabilities"] };
   });
 }
+
+function capacityHighlight(value: number | undefined, label: string): string[] { return value == null ? [] : [`${value < 0 ? "Unlimited" : value} ${label}`]; }

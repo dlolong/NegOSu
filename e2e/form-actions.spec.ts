@@ -34,7 +34,8 @@ for (const [fixture, cancelId, destination] of [
 ]) {
   test(`${fixture} Cancel discards edits, navigates correctly, and stays right-aligned`, async ({ page }) => {
     await page.goto(`https://forms.test/fixture?fixture=${fixture}`);
-    const dialog = page.locator("dialog");
+    // Closed auxiliary dialogs are not the active form being canceled.
+    const dialog = page.locator("dialog[open]");
     if (await dialog.count()) {
       const header = dialog.locator("header").first();
       await expect(header.getByRole("link", { name: /^Close / })).toHaveCount(1);

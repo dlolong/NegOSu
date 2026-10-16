@@ -22,7 +22,7 @@ export async function RoomHistory({ roomId, query }: { roomId: string; query: Re
   const history = historySchema.safeParse(result.data);
   const qs = new URLSearchParams({ tab: "history", preset: scope.filters.preset, start: scope.range.start, end: scope.range.end });
   return <section id="hospitality-room-history" className="mt-5">
-    {!advanced ? <div className="flex flex-wrap items-center gap-3 text-sm"><p>Free plan · Up to 30 days. Custom dates require a paid plan.</p><PlanUpgradeNotice id="hospitality-room-history-upgrade" capability="advanced_reports" compact/></div> : null}
+    {!advanced ? <PlanUpgradeNotice id="hospitality-room-history-upgrade" capability="advanced_reports"/> : null}
     <HospitalityReportFilters advanced={advanced} mode="history" section="stays" scope={scope} branchName={m.branchName} branches={m.branches}/>
     <p className="my-3 text-xs text-slate-500">Activity period: {scope.range.start} to {scope.range.end}. Current in-house stays plus check-ins or checkouts during the period.</p>
     {result.error || !history.success ? <LoadError>Room history could not be loaded. Refresh to try again.</LoadError> : <>

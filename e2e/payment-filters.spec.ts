@@ -90,9 +90,26 @@ test("reports and stay history keep their existing collapsible filter controls",
     await page.goto(`https://forms.test/dashboard/reports?mode=${mode}`);
     await expect(page.locator("#hospitality-payments-filters-button")).toHaveCount(0);
     await expect(page.locator("#hospitality-report-filters")).toBeHidden();
-    await page.locator("#hospitality-report-filter-panel summary").click();
+    await page.locator("#hospitality-report-filter-panel-button").click();
     await expect(page.locator("#hospitality-report-filters")).toBeVisible();
     await expect(page.locator("#hospitality-report-branch")).toHaveCount(mode === "report" ? 1 : 0);
     if (mode === "history") await expect(page.locator('input[name="tab"]')).toHaveValue("history");
   }
+});
+
+for (const width of [375, 1366]) test(`payment layout and expandable search at ${width}px`, async ({page}) => {
+ await page.setViewportSize({width,height:900});
+ const tabs=await page.locator("#payment-fixture-tabs").boundingBox();
+ const toolbar=await page.locator("#payments-toolbar").boundingBox();
+ const summary=await page.locator("#payment-fixture-period").boundingBox();
+ const table=await page.locator("#fixture-payments-table").boundingBox();
+ expect(tabs!.y).toBeLessThan(toolbar!.y); expect(toolbar!.y).toBeLessThan(summary!.y); expect(summary!.y).toBeLessThan(table!.y);
+ await expect(page.locator("#payments-table-search-input")).toHaveCount(0);
+ await page.locator("#payments-table-search-button").click();
+ await page.locator("#payments-table-search-input").fill("Ana");
+ await expect(page.locator("#fixture-payments-table")).toContainText("Ana");
+ await expect(page.locator("#fixture-payments-table")).not.toContainText("Ben");
+ await page.locator("#payments-table-search-input").press("Escape");
+ await expect(page.locator("#fixture-payments-table")).toContainText("Ben");
+ expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
 });

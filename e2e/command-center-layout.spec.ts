@@ -15,9 +15,7 @@ for (const width of [390, 768, 1366, 2072]) {
     if (width >= 1280) {
       expect(Math.abs(primary.y - rail.y)).toBeLessThan(2);
       expect(rail.x).toBeGreaterThanOrEqual(primary.x + primary.width);
-      const activity = await bounds("command-center-activity-chart");
-      const finance = await bounds("command-center-finance-chart");
-      expect(Math.abs(activity.y - finance.y)).toBeLessThan(2);
+      await expect(page.locator("#command-center-charts")).toHaveCount(0);
     } else {
       expect(rail.y).toBeGreaterThanOrEqual(primary.y + primary.height);
     }

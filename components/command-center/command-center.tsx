@@ -1,7 +1,6 @@
 import { PageTitle } from "@/components/page-title";
 import { WorkspaceColumns } from "@/components/workspace-columns";
 import type { ReactNode } from "react";
-import { DashboardChart } from "@/components/dashboard-chart";
 import { RecordRow, RecordItem, RecordLink } from "@/components/record-item";
 import { Search as SearchIcon, AlertCircle, ArrowRight, CalendarDays, ChevronRight, UsersRound, Plus } from "lucide-react";
 import Link from "next/link";
@@ -33,8 +32,10 @@ export function CommandCenter({
   quickActions,
   sectionErrors = {},
   discovery,
+  creditNotice,
 }: {
   discovery?: ReactNode;
+  creditNotice?: ReactNode;
   snapshot: SharedCommandCenterSnapshot;
   firstName: string;
   branches: ReadonlyArray<{ id: string; name: string }>;
@@ -47,7 +48,7 @@ export function CommandCenter({
   sectionErrors?: Partial<Record<"actions" | "operations" | "staff", string>>;
 }) {
   const primaryActions = snapshot.scope.mode === "branch" ? quickActions.filter(action => action.primary) : [];
-  const secondaryActions = quickActions.filter(action => !action.primary);
+  const secondaryActions = snapshot.scope.mode === "branch" ? quickActions.filter(action => !action.primary) : [];
   const branchNames = new Map(branches.map(({ id, name }) => [id, name]));
   const attentionCount = snapshot.metrics.find(({ key }) => key === "attention")?.value ?? snapshot.actions.length;
   return <main id="negosu-command-center-page" className="min-w-0 pb-5">
@@ -82,7 +83,7 @@ export function CommandCenter({
       </form> : null}
       {primaryActions.length ? <div id="dashboard-primary-actions" className="ml-auto flex w-full flex-wrap gap-2 sm:w-auto sm:justify-end">{primaryActions.map(action=><Button asChild key={action.id} variant={action.id === "add-walk-in" ? "secondary" : "primary"}><Link id={`negosu-command-center-quick-action-${action.id}`} href={action.href}>{action.id === "new-appointment" ? <CalendarDays size={16} aria-hidden="true"/> : <Plus size={16} aria-hidden="true"/>}{action.label}</Link></Button>)}</div> : null}
     </header>
-    <section id="negosu-command-center-metrics" aria-label="Business metrics" className="my-3 grid grid-cols-2 gap-2 md:grid-cols-3 2xl:grid-cols-5">
+    <section id="negosu-command-center-metrics" aria-label="Business metrics" className="my-3 grid grid-cols-2 gap-2 md:grid-cols-3 2xl:grid-cols-6">
       {snapshot.metrics.map((metric) => {
         const content = <><span className="text-[11px] font-medium normal-case tracking-wide text-slate-500 sm:text-xs">{metric.label}</span><strong className="mt-1 block text-xl font-medium tracking-tight text-admin-text sm:text-2xl">{metric.valueKind === "currency" ? formatCurrency(metric.value, snapshot.scope.currency) : metric.value.toLocaleString("en-PH")}</strong>{metric.helperText ? <small className="mt-0.5 hidden text-xs text-slate-500 sm:block">{metric.helperText}</small> : null}</>;
         const id = metricId(metric.key);
@@ -95,10 +96,10 @@ export function CommandCenter({
 
     <div className="grid min-w-0 gap-3 xl:grid-cols-2">
       <section id="negosu-action-inbox" aria-labelledby="negosu-action-inbox-title" className="min-w-0 rounded-xl border border-admin-border border-l-4 border-l-brand-primary bg-admin-surface p-4">
-        <div className="flex items-start justify-between gap-3"><div><h2 id="negosu-action-inbox-title" className="font-medium text-admin-text">Action Inbox</h2><p className="text-xs text-slate-500">Live conditions disappear when the underlying work is resolved.</p></div><Badge>{attentionCount} {attentionCount === 1 ? "condition" : "conditions"}</Badge></div>
+        <div className="flex items-start justify-between gap-3"><div><h2 id="negosu-action-inbox-title" className="font-medium text-admin-text">Needs attention</h2><p className="text-xs text-slate-500">Live conditions disappear when the underlying work is resolved.</p></div><Badge>{attentionCount} {attentionCount === 1 ? "condition" : "conditions"}</Badge></div>
         {sectionErrors.actions ? <SectionError id="negosu-action-inbox-error" message={sectionErrors.actions}/> : null}
-        <div id={actionVerticalId} className="mt-3 divide-y divide-slate-100">{snapshot.actions.slice(0, 8).map((action) => <Link id={`negosu-action-item-${action.id}`} key={action.id} href={action.href} className="group flex min-w-0 items-start gap-3 px-1 py-3 transition-colors hover:bg-brand-tint/50">
-          <span aria-hidden="true" className={`mt-1.5 h-2 w-2 shrink-0 rounded-full ${priorityColor(action.priority)}`}/><span className="min-w-0 flex-1"><span className="flex min-w-0 items-center gap-2"><strong className="truncate text-sm text-admin-text">{action.title}</strong><small className="shrink-0 text-[10px] font-medium normal-case tracking-wide text-slate-500">{action.priority}</small></span>{action.description ? <span className="mt-0.5 block truncate text-xs text-slate-500">{action.description}{snapshot.scope.mode === "all" && action.branchId ? ` · ${branchNames.get(action.branchId) ?? "Branch"}` : ""}</span> : null}</span><ChevronRight aria-hidden="true" className="mt-0.5 shrink-0 text-slate-400 group-hover:text-brand-primary" size={17}/>
+        <div id={actionVerticalId} className="mt-3 divide-y divide-slate-100">{snapshot.actions.slice(0, 8).map((action) => <Link id={`negosu-action-item-${action.id}`} key={action.id} href={snapshot.scope.mode === "all" && branches.length > 1 && !action.branchId ? "#negosu-command-center-branch-selector" : action.href} className="group flex min-w-0 items-start gap-3 px-1 py-3 transition-colors hover:bg-brand-tint/50">
+          <span aria-hidden="true" className={`mt-1.5 h-2 w-2 shrink-0 rounded-full ${priorityColor(action.priority)}`}/><span className="min-w-0 flex-1"><span className="flex min-w-0 items-center gap-2"><strong className="truncate text-sm text-admin-text">{action.title}</strong><small className="shrink-0 text-[10px] font-medium normal-case tracking-wide text-slate-500">{action.priority}</small></span>{action.description ? <span className="mt-0.5 block truncate text-xs text-slate-500">{action.description}{snapshot.scope.mode === "all" && !action.branchId ? " · Select a branch to review" : ""}{snapshot.scope.mode === "all" && action.branchId ? ` · ${branchNames.get(action.branchId) ?? "Branch"}` : ""}</span> : null}</span><ChevronRight aria-hidden="true" className="mt-0.5 shrink-0 text-slate-400 group-hover:text-brand-primary" size={17}/>
         </Link>)}</div>
         {!snapshot.actions.length && !sectionErrors.actions ? <div id="negosu-action-inbox-empty" className="mt-3 rounded-xl border border-dashed border-slate-300 bg-slate-50 px-4 py-5 text-center"><strong className="text-sm text-admin-text">You&apos;re caught up</strong><p className="mt-0.5 text-xs text-slate-500">No current conditions need management attention.</p></div> : null}
       </section>
@@ -107,7 +108,7 @@ export function CommandCenter({
         <div className="flex items-start justify-between gap-3"><div><h2 id="negosu-today-operations-title" className="font-medium text-admin-text">{todayTitle}</h2><p className="text-xs text-slate-500">{todayDescription}</p></div><CalendarDays aria-hidden="true" className="text-brand-primary" size={19}/></div>
         {sectionErrors.operations ? <SectionError id="negosu-today-operations-error" message={sectionErrors.operations}/> : null}
         <div id={todayVerticalId} className="mt-3 grid gap-1">{snapshot.operations.slice(0, 10).map((operation) => <Link id={`negosu-operation-${operation.id}`} key={operation.id} href={operation.href} className="grid min-w-0 grid-cols-[4.4rem_minmax(0,1fr)_auto] items-center gap-2 rounded-xl px-2 py-2 hover:bg-slate-50">
-          <span className="text-xs font-medium text-brand-primary-strong">{formatTime(operation.startsAt, branchTimezone(operation.branchId, snapshot))}</span><span className="min-w-0"><strong className="block truncate text-sm text-admin-text">{operation.title}</strong><span className="block truncate text-xs text-slate-500">{operation.subject}{operation.staffSummary ? ` · ${operation.staffSummary}` : ""}</span></span><span className="rounded-full bg-slate-100 px-2 py-1 text-[10px] font-medium capitalize text-slate-700">{operation.status.replaceAll("_", " ")}</span>
+          <span className="text-xs font-medium text-brand-primary-strong">{formatTime(operation.startsAt, branchTimezone(operation.branchId, snapshot))}</span><span className="min-w-0"><strong className="block truncate text-sm text-admin-text">{operation.title}</strong><span className="block truncate text-xs text-slate-500">{operation.subject}</span>{operation.serviceSummary && operation.serviceSummary !== operation.subject ? <span className="block truncate text-xs text-slate-500" title={operation.serviceSummary}>{operation.serviceSummary}</span> : null}{operation.staffSummary ? <span className="block truncate text-xs text-slate-500" title={[operation.staffSummary, operation.resourceSummary].filter(Boolean).join(" · ")}>{operation.staffSummary}{operation.resourceSummary ? ` · ${operation.resourceSummary}` : ""}</span> : null}</span><span className="rounded-full bg-slate-100 px-2 py-1 text-[10px] font-medium capitalize text-slate-700">{operation.status.replaceAll("_", " ")}</span>
         </Link>)}</div>
         {!snapshot.operations.length && !sectionErrors.operations ? <div id="negosu-today-operations-empty" className="mt-3 rounded-xl bg-slate-50 px-4 py-5 text-center text-sm text-slate-500">Nothing is scheduled or active in this view today.</div> : null}
       </section>
@@ -115,10 +116,7 @@ export function CommandCenter({
 
 
     {snapshot.scope.mode === "all" && snapshot.branchPerformance.length > 1 ? <section id="negosu-branch-performance" className="mt-3 min-w-0 rounded-xl border border-admin-border bg-admin-surface p-4"><h2 className="font-medium text-admin-text">Branch Performance</h2><div className="mt-3 hidden overflow-hidden rounded-xl border border-slate-200 2xl:block"><table id="negosu-branch-performance-table" className="w-full text-left text-sm"><thead className="bg-slate-50 text-xs normal-case text-slate-500"><tr><th className="px-3 py-2">Branch</th><th className="px-3 py-2 text-right">Collected today</th><th className="px-3 py-2 text-right">Appointments</th><th className="px-3 py-2 text-right">Outstanding</th><th className="px-3 py-2 text-right">Attention</th></tr></thead><tbody className="divide-y">{snapshot.branchPerformance.map((branch) => <RecordRow id={`negosu-branch-performance-${branch.branchId}`} key={branch.branchId}><th scope="row" className="px-3 py-2.5"><RecordLink id={`branch-performance-link-${branch.branchId}`} prefetch={false} href={`/dashboard/branch-context?branch=${branch.branchId}&next=/dashboard`}>{branch.branchName}</RecordLink></th><td className="px-3 py-2.5 text-right font-medium">{formatCurrency(branch.revenueTodayCentavos, snapshot.scope.currency)}</td><td className="px-3 py-2.5 text-right">{branch.appointmentsToday}</td><td className="px-3 py-2.5 text-right">{formatCurrency(branch.outstandingCentavos, snapshot.scope.currency)}</td><td className="px-3 py-2.5 text-right font-medium">{branch.attentionCount}</td></RecordRow>)}</tbody></table></div><div id="negosu-branch-performance-mobile" className="mt-3 grid gap-2 2xl:hidden">{snapshot.branchPerformance.map((branch) => <RecordItem id={`negosu-branch-performance-card-${branch.branchId}`} key={branch.branchId} className="rounded-xl border border-slate-200 p-3"><div className="flex justify-between gap-3"><RecordLink id={`branch-performance-link-mobile-${branch.branchId}`} prefetch={false} href={`/dashboard/branch-context?branch=${branch.branchId}&next=/dashboard`}>{branch.branchName}</RecordLink><Badge>{branch.attentionCount} attention</Badge></div><dl className="mt-2 grid grid-cols-3 gap-2 text-xs"><div><dt className="text-slate-500">Collected today</dt><dd className="font-medium">{formatCurrency(branch.revenueTodayCentavos, snapshot.scope.currency)}</dd></div><div><dt className="text-slate-500">Appointments</dt><dd className="font-medium">{branch.appointmentsToday}</dd></div><div><dt className="text-slate-500">Outstanding</dt><dd className="font-medium">{formatCurrency(branch.outstandingCentavos, snapshot.scope.currency)}</dd></div></dl></RecordItem>)}</div></section> : null}
-    <div id="command-center-charts" className="grid min-w-0 gap-3 xl:grid-cols-2 [&>section]:mb-0">
-      <DashboardChart id="command-center-activity-chart" title="Operations at a glance" description={`${snapshot.scope.label} · Current dashboard counts; categories may overlap.`} points={snapshot.metrics.filter(metric => metric.valueKind === "count").map(metric => ({ label: metric.label, value: metric.value }))}/>
-      {snapshot.metrics.some(metric => metric.valueKind === "currency") ? <DashboardChart id="command-center-finance-chart" title="Financial snapshot" description={`${snapshot.scope.label} · Today's collections and current balances, as labeled.`} currency={snapshot.scope.currency} points={snapshot.metrics.filter(metric => metric.valueKind === "currency").map(metric => ({ label: metric.label, value: metric.value }))}/> : null}
-    </div>
+    {creditNotice}
     </WorkspaceColumns>
   </main>;
 }

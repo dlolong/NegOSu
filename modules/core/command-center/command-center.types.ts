@@ -65,6 +65,7 @@ export type CommandCenterScope = {
 };
 
 export type SharedCommandCenterSnapshot = {
+  activity?: { checkedIn: number; inService: number; completedToday: number; readyPickup: number; jobsInProgress: number; awaitingApproval: number; readyRelease: number };
   scope: CommandCenterScope;
   metrics: CommandCenterMetric[];
   actions: CommandCenterAction[];

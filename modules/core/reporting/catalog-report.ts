@@ -1,0 +1,10 @@
+import { z } from "zod";
+import { formatMoney } from "@/lib/operations";
+export const catalogReportSchema=z.object({category:z.enum(["promos","rooms"]),count:z.number(),summary:z.object({amount:z.number(),revenue:z.number()}),rows:z.array(z.object({id:z.string(),name:z.string(),branch:z.string(),status:z.string(),price:z.number().optional(),bookings:z.number().optional(),bills:z.number().optional(),rates:z.array(z.object({label:z.string(),priceCentavos:z.number()})).optional(),amount:z.number(),revenue:z.number()}))});
+export type CatalogReport=z.infer<typeof catalogReportSchema>;
+export const catalogReportNote=(category:string)=>category==="promos" ? "Amount: accepted promo value for appointments in this period, excluding cancellations/no-shows. Revenue: completed promo value, not cash receipts. Prices show current catalog rates; totals use accepted price snapshots." : "Amount: room bills issued in this period. Revenue: payments received to date on those bills. Rates and occupancy show current room settings.";
+export function catalogReportTable(report:CatalogReport,currency:string) {
+ return {columns:[{key:"name",label:report.category==="rooms"?"Room":"Promo"},{key:"branch",label:"Branch"},{key:"status",label:"Status"},{key:"price",label:report.category==="rooms"?"Rates":"Current price"},{key:"count",label:report.category==="rooms"?"Bills":"Bookings"},{key:"amount",label:"Total amount"},{key:"revenue",label:"Revenue"}],rows:report.rows.map(row=>({id:row.id,cells:{name:row.name,branch:row.branch,status:row.status,price:report.category==="rooms"?row.rates?.map(rate=>`${rate.label}: ${formatMoney(rate.priceCentavos,currency)}`).join(", ")||"Not configured":formatMoney(row.price??0,currency),count:row.bookings??row.bills??0,amount:formatMoney(row.amount,currency),revenue:formatMoney(row.revenue,currency)}}))};
+}
+export type ReportCategory="bookings"|"payments"|"products"|"clients"|"services"|"staff"|"promos"|"rooms";
+export function reportCategories(industry:string):ReportCategory[] {return ["bookings","payments","products","promos",...(industry==="hospitality"?["rooms" as const]:[]),"clients","services","staff"];}

@@ -9,8 +9,9 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { groomingStatus } from "@/modules/pet-care/pets";
 import { zonedDateTimeToUtc, formatMoney } from "@/lib/operations";
-export default async function Page() {
+export default async function Page({ searchParams }: { searchParams: Promise<{ branch?: string }> }) {
  const { db, activeMembership, enabled, branchTimezone }=await petContext();
+ if (["owner", "manager"].includes(activeMembership.role)) { const { PetOverview } = await import("@/components/pet-care/overview"); return <PetOverview branch={(await searchParams).branch}/>; }
  const day=new Intl.DateTimeFormat("en-CA",{timeZone:branchTimezone,year:"numeric",month:"2-digit",day:"2-digit"}).format(new Date());
  const start=zonedDateTimeToUtc(`${day}T00:00`,branchTimezone)!;
  const nextDay=new Date(`${day}T12:00:00Z`); nextDay.setUTCDate(nextDay.getUTCDate()+1);
@@ -21,7 +22,7 @@ export default async function Page() {
   branchQuery().eq("status","checked_in"),branchQuery().eq("status","in_service"),
   db.from("pet_appointment_details").select("appointment_id,appointments!inner(branch_id)",{count:"exact",head:true}).eq("organization_id",activeMembership.organizationId).eq("appointments.branch_id",activeMembership.branchId).eq("pickup_status","ready"),
  ]);
- const canViewFinance=["owner","manager","cashier"].includes(activeMembership.role);
+ const canViewFinance=["owner","manager"].includes(activeMembership.role);
  let finance: ReturnType<typeof summarizePayments> | null = null;
  if(canViewFinance) {
   try { const records=await loadPaymentWorkspace(db,activeMembership.organizationId,activeMembership.branchId,"appointment"); finance=summarizePayments(records.payments,records.documents,branchTimezone); } catch { /* Render a controlled finance error below. */ }

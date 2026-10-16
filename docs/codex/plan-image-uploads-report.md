@@ -1,3 +1,5 @@
+> Current policy (0143–0145): premium access and credits are separate. Existing one-time balances are preserved; Free credits no longer unlock advanced reports or image uploads. These actions have no approved metered cost. See [credits and dashboard configuration](credits-dashboard-report.md) for the current implementation and release requirements. The earlier validation entries below describe their historical migrations.
+
 # Plan-gated direct image uploads
 
 ## Implementation and plan rules
@@ -25,3 +27,11 @@ Migration 0100 (service thumbnails) must precede 0101. No migration was applied 
 Uploaded files count toward quota even if the user abandons a form. Automatic garbage collection/media-library management is deferred; operators can remove unreferenced objects through Storage administration. Replacing an image does not automatically delete its previous object because other pages may reference it. Each upload gets a unique path; a network-ambiguous retry can create an additional object, which is quota-accounted. Saving the resulting image URL uses the existing idempotent field update.
 
 Before release: apply migrations 0100/0101 in a development project, run `supabase/tests/plan_image_uploads.sql`, and verify the actual Storage integration with Free, paid owner/manager, unauthorized staff and cross-tenant accounts, including concurrent quota limits. Review Storage-trigger compatibility with the deployed Storage version. These integration checks remain a release prerequisite.
+
+## Shared credit extension (0142)
+
+The original Free-plan exclusion and random retry-path behavior above are superseded by migrations 0141–0142. Owners/managers on Free may now spend one shared trial credit for a successful direct image upload. The form shows the credit cost before choosing a file. A SHA-256-bound upload intent and stable request UUID determine the object path; ambiguous retries confirm the same stored object rather than charging again. Intent creation is free, and completed retry confirmation is allowed even at zero credits. A successful upload costs a credit even if its parent form is later abandoned; deletion does not refund usage.
+
+The quota trigger debits the same account used by reports inside the Storage metadata transaction. Rolled-back preflight and failed size/quota/permission checks do not charge. Final persistence rechecks the intent actor's current owner/manager membership and effective plan, including its accepted cost ceiling. Free trial uploads have a 200 MiB business-image allowance (100 maximum-size uploads); paid storage limits remain unchanged. Paid plans with missing storage configuration still fail closed instead of directing users to buy another plan.
+
+Existing public images and pasted URLs remain available after exhaustion. No automatic media cleanup, private-job-photo metering, or hosted Storage mutation was performed. Apply both migrations before deploying the upload route. Local SQL tests cover the trigger and rollback behavior; the actual deployed Storage uploader should be smoke-tested in staging with one successful upload, one failed upload, and one interrupted/retried upload before production release.

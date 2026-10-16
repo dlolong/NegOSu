@@ -1,3 +1,4 @@
+import { creditOperationResultSchema } from "@/modules/platform/credits";
 import "server-only";
 
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -15,6 +16,11 @@ function controlledDatabaseError(message:string,error:{message:string}|null):nev
 }
 
 export const notificationOutboxRepository:NotificationOutboxRepository={
+  async reserveCredit(input){
+    const {data,error}=await createAdminClient().rpc("reserve_notification_credit",{p_outbox:input.outboxId,p_worker:input.workerId});
+    if(error||!data?.code) controlledDatabaseError("Unable to reserve notification credits.",error);
+    return creditOperationResultSchema.parse(data);
+  },
   async claimBatch(input){
     const{data,error}=await createAdminClient().rpc("claim_notification_outbox_batch",{
       p_worker_id:input.workerId,p_batch_size:input.batchSize,p_lease_minutes:input.leaseMinutes,

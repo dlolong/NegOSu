@@ -26,15 +26,15 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ d
  if(status) appointmentQuery=["ready","collected"].includes(status)?appointmentQuery.eq("pet_appointment_details.pickup_status",status):appointmentQuery.eq("status",status);
  if(range) {appointmentQuery=appointmentQuery.gte("starts_at",range.start.toISOString());if(range.end) appointmentQuery=appointmentQuery.lt("starts_at",range.end.toISOString());}
  const pageHref=(number:number)=>`?${new URLSearchParams({q:search,from:query.from??range?.from??"",to:query.to??range?.to??"",status,page:String(number)})}`;
- const [appointments, pets, owners, services, staff, resources] = await Promise.all([
+ const [appointments, pets, owners, services, staff, resources, promoResult] = await Promise.all([
   (range ? appointmentQuery : appointmentQuery.eq("id","00000000-0000-0000-0000-000000000000")).order("starts_at", { ascending: false }).order("id").range((page-1)*50,page*50-1),
   db.from("pet_profiles").select("id,name,customer_id").eq("organization_id", activeMembership.organizationId).eq("is_active", true),
   db.from("customers").select("id,full_name").eq("organization_id", activeMembership.organizationId).eq("is_archived", false),
   db.from("services").select("id,name").eq("organization_id", activeMembership.organizationId).eq("is_active", true),
   db.from("organization_staff_profiles").select("id,full_name").eq("organization_id", activeMembership.organizationId).eq("is_active", true),
   db.from("scheduling_resources").select("id,name").eq("organization_id", activeMembership.organizationId).eq("branch_id", activeMembership.branchId).eq("is_active", true),
+  query.dialog==="create" ? getAppointmentPromos(activeMembership.organizationId) : Promise.resolve({choices:[],error:undefined}),
  ]);
- const promoResult=query.dialog==="create"?await getAppointmentPromos(activeMembership.organizationId):{choices:[],error:undefined};
  const canManage = enabled && ["owner","manager","advisor"].includes(activeMembership.role), ownerName = new Map((owners.data ?? []).map(owner => [owner.id, owner.full_name]));
  const related=(value:unknown,key:string)=>{const row=Array.isArray(value)?value[0]:value;return (row as Record<string,string>|null)?.[key]??"";};
  const assignmentLabel=(a:NonNullable<typeof appointments.data>[number])=>[a.appointment_staff_assignments.map(s=>related(s.organization_staff_profiles,"full_name")).join(", "),a.appointment_resource_assignments.map(r=>related(r.scheduling_resources,"name")).join(", ")].filter(Boolean).join(" · ");

@@ -39,7 +39,7 @@ function supportsCapability(industry: IndustryKey, capability: UpgradeCapability
 
 const featureLabels = {
   image_uploads: "direct image uploads",
-  advanced_reports: "detailed reports, custom dates and CSV export",
+  advanced_reports: "detailed reports, extended history and CSV export",
   public_page: "a public website and online bookings",
   reminders: "maintenance reminders",
 };

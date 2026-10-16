@@ -1,0 +1,20 @@
+import {expect,test} from "@playwright/test";
+import {renderFormFixture} from "./fixtures/form-browser";
+let html:string;
+test.beforeAll(async()=>{html=await renderFormFixture("e2e/fixtures/shared-tabs.tsx");});
+for(const width of [320,1440]) test(`shared route and report tabs have matching styles and usable navigation at ${width}px`,async({page})=>{
+ await page.setViewportSize({width,height:900});
+ await page.route("https://forms.test/**",route=>route.fulfill({contentType:"text/html",body:html}));
+ await page.goto("https://forms.test/tabs");
+ await expect(page.locator("#route-products")).toHaveAttribute("aria-current","page");
+ await expect(page.locator("#view-products")).toHaveAttribute("aria-pressed","true");
+ const style=async(id:string)=>page.locator(id).evaluate(el=>{const s=getComputedStyle(el);return [s.padding,s.borderBottomWidth,s.fontSize,s.color,s.backgroundColor];});
+ expect(await style("#view-products")).toEqual(await style("#route-products"));
+ await page.locator("#view-staff").focus();await page.keyboard.press("Enter");
+ await expect(page.locator("#selected-view")).toHaveText("staff");
+ await expect(page.locator("#view-staff")).toHaveAttribute("aria-pressed","true");
+ await expect(page.locator("#view-products")).toHaveAttribute("aria-pressed","false");
+ expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);
+ await page.locator("#route-promos").click();
+ await expect(page).toHaveURL("https://forms.test/dashboard/promos");
+});

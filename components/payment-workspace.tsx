@@ -1,3 +1,4 @@
+import { PaymentsLayout } from "@/components/payments-layout";
 import { CompactFilters } from "@/components/compact-filters";
 import Link from "next/link";
 import { ChevronLeft, ChevronRight, CalendarDays, RefreshCw, Search } from "lucide-react";
@@ -20,7 +21,7 @@ export async function PaymentWorkspace({ query, legacyPet = false, allBills = fa
   const { activeMembership: membership } = await getDashboardContext();
   if (!roleHasPermission(membership.role, "payments.record")) notFound();
   const kind = ["automotive","hospitality"].includes(membership.industry) ? "invoice" : "appointment";
-  const appointmentsHref = membership.industry === "pet_care" ? "/dashboard/pet-care/appointments" : "/dashboard/appointments";
+  const appointmentsHref = membership.industry === "hospitality" ? "/dashboard/hospitality/bookings" : membership.industry === "pet_care" ? "/dashboard/pet-care/appointments" : "/dashboard/appointments";
   const baseHref = allBills ? "/dashboard/payments/ledger" : legacyPet ? "/dashboard/pet-care/payments" : "/dashboard/payments";
   let workspace: Awaited<ReturnType<typeof loadPaymentWorkspace>>;
   let timezone = membership.timezone;
@@ -40,26 +41,25 @@ export async function PaymentWorkspace({ query, legacyPet = false, allBills = fa
   const date = (value: string | null) => value ? new Intl.DateTimeFormat("en-PH", { timeZone: timezone, dateStyle: "medium", timeStyle: "short" }).format(new Date(value)) : "Date unavailable";
   const money = (value: number) => formatMoney(value, membership.currency);
   const isHistory = view.tab === "history";
-  return <main id={legacyPet ? "pet-payments-page" : "payments-page"} className="mx-auto min-w-0 max-w-6xl">
-    <PageHeader id="payments-page-header" title="Payments" description="Track what has been paid and what is still due." action={<Button asChild variant="secondary"><Link id="payments-appointments-button" href={appointmentsHref}><CalendarDays size={16} aria-hidden="true"/>View appointments</Link></Button>}/>
-    <Button asChild variant="secondary" className="mt-3"><Link id="payments-new-sale-button" href="/dashboard/checkout/new">New product sale</Link></Button>
-    <section id="payments-metrics" aria-label="Branch payment summary" className="mt-4 grid grid-cols-2 gap-3">
-      <Card id="payments-collected-today" elevation="none" className="min-w-0 p-3 sm:p-4"><p className="text-xs font-medium text-admin-text-secondary sm:text-sm">Collected today</p><strong className="mt-1 block text-lg tabular-nums text-admin-text [overflow-wrap:anywhere] sm:text-2xl">{collections.map(group => <span className="block" key={group.currency}>{formatMoney(group.collected, group.currency)}</span>)}</strong><p id="payments-count-today" className="mt-1 text-xs text-admin-text-muted">{summary.count} {summary.count === 1 ? "payment" : "payments"}</p></Card>
-      <Card id="payments-outstanding-total" elevation="none" className="min-w-0 p-3 sm:p-4"><p className="text-xs font-medium text-admin-text-secondary sm:text-sm">To collect</p><strong className="mt-1 block text-lg tabular-nums text-admin-text [overflow-wrap:anywhere] sm:text-2xl">{money(summary.outstanding)}</strong><p className="mt-1 text-xs text-admin-text-muted">{view.outstandingCount} unpaid {kind === "invoice" ? "invoices" : "appointments"}</p></Card>
-    </section>
-    <Tabs id="payments-tabs" className="mt-5" ariaLabel="Payment views" items={[
+  return <PaymentsLayout id={legacyPet ? "pet-payments-page" : "payments-page"} headerId="payments-page-header" description="Collect outstanding balances and review recorded collections."
+    tabs={<Tabs id="payments-tabs" className="mt-5" ariaLabel="Payment views" items={[
       {id:"payments-tab-outstanding",label:"Outstanding",count:view.outstandingCount,href:paymentViewHref(baseHref,"outstanding",view.search),active:!isHistory},
-      {id:"payments-tab-history",label:"History",count:view.historyCount,href:paymentViewHref(baseHref,"history",view.search),active:isHistory},
-    ]}/>
-    <section id={isHistory ? "payments-history-section" : "payments-outstanding-invoices"} aria-labelledby="payments-section-title" className="mt-4 min-w-0">
-      <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
-        <div><h2 id="payments-section-title" className="text-base font-medium text-admin-text">{isHistory ? "Payment history" : "Outstanding balances"}</h2><p className="mt-1 text-sm text-admin-text-secondary">{isHistory ? "Select a payment to review its invoice or appointment." : "Select a row to review the balance and record payment."}</p></div>
-        <CompactFilters id="payments-search-form" action={baseHref} searchLabel="Search payments" search={<input key={`${view.tab}-${view.search}`} id="payments-search-input"  name="q" defaultValue={view.search} maxLength={120} placeholder={isHistory ? "Customer, reference, method…" : `Customer or ${kind}…`} type="search" enterKeyHint="search" className="min-h-11 w-full min-w-0 rounded-ui-md border border-admin-border bg-admin-surface px-3 py-2 text-sm"/>} searchValue={view.search} clearHref={paymentViewHref(baseHref,view.tab)} hiddenFields={<><input type="hidden" name="tab" value={view.tab}/></>}>
+      {id:"payments-tab-history",label:"Collections",count:view.historyCount,href:paymentViewHref(baseHref,"history",view.search),active:isHistory},
+    ]}/>}
+    toolbar={<><Button asChild variant="secondary"><Link id="payments-appointments-button" href={appointmentsHref}><CalendarDays size={16} aria-hidden="true"/>{membership.industry === "hospitality" ? "Bookings" : "Appointments"}</Link></Button><Button asChild variant="secondary"><Link id="payments-new-sale-button" href="/dashboard/checkout/new">New product sale</Link></Button>{roleHasPermission(membership.role,"reports.view") ? <Button asChild variant="ghost"><Link id="payments-reports-link" href="/dashboard/reports">Reports & exports</Link></Button> : null}<CompactFilters className="my-0" id="payments-search-form" action={baseHref} searchLabel="Search payments" search={<input key={`${view.tab}-${view.search}`} id="payments-search-input"  name="q" defaultValue={view.search} maxLength={120} placeholder={isHistory ? "Customer, reference, method…" : `Customer or ${kind}…`} type="search" enterKeyHint="search" className="min-h-11 w-full min-w-0 rounded-ui-md border border-admin-border bg-admin-surface px-3 py-2 text-sm"/>} searchValue={view.search} clearHref={paymentViewHref(baseHref,view.tab)} hiddenFields={<><input type="hidden" name="tab" value={view.tab}/></>}>
 
 
           <Button id="payments-search-button" type="submit" variant="secondary" size="icon" aria-label="Search"><Search size={17} aria-hidden="true"/></Button>
 
-        </CompactFilters>
+        </CompactFilters></>}
+    summary={<section id="payments-metrics" aria-label="Branch payment summary" className="mt-4 grid grid-cols-2 gap-3">
+      <Card id="payments-collected-today" elevation="none" className="min-w-0 p-3 sm:p-4"><p className="text-xs font-medium text-admin-text-secondary sm:text-sm">Collected today</p><strong className="mt-1 block text-lg tabular-nums text-admin-text [overflow-wrap:anywhere] sm:text-2xl">{collections.map(group => <span className="block" key={group.currency}>{formatMoney(group.collected, group.currency)}</span>)}</strong><p id="payments-count-today" className="mt-1 text-xs text-admin-text-muted">{summary.count} {summary.count === 1 ? "payment" : "payments"}</p></Card>
+      <Card id="payments-outstanding-total" elevation="none" className="min-w-0 p-3 sm:p-4"><p className="text-xs font-medium text-admin-text-secondary sm:text-sm">To collect</p><strong className="mt-1 block text-lg tabular-nums text-admin-text [overflow-wrap:anywhere] sm:text-2xl">{money(summary.outstanding)}</strong><p className="mt-1 text-xs text-admin-text-muted">{view.outstandingCount} unpaid {kind === "invoice" ? "invoices" : "appointments"}</p></Card>
+    </section>}>
+    <section id={isHistory ? "payments-history-section" : "payments-outstanding-invoices"} aria-labelledby="payments-section-title" className="mt-4 min-w-0">
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+        <div><h2 id="payments-section-title" className="text-base font-medium text-admin-text">{isHistory ? "Collections" : "Outstanding balances"}</h2><p className="mt-1 text-sm text-admin-text-secondary">{isHistory ? "Select a payment to review its invoice or appointment." : "Select a row to review the balance and record payment."}</p></div>
+
       </div>
       {view.search && <p id="payments-search-results" role="status" className="mb-3 break-words text-sm text-admin-text-secondary">{view.count} results for “{view.search}” · Branch totals above include all records.</p>}
       {isHistory ? <div id={legacyPet ? "pet-payments-list" : "payments-list"}><RecordTable id="payments-history-table" caption="Recorded payments" emptyId="payments-history-empty" empty={view.search ? "No matching records. Try another search." : "No recorded payments yet."} columns={[{key:"customer",label:"Customer / record"},{key:"date",label:"Paid on",secondary:true},{key:"method",label:"Method",secondary:true},{key:"reference",label:"Reference",secondary:true},{key:"status",label:"Status",secondary:true},{key:"amount",label:"Amount",align:"right"}]} rows={view.history.map(payment=>{
@@ -70,7 +70,7 @@ export async function PaymentWorkspace({ query, legacyPet = false, allBills = fa
       <nav id={isHistory ? "payments-history-pages" : "payments-outstanding-pages"} aria-label="Payment table pages" className="mt-3 flex flex-wrap items-center justify-between gap-3 text-sm text-admin-text-secondary"><span>{view.count ? `${view.offset+1}–${Math.min(view.offset+paymentPageSize,view.count)} of ${view.count}` : "0 records"} · Page {view.page} of {view.pages}</span><div className="flex gap-2">{view.page>1 && <Button asChild variant="secondary"><Link id="payments-previous" href={paymentViewHref(baseHref,view.tab,view.search,view.page-1)}><ChevronLeft size={16} aria-hidden="true"/>Previous</Link></Button>}{view.page<view.pages && <Button asChild variant="secondary"><Link id="payments-next" href={paymentViewHref(baseHref,view.tab,view.search,view.page+1)}>Next<ChevronRight size={16} aria-hidden="true"/></Link></Button>}</div></nav>
     </section>
     {isHistory && <details id="payments-by-method" className="mt-5 rounded-ui-lg border border-admin-border bg-admin-surface p-4"><summary className="min-h-11 content-center cursor-pointer text-sm font-medium text-admin-text-secondary">Today&apos;s collections by method</summary><dl className="mt-3 grid gap-2 text-sm sm:grid-cols-2 lg:grid-cols-3">{collections.flatMap(group => group.byMethod.map(([method,amount]) => <div key={`${group.currency}-${method}`} className="flex justify-between gap-3"><dt>{methodLabel(method)}</dt><dd className="font-medium tabular-nums">{formatMoney(amount, group.currency)}</dd></div>))}{!summary.count && <div className="text-admin-text-muted"><dt>No payments today.</dt><dd className="sr-only">Zero collected</dd></div>}</dl></details>}
-  </main>;
+  </PaymentsLayout>;
 }
 
 function methodLabel(method:string) {return ({cash:"Cash",gcash:"GCash",maya:"Maya",bank_transfer:"Bank transfer",card:"Card",other:"Other"} as Record<string,string>)[method] ?? method.replaceAll("_"," ");}

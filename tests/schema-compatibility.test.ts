@@ -105,14 +105,16 @@ test("Automotive work fallback refuses to hide unrelated database failures", () 
   }), false);
 });
 
-test("rolling-deployment reads prefer canonical 0054/0055 capabilities and retain scoped legacy fallbacks", () => {
+test("dashboard requires authoritative aggregates; automotive staff retains its scoped migration fallback", () => {
   const commandCenter = readFileSync("modules/core/command-center/command-center.runtime.ts", "utf8");
   const jobs = readFileSync("app/dashboard/jobs/page.tsx", "utf8");
   const work = readFileSync("app/dashboard/my-work/page.tsx", "utf8");
   const automotive = readFileSync("modules/automotive/command-center/automotive-command-center.runtime.ts", "utf8");
 
-  assert.ok(commandCenter.indexOf('rpc("get_command_center_shared_metrics"') < commandCenter.indexOf("loadLegacySharedMetrics"));
-  assert.match(commandCenter, /\.eq\("organization_id", scope\.organizationId\)\.in\("branch_id", scope\.branchIds\)/);
+  assert.match(commandCenter, /rpc\("get_command_center_shared_metrics"/);
+  assert.match(commandCenter, /p_organization_id: scope.organizationId/);
+  assert.match(commandCenter, /p_branch_ids: scope.branchIds/);
+  assert.doesNotMatch(commandCenter, /loadLegacySharedMetrics/);
   assert.ok(jobs.indexOf("primary_technician_staff_id") < jobs.indexOf("primary_technician_user_id"));
   assert.ok(work.indexOf("shouldUseLegacyAutomotiveWorkReads") < work.lastIndexOf("primary_technician_user_id"));
   assert.ok(automotive.indexOf('from("staff_directory")') < automotive.indexOf('rpc("list_staff"'));

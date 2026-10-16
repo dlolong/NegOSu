@@ -1,3 +1,4 @@
+import { listOperationalStaffDirectory } from "@/modules/core/staff/staff.runtime";
 import { DashboardDiscovery } from "@/components/dashboard-discovery";
 import Link from "next/link";
 import { redirect } from "next/navigation";
@@ -7,18 +8,17 @@ import { hospitalityContext, loadHospitalityWorkspace } from "@/modules/hospital
 import { resolveReportRange, reportQuerySchema } from "@/lib/reporting";
 import { LoadError } from "./shared";
 export async function HospitalityOverview({ branch }: { branch?: string }) {
-  const { activeMembership: m, profile, db } = await hospitalityContext();
+  const { activeMembership: m, profile } = await hospitalityContext();
   if (!["owner", "manager"].includes(m.role)) redirect("/dashboard/hospitality/bookings");
   let shared; let staffError = false;
   try {
     shared = await getSharedCommandCenterSnapshot(branch);
     const range = resolveReportRange(reportQuerySchema.parse({ preset: "today" }), m.timezone);
     const report = await loadHospitalityWorkspace({ branch: shared.scope.mode === "all" ? null : shared.scope.selectedBranchId, ...range, section: "stays", mode: "overview" });
-    const staff = await db.from("organization_staff_profiles").select("id,full_name,job_function").eq("organization_id", m.organizationId).eq("is_active", true).limit(10);
+    const staff = await listOperationalStaffDirectory(m.organizationId).then(data => ({ data, error: false })).catch(() => ({ data: [], error: true }));
     shared.metrics = [
       { key: "occupied", label: "Occupied now", value: report.occupied, valueKind: "count" },
       { key: "vacant", label: "Available now", value: report.vacant, valueKind: "count", href: "/dashboard/hospitality/bookings" },
-      { key: "cleaning", label: "Cleaning now", value: report.cleaning, valueKind: "count", href: "/dashboard/hospitality/bookings" },
       { key: "check_ins", label: "Check-ins today", value: report.checkIns, valueKind: "count" },
       { key: "check_outs", label: "Checkouts today", value: report.checkOuts, valueKind: "count" },
       ...(report.finance ? [
@@ -27,11 +27,12 @@ export async function HospitalityOverview({ branch }: { branch?: string }) {
       ] : []),
     ];
     shared.actions = [
+      ...(report.cleaning ? [{ id: "cleaning", code: "cleaning", priority: "medium" as const, title: `${report.cleaning} room(s) need cleaning`, href: "/dashboard/hospitality/bookings" }] : []),
       ...(report.finance?.checkedOutDebt ? [{ id: "checkout-balances", code: "outstanding", priority: "medium" as const, title: `${report.finance.checkedOutDebt} checked-out stay(s) with balances`, description: "Guest balances remain collectible after checkout.", href: "/dashboard/payments" }] : []),
       ...(report.lowStock ? [{ id: "low-stock", code: "low_stock", priority: "medium" as const, title: `${report.lowStock} low-stock product(s)`, description: "Review shared inventory and restock supplies.", href: "/dashboard/inventory" }] : []),
     ];
     shared.operations = report.rows.slice(0, 10).map(row => ({ id: String(row.id), title: String(row.room), subject: String(row.guest), startsAt: String(row.checked_in_at), status: row.checked_out_at ? "checked_out" : "in_house", href: `/dashboard/hospitality/stays/${row.id}`, branchId: String(row.branch_id) }));
-    shared.staff = (staff.data ?? []).map(s => ({ id: s.id, displayName: s.full_name, status: "active", context: s.job_function ?? "Staff profile", href: "/dashboard/settings/staff" }));
+    shared.staff = (staff.data ?? []).filter(s => !s.branchIds.length || s.branchIds.some(id => shared!.scope.branchIds.includes(id))).slice(0, 10).map(s => ({ id: s.staffId, displayName: s.fullName, status: "active", context: s.jobFunction ?? "Staff profile", href: "/dashboard/settings/staff" }));
     shared.branchTimezones = Object.fromEntries(shared.branchPerformance.map(b => [b.branchId, b.timezone]));
     shared.branchPerformance = [];
     staffError = Boolean(staff.error);

@@ -14,6 +14,7 @@ export type DeliveryProviderResult={accepted:boolean;providerMessageId?:string|n
 export interface NotificationDeliveryProvider{
   readonly name:string;
   readonly configured:boolean;
+  readonly billingMode:"free"|"metered";
   send(message:DeliveryProviderMessage):Promise<DeliveryProviderResult>;
 }
 
@@ -22,7 +23,7 @@ export class DeliveryProviderError extends Error{
 }
 
 export class DisabledDeliveryProvider implements NotificationDeliveryProvider{
-  readonly name="disabled";readonly configured=false;
+  readonly name="disabled";readonly configured=false;readonly billingMode="free" as const;
   async send(message:DeliveryProviderMessage):Promise<DeliveryProviderResult>{
     void message;
     throw new DeliveryProviderError("CHANNEL_DISABLED","Delivery provider is not configured.",false);
@@ -30,7 +31,7 @@ export class DisabledDeliveryProvider implements NotificationDeliveryProvider{
 }
 
 export class ConsoleDeliveryProvider implements NotificationDeliveryProvider{
-  readonly configured=true;
+  readonly configured=true;readonly billingMode="free" as const;
   constructor(public readonly name:string,private readonly channel:NotificationChannel){}
   async send(message:DeliveryProviderMessage):Promise<DeliveryProviderResult>{
     console.info("notification.dev_delivery",{

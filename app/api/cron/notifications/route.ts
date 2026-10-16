@@ -1,4 +1,5 @@
 import { enqueuePetCareReminders, petNotificationIsCurrent } from "@/modules/pet-care/notifications/runtime";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { randomUUID } from "node:crypto";
 import { NextResponse } from "next/server";
 
@@ -19,6 +20,8 @@ export async function POST(request:Request){
   if(!isAuthorizedNotificationCron(request,serverEnv.NOTIFICATION_CRON_SECRET)){
     return new NextResponse("Unauthorized",{status:401});
   }
+  const periods=await createAdminClient().rpc("sync_configured_credit_periods",{p_limit:100});
+  if(periods.error) return NextResponse.json({error:"Credit period processing unavailable."},{status:503});
   const [estimateRemindersQueued,maintenanceRemindersQueued,salonAppointmentRemindersQueued,petCareRemindersQueued]=await Promise.all([
     enqueueDueEstimateApprovalReminders(),enqueueDueVehicleMaintenanceReminders(),enqueueDueSalonAppointmentReminders(),enqueuePetCareReminders(),
   ]);

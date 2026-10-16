@@ -1,3 +1,4 @@
+import type { CreditOperationCode } from "@/modules/platform/credits";
 import { decryptDeliverySecret, type EncryptedDeliverySecret } from "@/lib/notifications/delivery-secret";
 import { evaluateNotificationDeliveryEligibility, type NotificationChannel } from "@/lib/notifications/eligibility";
 import { DeliveryProviderError, type DeliveryProviders } from "@/lib/notifications/providers";
@@ -17,6 +18,7 @@ export type RenderedNotification={subject?:string;body:string};
 export type NotificationTemplateRenderer=(input:{templateKey:string;payload:unknown;deliverySecret:string|null})=>RenderedNotification;
 
 export interface NotificationOutboxRepository{
+  reserveCredit(input:{outboxId:string;workerId:string}):Promise<{code:CreditOperationCode}>;
   claimBatch(input:{workerId:string;batchSize:number;leaseMinutes:number}):Promise<ClaimedNotification[]>;
   getCurrentChannelOptIn(input:{organizationId:string;customerId:string;channel:NotificationChannel}):Promise<boolean>;
   getDeliverySecret(secretId:string):Promise<EncryptedDeliverySecret|null>;
@@ -88,6 +90,18 @@ export async function processNotificationOutboxBatch(input:{
       result.cancelled++;continue;
     }
 
+    if(provider.billingMode === "metered") {
+      const credit = await input.repository.reserveCredit({outboxId:row.id,workerId:input.workerId});
+      if (!["CREDIT_NOT_REQUIRED","CREDIT_RESERVED","CREDIT_COMMITTED"].includes(credit.code)) {
+        await input.repository.recordResult({outboxId:row.id,workerId:input.workerId,result:"retry",provider:provider.name,errorCode:credit.code,nextAvailableAt:notificationRetryAt(row.attemptCount+1,input.now).toISOString()});
+        if (row.attemptCount + 1 >= row.maxAttempts) result.failed++; else result.retried++; continue;
+      }
+      // A prior accepted send has already consumed this logical operation.
+      if (credit.code === "CREDIT_COMMITTED") {
+        await input.repository.recordResult({outboxId:row.id,workerId:input.workerId,result:"sent",provider:provider.name});
+        result.sent++; continue;
+      }
+    }
     try{
       const providerResult=await provider.send({
         notificationId:row.id,to:row.recipientAddress!,subject:rendered.subject,body:rendered.body,

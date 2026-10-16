@@ -30,6 +30,9 @@ function claimed(overrides:Partial<ClaimedNotification>={}):ClaimedNotification{
 class MemoryRepository implements NotificationOutboxRepository{
   results:Array<Parameters<NotificationOutboxRepository["recordResult"]>[0]>=[];
   constructor(public rows:ClaimedNotification[],public optedIn=true,public encrypted=encryptDeliverySecret(rawToken,encryptionKey)){}
+  creditCode: Awaited<ReturnType<NotificationOutboxRepository["reserveCredit"]>>["code"] = "CREDIT_NOT_REQUIRED";
+  reservations = 0;
+  async reserveCredit(){this.reservations++; return {code:this.creditCode};}
   async claimBatch(){return this.rows;}
   async getCurrentChannelOptIn(){return this.optedIn;}
   async getDeliverySecret(){return this.encrypted;}
@@ -38,7 +41,7 @@ class MemoryRepository implements NotificationOutboxRepository{
 }
 
 class StubProvider implements NotificationDeliveryProvider{
-  readonly name="stub";readonly configured=true;calls:DeliveryProviderMessage[]=[];
+  readonly name="stub";readonly configured=true;billingMode:"free"|"metered"="free";calls:DeliveryProviderMessage[]=[];
   constructor(private result:DeliveryProviderResult|Error={accepted:true,providerMessageId:"provider-1"}){}
   async send(message:DeliveryProviderMessage){this.calls.push(message);if(this.result instanceof Error)throw this.result;return this.result;}
 }
@@ -188,4 +191,18 @@ test("reference eligibility is rechecked before a prepared message reaches a pro
  const result=await processNotificationOutboxBatch({repository,providers:{email:provider,sms:provider},render:()=>({body:"Milo is ready for pickup."}),workerId:"pet-test",isReferenceCurrent:async()=>false});
  assert.equal(result.cancelled,1);assert.equal(provider.calls.length,0);
  assert.equal(repository.results[0].errorCode,"REFERENCE_NO_LONGER_ELIGIBLE");
+});
+
+for (const code of ["INSUFFICIENT_CREDITS", "FEATURE_NOT_ENTITLED", "IDEMPOTENCY_CONFLICT", "CLAIM_INACTIVE", "CREDIT_COMMITTED", "CREDIT_RESERVED", "CREDIT_NOT_REQUIRED"] as const) test(`metered delivery respects ${code}`, async () => {
+  const repository = new MemoryRepository([claimed({channel:"sms", recipientAddress:"+639171234567", deliverySecretId:null})]);
+  repository.creditCode = code;
+  const provider = new StubProvider(); provider.billingMode="metered";
+  await processNotificationOutboxBatch({repository, providers:{email:provider,sms:provider}, render:()=>({body:"Synthetic test"}),workerId:"test"});
+  assert.equal(repository.reservations,1);
+  assert.equal(provider.calls.length,["CREDIT_RESERVED","CREDIT_NOT_REQUIRED"].includes(code)?1:0);
+});
+test("free console delivery never reserves or consumes credits",async()=>{
+  const repository=new MemoryRepository([claimed({deliverySecretId:null})]); const provider=new StubProvider();
+  await processNotificationOutboxBatch({repository,providers:{email:provider,sms:provider},render:()=>({body:"Synthetic"}),workerId:"test"});
+  assert.equal(repository.reservations,0); assert.equal(provider.calls.length,1);
 });

@@ -1,6 +1,8 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { createLookupCache } from "@/lib/lookup-cache";
+import { useLookupScope } from "@/components/lookup-scope";
 import { CatalogItemThumbnail } from "@/components/catalog-item-thumbnail";
 import { Check, Plus, X } from "lucide-react";
 import { lookupRecords } from "@/app/dashboard/appointments/entity-actions";
@@ -21,7 +23,10 @@ export function SearchableSelect({ id, name, options, value, defaultValue = "", 
   const initial = useRef(value ?? defaultValue);
   const selectedId = value ?? selected;
   const selectedOption = options.find(option => option.id === selectedId) ?? (chosen?.id === selectedId ? chosen : undefined);
-  const key = JSON.stringify([lookup, scopeId, query]);
+  const scope = useLookupScope();
+  // New server options or scope replace the cache; nothing survives unmount/logout.
+  const cache = useMemo(() => ({ entries: createLookupCache<SelectOption[]>(), options, scope, scopeId, lookup }), [options, scope, scopeId, lookup]);
+  const key = JSON.stringify([scope, lookup, scopeId, query]);
   const loading = Boolean(open && lookup && remote?.key !== key);
   const error = remote?.key === key ? remote.error : undefined;
   const source = lookup && remote?.key === key && !error ? remote.options : options;
@@ -31,13 +36,18 @@ export function SearchableSelect({ id, name, options, value, defaultValue = "", 
   useEffect(() => {
     if (!open || !lookup) return;
     let cancelled = false;
+    const cached = scope ? cache.entries.get(key) : undefined;
     const timer = setTimeout(() => {
+      if (cached) { setRemote({ key, options: cached }); return; }
       void lookupRecords({ kind: lookup, query, scopeId }).then(result => {
-        if (!cancelled) setRemote({ key, options: result.data ?? [], error: result.error });
+        if (!cancelled) {
+          if (scope && result.data && !result.error) cache.entries.set(key, result.data);
+          setRemote({ key, options: result.data ?? [], error: result.error });
+        }
       }).catch(() => { if (!cancelled) setRemote({ key, options: [], error: "Unable to search. Please try again." }); });
-    }, 200);
+    }, cached ? 0 : 200);
     return () => { cancelled = true; clearTimeout(timer); };
-  }, [open, lookup, query, scopeId, key]);
+  }, [open, lookup, query, scopeId, key, scope, cache]);
   useEffect(() => {
     const form = input.current?.form;
     const reset = () => { if (preserveValueOnReset) { setQuery(""); setOpen(false); return; } setSelected(initial.current); setChosen(undefined); setQuery(""); setOpen(false); onValueChange?.(initial.current, options.find(option => option.id === initial.current)); };

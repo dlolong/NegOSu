@@ -373,7 +373,8 @@ test("Apartelle owner can review monthly and yearly plan upgrades", async ({ pag
   await login(page, "other");
   await expect(page.locator("#dashboard-plan-upgrade")).toHaveCount(0);
   await page.goto("/dashboard/reports?view=overview");
-  await page.locator("#hospitality-reports-plan-upgrade-button").click();
+  await page.locator("#dashboard-notification-bell").click();
+  await page.locator("#plan-notice-advanced_reports-link").click();
   await expect(page.locator("#billing-page")).toBeVisible();
   await page.locator("#billing-choose-plan-starter").click();
   await expect(page.locator("#billing-upgrade-page")).toBeVisible();

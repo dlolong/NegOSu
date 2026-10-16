@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Fragment } from "react";
 import { notFound, redirect } from "next/navigation";
 import { CheckCheck, LogIn, LogOut, Plus, Search } from "lucide-react";
 import { z } from "zod";
@@ -36,25 +37,24 @@ export default async function BookingsPage({ searchParams }: { searchParams: Pro
   let request = db.from("hospitality_room_availability").select("*", { count: "exact" }).eq("organization_id", m.organizationId).eq("branch_id", m.branchId);
   if (term) request = request.ilike("name", `%${term}%`);
   if (status) request = request.eq("occupancy_status", status);
-  const [rooms, branch] = await Promise.all([
+  const needsSelected = Boolean(q.room && (entering || q.dialog === "ready" || q.dialog === "stay"));
+  if (needsSelected && !z.uuid().safeParse(q.room).success) notFound();
+  const [rooms, branch, selectedResult, staffResult] = await Promise.all([
     request.order("name").order("id").range((page - 1) * 50, page * 50 - 1),
     db.from("branches").select("timezone").eq("organization_id", m.organizationId).eq("id", m.branchId).single(),
+    needsSelected ? db.from("hospitality_room_availability").select("*").eq("id", q.room!).eq("organization_id", m.organizationId).eq("branch_id", m.branchId).maybeSingle() : Promise.resolve({ data: null, error: null }),
+    entering && needsSelected ? hospitalityShiftStaff(m.organizationId, m.branchId).then(data => ({ data, error: false })).catch(() => ({ data: [], error: true })) : Promise.resolve({ data: [], error: false }),
   ]);
   const rows = (rooms.data ?? []) as AvailableRoom[];
-  let selected: AvailableRoom | null = null, selectedError = false;
-  if (q.room && (entering || q.dialog === "ready" || q.dialog === "stay")) {
-    if (!z.uuid().safeParse(q.room).success) notFound();
-    const result = await db.from("hospitality_room_availability").select("*").eq("id", q.room).eq("organization_id", m.organizationId).eq("branch_id", m.branchId).maybeSingle();
-    selectedError = Boolean(result.error); selected = result.data as AvailableRoom | null;
-    if (!selectedError && !selected) notFound();
-  }
+  const selected = selectedResult.data as AvailableRoom | null;
+  let selectedError = Boolean(selectedResult.error);
+  if (needsSelected && !selectedError && !selected) notFound();
+  const staff = staffResult.data, staffError = staffResult.error;
   if (q.dialog === "stay" && selected) {
     const stay = await db.from("hospitality_stays").select("id").eq("organization_id", m.organizationId).eq("branch_id", m.branchId).eq("room_id", selected.id).order("checked_in_at", { ascending: false }).order("id").limit(1).maybeSingle();
     if (stay.error) selectedError = true;
     else if (stay.data) redirect(`/dashboard/hospitality/stays/${stay.data.id}`);
   }
-  let staff: Awaited<ReturnType<typeof hospitalityShiftStaff>> = [], staffError = false;
-  if (entering && selected) { try { staff = await hospitalityShiftStaff(m.organizationId, m.branchId); } catch { staffError = true; } }
   const guest = z.uuid().safeParse(q.guest).success ? q.guest! : "";
   const pickPage = pageNumber(q.pickPage), pickQ = searchTerm(q.pickQ);
   let choices = null;
@@ -74,10 +74,10 @@ export default async function BookingsPage({ searchParams }: { searchParams: Pro
       <Button id="hospitality-booking-search-button" type="submit" variant="secondary"><Search size={16}/>Search</Button>
     </form>
     {rooms.error ? <LoadError>Rooms could not be loaded. Refresh and try again.</LoadError> : <RecordTable id="hospitality-booking-rooms" caption="Room availability and bookings" empty="No rooms found." columns={[{ key: "room", label: "Room" }, { key: "status", label: "Status" }, { key: "period", label: "Paid until", secondary: true }, { key: "actions", label: "Actions", align: "right" }]} rows={rows.map(room => ({ id: `hospitality-booking-room-${room.id}`, cells: {
-      room: <><RecordLink href={room.stay_id ? `/dashboard/hospitality/stays/${room.stay_id}` : href({ dialog: "stay", room: room.id })}>{room.name}</RecordLink><p className="mt-1 text-xs text-slate-500">{room.room_type || "Room"} · Capacity {room.capacity}</p></>,
-      status: <RoomStatus status={room.occupancy_status}/>,
+      room: <Fragment key={`booking-room-${room.id}`}><RecordLink href={room.stay_id ? `/dashboard/hospitality/stays/${room.stay_id}` : href({ dialog: "stay", room: room.id })}>{room.name}</RecordLink><p className="mt-1 text-xs text-slate-500">{room.room_type || "Room"} · Capacity {room.capacity}</p></Fragment>,
+      status: <RoomStatus key={`booking-status-${room.id}`} status={room.occupancy_status}/>,
       period: room.planned_checkout_at ? dateLabel(room.planned_checkout_at, branch.data?.timezone ?? m.timezone) : "—",
-      actions: <div className="flex flex-wrap justify-end gap-2">
+      actions: <div key={`booking-actions-${room.id}`} className="flex flex-wrap justify-end gap-2">
         {room.occupancy_status === "vacant" && checkIn ? room.rates.length ? <Button asChild size="sm" variant="arrival"><Link id={`hospitality-check-in-${room.id}`} href={href({ dialog: "check-in", room: room.id })}><LogIn size={15}/>Check In</Link></Button> : <span className="text-xs text-slate-500">Set room rates first</span> : null}
         {room.stay_id && operate ? <Button asChild size="sm" variant="complete"><Link id={`hospitality-check-out-${room.id}`} href={`/dashboard/hospitality/stays/${room.stay_id}?dialog=checkout`}><LogOut size={15}/>Check Out</Link></Button> : null}
         {room.cleaning_required && !room.stay_id && housekeeping ? <Button asChild size="sm" variant="ready"><Link id={`hospitality-mark-ready-${room.id}`} href={href({ dialog: "ready", room: room.id })}><CheckCheck size={15}/>Mark as Ready</Link></Button> : null}

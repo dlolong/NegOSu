@@ -31,16 +31,20 @@ export async function getSalonCommandCenter(shared: SharedCommandCenterSnapshot)
   // The aggregate RPC is the final branch-authorization boundary. Compose
   // vertical reads only from the branch rows it actually returned.
   const branchIds = shared.branchPerformance.map(({ branchId }) => branchId);
-  const [appointmentsResult, staffResult] = await Promise.all([
+  const [appointmentsResult, todayResult, staffResult] = await Promise.all([
     supabase.from("appointments")
       .select("id,branch_id,starts_at,ends_at,status,expected_total_centavos,created_at,customers(full_name),appointment_services(service_name_snapshot)")
       .eq("organization_id", shared.scope.organizationId).in("branch_id", branchIds).in("status", [...salonCommandCenterStatuses])
       .gte("starts_at", minStart).lt("starts_at", maxEnd).order("starts_at").limit(300),
+    supabase.from("appointments")
+      .select("id,branch_id,starts_at,ends_at,status,expected_total_centavos,created_at,customers(full_name),appointment_services(service_name_snapshot)")
+      .eq("organization_id", shared.scope.organizationId).in("branch_id", branchIds).in("status", [...salonCommandCenterStatuses])
+      .gte("starts_at", new Date(earliestToday).toISOString()).lt("starts_at", new Date(Math.max(...windows.map(({ end }) => end.valueOf()))).toISOString()).order("starts_at").limit(300),
     listOperationalStaffDirectory(shared.scope.organizationId)
       .then((data) => ({ data: data.slice(0, 200), error: false }))
       .catch(() => ({ data: [], error: true })),
   ]);
-  const rawAppointments = (appointmentsResult.data ?? []) as unknown as RawAppointment[];
+  const rawAppointments = [...new Map([...(appointmentsResult.data ?? []), ...(todayResult.data ?? [])].map(row => [row.id, row])).values()] as unknown as RawAppointment[];
   const appointmentIds = rawAppointments.map(({ id }) => id);
   const [assignmentContextResult, paymentsResult] = await Promise.all([
     loadAppointmentAssignmentContext(shared.scope.organizationId, appointmentIds)
@@ -94,11 +98,19 @@ export async function getSalonCommandCenter(shared: SharedCommandCenterSnapshot)
     staff: deriveSalonStaff(staff, appointments.filter(({ startsAt }) => Boolean(startsAt && Date.parse(startsAt) >= earliestToday))),
   });
 
+  if (shared.activity) snapshot.metrics = [
+    ...shared.metrics.filter(metric => metric.key === "appointments_today"),
+    { key: "checked_in", label: "Checked in", value: shared.activity.checkedIn, valueKind: "count" },
+    { key: "in_service", label: "In service", value: shared.activity.inService, valueKind: "count" },
+    { key: "completed_today", label: "Completed today", value: shared.activity.completedToday, valueKind: "count" },
+    ...shared.metrics.filter(metric => metric.valueKind === "currency"),
+  ];
+
   return {
     snapshot,
     sectionErrors: {
       ...(appointmentsResult.error || paymentsResult.error || assignmentContextResult.error ? { actions: "Some Salon action items could not be loaded." } : {}),
-      ...(appointmentsResult.error || assignmentContextResult.error ? { operations: "Some of today’s Salon appointments could not be loaded." } : {}),
+      ...(todayResult.error || assignmentContextResult.error ? { operations: "Some of today’s Salon appointments could not be loaded." } : {}),
       ...(staffResult.error ? { staff: "Some Staff availability could not be loaded." } : {}),
     },
   };

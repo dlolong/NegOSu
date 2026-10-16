@@ -54,7 +54,7 @@ export async function checkIn(_state: HospitalityActionState, data: FormData): P
     if (result.error) return { error: ["PGRST202", "42883"].includes(result.error.code) ? "Manual date/time check-in is not available yet. Ask your administrator to apply the latest database update." : result.error.code === "22007" ? "Enter a past check-in time and, if checked out, a later checkout time that is not in the future." : result.error.code === "23P01" ? "This arrival time overlaps another stay for the room. Review its stay history and choose a later time or another room." : result.error.code === "40001" ? "Room rates, arrival time or recorded shift details changed. Close this form and review the room and stay before collecting payment." : result.error.code === "55000" ? "This room is being cleaned. Wait until it is marked ready before check-in." : result.error.code === "23505" ? "This room is already occupied. Choose another vacant room." : result.error.code === "22023" ? "Review staff, price, discount and deposit details. Confirm any deposit return for a completed booking. Payment must cover the final price plus deposit." : failure(result.error).error };
     stayId = result.data;
   } catch (error) { return failure(error); }
-  done(`/dashboard/hospitality/stays/${stayId}`);
+  done(`/dashboard/hospitality/stays/${stayId}/check-in-receipt`);
 }
 export async function checkOut(_state: HospitalityActionState, data: FormData): Promise<HospitalityActionState> {
   const stayId = value(data, "stayId");

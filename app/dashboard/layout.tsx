@@ -1,3 +1,4 @@
+import { LookupScopeProvider } from "@/components/lookup-scope";
 import { isPlatformAdmin } from "@/modules/platform/admin-access";
 import { loadPlanUpgrades } from "@/lib/billing/upgrades";
 import { createClient } from "@/lib/supabase/server";
@@ -13,5 +14,6 @@ export async function generateMetadata() {
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const context = await getDashboardContext();
   const upgrades = await loadPlanUpgrades(await createClient(), context.activeMembership.organizationId);
-  return <AppShell platformAdmin={isPlatformAdmin(context.user.id, process.env.PLATFORM_ADMIN_USER_IDS)} upgrades={upgrades} activeMembership={context.activeMembership} memberships={context.memberships} profileName={context.profile.fullName} dashboardTheme={context.profile.dashboardTheme}>{children}</AppShell>;
+  const scope = JSON.stringify([context.user.id, context.activeMembership.organizationId, context.activeMembership.branchId, context.activeMembership.role]);
+  return <AppShell platformAdmin={isPlatformAdmin(context.user.id, process.env.PLATFORM_ADMIN_USER_IDS)} upgrades={upgrades} activeMembership={context.activeMembership} memberships={context.memberships} profileName={context.profile.fullName} dashboardTheme={context.profile.dashboardTheme}><LookupScopeProvider key={scope} scope={scope}>{children}</LookupScopeProvider></AppShell>;
 }

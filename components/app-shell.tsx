@@ -188,7 +188,7 @@ export function AppShell({ children, activeMembership, memberships, profileName,
   const mobileColumnClasses = ["grid-cols-1", "grid-cols-2", "grid-cols-3", "grid-cols-4"] as const;
   const mobileColumnClass = mobileColumnClasses[Math.min(mobileNav.length, 3)];
   return (
-    <PlanUpgradeProvider state={upgrades} industry={activeMembership.industry} isOwner={activeMembership.role === "owner"}>
+    <PlanUpgradeProvider key={`${activeMembership.organizationId}-${activeMembership.role}`} state={upgrades} industry={activeMembership.industry} isOwner={activeMembership.role === "owner"}>
     <div id="dashboard-app-shell" data-dashboard-theme={dashboardTheme} className="flex h-dvh min-h-0 overflow-hidden bg-admin-canvas lg:grid lg:grid-cols-[224px_minmax(0,1fr)]">
       <aside id="negosu-sidebar" className="hidden overflow-y-auto overscroll-y-contain border-r border-white/10 bg-brand-ink text-white lg:block">
         <div className="px-3 py-4">

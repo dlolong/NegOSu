@@ -1,6 +1,6 @@
 import { reportQuerySchema, resolveReportScope } from "@/lib/reporting";
 
-/** Hospitality Free filters expose only rolling presets; paid plans unlock custom dates. */
+/** Recent dates remain available on Free; database authorization bounds the period. */
 export function resolveHospitalityReportScope(
   filters: Parameters<typeof resolveReportScope>[0],
   membership: Parameters<typeof resolveReportScope>[1],
@@ -8,11 +8,10 @@ export function resolveHospitalityReportScope(
   mode: "report" | "payments" | "history",
   now = new Date(),
 ) {
-  const preset = filters.preset === "month" || (!advanced && filters.preset === "custom") ? "30d" : filters.preset;
+
   const effective = reportQuerySchema.parse({
-    ...filters, preset,
-    ...(!advanced ? { start: undefined, end: undefined } : {}),
+    ...filters,
     branch: advanced && mode === "report" ? filters.branch : membership.branchId,
   });
-  return resolveReportScope(effective, membership, true, now);
+  return resolveReportScope(effective, membership, advanced, now);
 }

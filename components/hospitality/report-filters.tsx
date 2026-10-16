@@ -20,10 +20,10 @@ export function HospitalityReportFilters({ advanced, mode, section, scope, branc
     {mode === "report" ? <input type="hidden" name="view" value="overview"/> : null}
     {mode === "history" ? <input type="hidden" name="tab" value="history"/> : null}
     <Field label="Period" full={payments}><select id="hospitality-report-period" name="preset" defaultValue={scope.filters.preset} className={fieldClass}>
-      <option value="today">Today</option><option value="7d">Last 7 days</option><option value="30d">Last 30 days</option>{advanced ? <option value="custom">Custom dates</option> : <option value="custom" disabled>Custom dates · Paid plan</option>}
+      <option value="today">Today</option><option value="7d">Last 7 days</option><option value="30d">Last 30 days</option><option value="month">This month</option><option value="custom">Custom dates</option>
     </select></Field>
-    {advanced ? <><Field label="Start (custom)"><Input id="hospitality-report-start" name="start" type="date" defaultValue={scope.range.start} className={fieldClass}/></Field>
-    <Field label="End (custom)"><Input id="hospitality-report-end" name="end" type="date" defaultValue={scope.range.end} className={fieldClass}/></Field></> : null}
+    {<><Field label="Start (custom)"><Input id="hospitality-report-start" name="start" type="date" defaultValue={scope.range.start} className={fieldClass}/></Field>
+    <Field label="End (custom)"><Input id="hospitality-report-end" name="end" type="date" defaultValue={scope.range.end} className={fieldClass}/></Field></>}
     {mode === "report" && advanced ? <Field label="Branch"><select id="hospitality-report-branch" name="branch" defaultValue={scope.branch} className={fieldClass}>
       <option value="all">All accessible branches</option>{branches.map(branch => <option key={branch.id} value={branch.id}>{branch.name}</option>)}
     </select></Field> : <p className={payments ? "text-sm text-admin-text-secondary sm:col-span-2" : "text-sm text-slate-500"}>{branchName}</p>}

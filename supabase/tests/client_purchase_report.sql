@@ -24,8 +24,10 @@ insert into pet_profiles(id,organization_id,customer_id,name,species) values(pg_
 insert into pet_appointment_details(appointment_id,organization_id,pet_id,customer_id_snapshot,pet_name_snapshot) values(pg_temp.cid('appointment-pet_care'),pg_temp.cid('pet_care'),pg_temp.cid('pet'),pg_temp.cid('customer-pet_care'),'Test pet');
 insert into vehicles(id,organization_id,customer_id,make,model,plate_number) values(pg_temp.cid('vehicle'),pg_temp.cid('automotive'),pg_temp.cid('customer-automotive'),'Toyota','Test','CHECKOUT-01');
 insert into services(id,organization_id,name,duration_minutes,base_price_centavos) values(pg_temp.cid('service-automotive'),pg_temp.cid('automotive'),'Approved labor',30,10000);
+insert into appointments(id,organization_id,branch_id,customer_id,vehicle_id,starts_at,expected_duration_minutes,status) values(pg_temp.cid('appointment-automotive'),pg_temp.cid('automotive'),pg_temp.cid('branch-automotive'),pg_temp.cid('customer-automotive'),pg_temp.cid('vehicle'),now()-interval '1 hour',30,'completed');
 insert into job_orders(id,organization_id,branch_id,customer_id,vehicle_id,job_number,status) values(pg_temp.cid('job'),pg_temp.cid('automotive'),pg_temp.cid('branch-automotive'),pg_temp.cid('customer-automotive'),pg_temp.cid('vehicle'),1,'ready_for_release');
 insert into job_order_items(organization_id,job_order_id,service_id,service_name_snapshot,quantity,unit_price_centavos,line_total_centavos,duration_minutes) values(pg_temp.cid('automotive'),pg_temp.cid('job'),pg_temp.cid('service-automotive'),'Approved labor',1,10000,10000,30);
+update job_orders set appointment_id=pg_temp.cid('appointment-automotive') where id=pg_temp.cid('job');
 create temporary table ctx(name text primary key,id uuid,line uuid,bill uuid);
 grant all on ctx to authenticated;
 select set_config('request.jwt.claims',jsonb_build_object('sub',pg_temp.cid('owner'),'role','authenticated')::text,true);
@@ -62,6 +64,34 @@ select record_checkout_payment(id,12000,'cash',null,current_date,pg_temp.cid('pa
 create function pg_temp.report(v text,client text default '',item text default '',kind text default 'all',page integer default 1) returns jsonb language sql as $$
  select public.get_client_purchase_report(pg_temp.cid(v),current_date-1,current_date+1,null,client,item,kind,page)
 $$;
+select is((get_catalog_financial_report(pg_temp.cid('hospitality'),current_date-1,current_date+1,pg_temp.cid('branch-hospitality'),'rooms')->'summary'->>'amount')::bigint,10000::bigint,'room totals count base stay bill once and exclude separate retail');
+select is((get_catalog_financial_report(pg_temp.cid('hospitality'),current_date-1,current_date+1,pg_temp.cid('branch-hospitality'),'rooms')->'summary'->>'revenue')::bigint,10000::bigint,'room revenue is paid to date on stay bill');
+select ok((get_hospitality_workspace(pg_temp.cid('hospitality'),pg_temp.cid('branch-hospitality'),current_date-1,current_date+1,'stays',1,'report')->'rows'->0) ?& array['charges','paid','balance'],'stay table includes money fields');
+select is((get_hospitality_workspace(pg_temp.cid('hospitality'),pg_temp.cid('branch-hospitality'),current_date-1,current_date+1,'stays',1,'report')->'reportTotals'->>'amount')::bigint,15000::bigint,'hospitality summary includes posted retail and stay charges');
+select throws_ok($$select get_catalog_financial_report(pg_temp.cid('salon'),current_date,current_date,pg_temp.cid('branch-salon'),'rooms')$$,'42501',null,'room report restricted to hospitality');
+select throws_ok($$select get_catalog_financial_report(pg_temp.cid('salon'),current_date,current_date,pg_temp.cid('branch-other'),'promos')$$,'42501',null,'promo report rejects foreign branch');
+select ok(not (get_hospitality_workspace(pg_temp.cid('hospitality'),pg_temp.cid('branch-hospitality'),current_date-365,current_date,'stays',1,'overview') ? 'reportTotals'),'overview cannot expose new arbitrary-range financial totals');
+create function pg_temp.salon() returns jsonb language sql as $$
+ select get_appointment_report(pg_temp.cid('salon'),current_date-1,current_date+1,pg_temp.cid('branch-salon'))
+$$;
+create function pg_temp.vertical_bookings(v text) returns jsonb language sql as $$
+ select (case when v='automotive' then get_owner_report(pg_temp.cid(v),current_date-1,current_date+1,pg_temp.cid('branch-'||v)) else get_appointment_report(pg_temp.cid(v),current_date-1,current_date+1,pg_temp.cid('branch-'||v)) end)->'bookingDetails'
+$$;
+select is(pg_temp.vertical_bookings(v)->>'industry',v,v||': detail contract identifies vertical') from unnest(array['automotive','pet_care']) v;
+select is(pg_temp.vertical_bookings(v)->'appointments'->0->>'client','Checkout Client',v||': booking shows customer/owner') from unnest(array['automotive','pet_care']) v;
+select is(pg_temp.vertical_bookings(v)->'appointments'->0->>'staff','Staff '||v,v||': staff attribution is deduplicated') from unnest(array['automotive','pet_care']) v;
+select ok((pg_temp.vertical_bookings(v)->'appointments'->0->>'products') like '%Retail bottle%',v||': purchased products follow visit checkout') from unnest(array['automotive','pet_care']) v;
+select is((pg_temp.vertical_bookings(v)->'appointments'->0->>'total')::bigint,15000::bigint,v||': total uses canonical base and retail charges once') from unnest(array['automotive','pet_care']) v;
+select throws_ok($$select booking_report_details_data(pg_temp.cid('automotive'),current_date,current_date,pg_temp.cid('branch-automotive'))$$,'42501',null,'private detail helper cannot bypass public scope checks');
+select throws_ok($$select get_owner_report(pg_temp.cid('automotive'),current_date,current_date,pg_temp.cid('branch-other'))$$,'42501',null,'automotive detail reader denies foreign branch');
+select throws_ok($$select get_appointment_report(pg_temp.cid('pet_care'),current_date,current_date,pg_temp.cid('branch-other'))$$,'42501',null,'pet detail reader denies foreign branch');
+select is(pg_temp.salon()->'salonDetails'->'appointments'->0->>'client','Checkout Client','salon appointment shows client');
+select is(pg_temp.salon()->'salonDetails'->'appointments'->0->>'staff','Second stylist, Staff salon','salon appointment retains multiple and inactive staff');
+select ok((pg_temp.salon()->'salonDetails'->'appointments'->0->>'products') like '%Retail bottle%', 'salon appointment shows posted products');
+select is((pg_temp.salon()->'salonDetails'->'appointments'->0->>'total')::bigint,15000::bigint,'salon visit total adds product bill exactly once despite multiple staff');
+select is((pg_temp.salon()->'summary'->>'grossSalesCentavos')::bigint,15000::bigint,'salon sales total uses canonical charges');
+select is((pg_temp.salon()->'summary'->>'paymentsReceivedCentavos')::bigint,12000::bigint,'salon collected revenue uses actual receipts');
+select ok(jsonb_array_length(pg_temp.salon()->'salonDetails'->'payments')>0,'salon payment records present');
 select is((pg_temp.report(name)->>'count')::integer,1,name||': base and retail bills merge by client ID') from ctx;
 select is((pg_temp.report(name)->'summary'->>'total')::bigint,15000::bigint,name||': full bills counted exactly once') from ctx;
 select is((pg_temp.report(name)->'summary'->>'paid')::bigint,12000::bigint,name||': current payments reconcile') from ctx;
@@ -93,6 +123,9 @@ insert into appointment_staff_assignments(organization_id,appointment_id,staff_p
 -- Included products are fulfilled but carry no extra revenue.
 insert into checkout_lines(checkout_id,inventory_item_id,name,unit,quantity,unit_price_centavos,included_key,stock_tracked,handed_over)
 select id,pg_temp.cid('item-salon'),'Promo sample','piece',1,0,'report-promo',false,1 from ctx where name='salon';
+select is((select (r->>'total')::bigint from jsonb_array_elements(pg_temp.salon()->'salonDetails'->'appointments') r where r->>'id'=pg_temp.cid('appointment-salon')::text),15000::bigint,'promo inclusions do not increase appointment total');
+select ok((select r->>'products' like '%Promo sample%included%' from jsonb_array_elements(pg_temp.salon()->'salonDetails'->'appointments') r where r->>'id'=pg_temp.cid('appointment-salon')::text),'fulfilled promo products are labelled included');
+select ok(not exists(select 1 from jsonb_array_elements(pg_temp.salon()->'salonDetails'->'appointments') r where r->>'id'=pg_temp.cid('second-visit')::text),'salon details exclude other branches');
 -- Reuse a non-reporting identity as a branch-restricted viewer for isolation tests.
 delete from organization_memberships where id=pg_temp.cid('tech-member');
 insert into organization_memberships(id,organization_id,user_id,role) values(pg_temp.cid('viewer-member'),pg_temp.cid('salon'),pg_temp.cid('technician'),'viewer');

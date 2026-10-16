@@ -123,5 +123,14 @@ select throws_ok($$update appointment_promo_snapshots set price_centavos=100$$,'
 reset role;
 set local "request.jwt.claims"='{}';
 set constraints all immediate;
+insert into organization_subscriptions(organization_id,plan_id,status) values('20640000-0000-4000-8000-000000000001','pro','active');
+set local "request.jwt.claims"='{"sub":"10640000-0000-4000-8000-000000000001","role":"authenticated"}';
+create function pg_temp.promo_report() returns jsonb language sql as $$select get_catalog_financial_report('20640000-0000-4000-8000-000000000001',current_date-1,current_date+30,'40640000-0000-4000-8000-000000000001','promos')$$;
+select is((pg_temp.promo_report()->'summary'->>'amount')::bigint,(select sum(price_centavos)::bigint from appointment_promo_snapshots),'promo totals sum accepted allocations, not current catalog price');
+select is((select (r->>'bookings')::bigint from jsonb_array_elements(pg_temp.promo_report()->'rows') r where r->>'id'=(select id::text from bundle)),2::bigint,'multi-service promo counts each appointment once');
+update appointments set status='completed' where id=pg_temp.staff_bundle();
+select is((pg_temp.promo_report()->'summary'->>'revenue')::bigint,1::bigint,'promo revenue counts completed accepted price once');
+update appointments set status='cancelled' where id=pg_temp.staff_bundle();
+select is((pg_temp.promo_report()->'summary'->>'revenue')::bigint,0::bigint,'cancelled promo excluded from revenue');
 select * from finish();
 rollback;

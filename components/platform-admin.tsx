@@ -1,3 +1,4 @@
+import { Tabs } from "@/components/ui/tabs";
 import Link from "next/link";
 import { RecordTable } from "@/components/record-table";
 import { DashboardChart } from "@/components/dashboard-chart";
@@ -5,11 +6,11 @@ import type { AdminOverview, AdminRow, AdminSection } from "@/modules/platform/a
 
 export const platformLinks = [
   ["", "Overview"], ["inquiries", "Inquiries"], ["signups", "Signups"], ["businesses", "Businesses"],
-  ["subscriptions", "Subscriptions"], ["payments", "Payments"], ["events", "Billing events"], ["plans", "Plan catalog"],
+  ["subscriptions", "Subscriptions"], ["payments", "Payments"], ["events", "Billing events"], ["plans", "Plan catalog"], ["usage", "Usage credits"],
 ] as const;
 
 export function PlatformAdminNavigation() {
-  return <nav id="platform-admin-navigation" aria-label="Platform administration" className="my-5 flex flex-wrap gap-2">{platformLinks.map(([path, label]) => <Link id={`platform-admin-nav-${path || "overview"}`} key={path} href={`/admin${path ? `/${path}` : ""}`} className="rounded-lg border border-admin-border bg-admin-surface px-3 py-2 text-sm font-medium text-admin-text hover:bg-brand-tint">{label}</Link>)}</nav>;
+  return <Tabs id="platform-admin-navigation" ariaLabel="Platform administration" className="my-5" items={platformLinks.map(([path,label])=>({id:`platform-admin-nav-${path || "overview"}`,label,href:`/admin${path ? `/${path}` : ""}`}))}/>;
 }
 
 export function PlatformOverview({ data, livemode }: { data: AdminOverview; livemode: boolean }) {
